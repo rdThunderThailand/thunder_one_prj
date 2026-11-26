@@ -231,7 +231,7 @@ export function GlobalSearch({ variant }: { variant: "default" | "media" }) {
                 aria-label={group.label}
                 className="py-1"
               >
-                <p className="px-4 pb-1 pt-2 text-[10px] font-bold uppercase tracking-[0.08em] text-muted-foreground">{group.label}</p>
+                <p className="px-4 pb-1 pt-2 text-2xs font-bold uppercase tracking-[0.08em] text-muted-foreground">{group.label}</p>
                 {group.hits.map((hit, hi) => {
                   const i = offsets[gi] + hi;
                   return (
@@ -276,7 +276,7 @@ export function GlobalSearch({ variant }: { variant: "default" | "media" }) {
             )}
           </div>
 
-          <div className="flex items-center gap-3 border-t border-border px-4 py-2 text-[10px] text-muted-foreground">
+          <div className="flex items-center gap-3 border-t border-border px-4 py-2 text-2xs text-muted-foreground">
             <span>↑↓ เลือก</span>
             <span>Enter เปิด</span>
             <span>Esc ปิด</span>

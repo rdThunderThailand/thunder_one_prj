@@ -1,6 +1,6 @@
 # 0080 — Published Programs are edited in place, without a draft revision
 
-Status: accepted (2026-09-30, grilling session on the Program redesign mockups in `docs/program/figma-mockup/`, then review round 1). Extends ADR 0053 (republish in place) and ADR 0078 (Publish Changes). Plan: `docs/program/plan-program-redesign.md`.
+Status: accepted (2026-09-30, grilling session on the Program redesign mockups in `docs/media-workspace/program/figma-mockup/`, then review round 1). Extends ADR 0053 (republish in place) and ADR 0078 (Publish Changes). Plan: `docs/media-workspace/program/plan-program-redesign.md`.
 
 ## Context
 

@@ -1,4 +1,5 @@
-import { DEFAULT_TIMEZONE, shiftYmd, utcToZonedParts, ymdDow, zonedToUtcIso } from "./schedule.ts";
+import { DEFAULT_TIMEZONE, END_OF_DAY, shiftYmd, utcToZonedParts, zonedToUtcIso } from "./schedule.ts";
+import { hasAiringLeft } from "./schedule-airing.ts";
 import type { AppLocale } from "@/lib/app-locale";
 import type { PublicationSchedule } from "./types/index.ts";
 
@@ -124,17 +125,17 @@ export function scheduleToDraft(schedule: PublicationSchedule | null, today: str
     startDate: start.date,
     dailyStart,
     dailyEnd,
-    allDay: dailyStart === "00:00" && dailyEnd === "23:59",
+    allDay: dailyStart === "00:00" && dailyEnd === END_OF_DAY,
   });
 
   if (!("freq" in rec)) {
     if (end && end.date === start.date) return { ...withWindow(start.time, end.time), mode: "one-time" };
     // A one-off ending at the next midnight is the modal's own all-day one-time shape.
     if (end && end.time === "00:00" && end.date === shiftYmd(start.date, 1) && start.time === "00:00") {
-      return { ...withWindow("00:00", "23:59"), mode: "one-time" };
+      return { ...withWindow("00:00", END_OF_DAY), mode: "one-time" };
     }
     return {
-      ...withWindow("00:00", "23:59"),
+      ...withWindow("00:00", END_OF_DAY),
       mode: "continuous",
       startTime: start.time,
       endDate: end?.date ?? "",
@@ -152,17 +153,17 @@ export function scheduleToDraft(schedule: PublicationSchedule | null, today: str
 
 export type DraftErrors = Partial<Record<"days" | "dates" | "monthDays" | "startDate" | "endDate" | "time", string>>;
 
-const PAST_START = "Start date can't be in the past.";
+const PAST_START = "วันเริ่มต้องเป็นวันนี้หรือหลังจากวันนี้";
 
 function validateContinuous(draft: ScheduleDraft, today: string, nowTime: string, isStartLocked: boolean): DraftErrors {
   const errors: DraftErrors = {};
-  if (!draft.startDate) errors.startDate = "Pick a start date.";
+  if (!draft.startDate) errors.startDate = "กรุณาเลือกวันเริ่ม";
   else if (!isStartLocked && draft.startDate < today) errors.startDate = PAST_START;
   if (!draft.endDate) return errors;
   const startKey = `${draft.startDate} ${draft.startTime}`;
   const endKey = `${draft.endDate} ${draft.endTime}`;
-  if (endKey <= startKey) errors.endDate = "End must be after the start.";
-  else if (endKey <= `${today} ${nowTime}`) errors.endDate = "End is in the past.";
+  if (endKey <= startKey) errors.endDate = "วันและเวลาสิ้นสุดต้องอยู่หลังวันและเวลาเริ่ม";
+  else if (endKey <= `${today} ${nowTime}`) errors.endDate = "วันและเวลาสิ้นสุดผ่านไปแล้ว";
   return errors;
 }
 
@@ -174,24 +175,29 @@ function validateContinuous(draft: ScheduleDraft, today: string, nowTime: string
 export function validateDraft(draft: ScheduleDraft, today: string, nowTime = "00:00", isStartLocked = false): DraftErrors {
   const errors: DraftErrors = {};
   if (draft.mode === "continuous") return validateContinuous(draft, today, nowTime, isStartLocked);
-  if (!draft.allDay && !(draft.dailyStart < draft.dailyEnd)) errors.time = "End time must be after start time.";
+  const stored = toStoredSchedule(draft);
+  const now = new Date(zonedToUtcIso(today, nowTime, draft.timezone));
+  if (!draft.allDay && !(draft.dailyStart < draft.dailyEnd)) errors.time = "เวลาสิ้นสุดต้องอยู่หลังเวลาเริ่ม";
   if (draft.mode === "weekly" || draft.mode === "monthly") {
-    if (draft.mode === "weekly" && draft.days.length === 0) errors.days = "Pick at least one day.";
-    if (draft.mode === "monthly" && draft.monthDays.length === 0) errors.monthDays = "Pick at least one day of the month.";
-    if (!draft.startDate) errors.startDate = "Pick a start date.";
+    if (draft.mode === "weekly" && draft.days.length === 0) errors.days = "กรุณาเลือกวันในสัปดาห์อย่างน้อย 1 วัน";
+    if (draft.mode === "monthly" && draft.monthDays.length === 0) errors.monthDays = "กรุณาเลือกวันที่ในเดือนอย่างน้อย 1 วัน";
+    if (!draft.startDate) errors.startDate = "กรุณาเลือกวันเริ่ม";
     else if (!isStartLocked && draft.startDate < today) errors.startDate = PAST_START;
-    if (draft.endDate && draft.endDate < draft.startDate) errors.endDate = "End date must be on or after the start date.";
-    else if (draft.endDate && draft.endDate < today) errors.endDate = "End date is in the past.";
+    if (draft.endDate && draft.endDate < draft.startDate) errors.endDate = "วันสิ้นสุดต้องเป็นวันเริ่มหรือหลังจากวันเริ่ม";
+    else if (draft.endDate && draft.endDate < today) errors.endDate = "วันสิ้นสุดผ่านไปแล้ว";
   }
   if (draft.mode === "dates") {
-    if (draft.dates.length === 0) errors.dates = "Pick at least one date.";
-    if (draft.dates.length > MAX_DATES) errors.dates = `Pick at most ${MAX_DATES} dates.`;
-    if (draft.dates.length > 0 && draft.dates.every((d) => d < today)) errors.dates = "Pick at least one date from today on.";
+    if (draft.dates.length === 0) errors.dates = "กรุณาเลือกวันที่อย่างน้อย 1 วัน";
+    if (draft.dates.length > MAX_DATES) errors.dates = `เลือกวันที่ได้สูงสุด ${MAX_DATES} วัน`;
+    if (draft.dates.length > 0 && draft.dates.every((d) => d < today)) errors.dates = "กรุณาเลือกวันนี้หรือวันหลังจากวันนี้อย่างน้อย 1 วัน";
   }
-  if (draft.mode === "one-time" && !draft.startDate) errors.startDate = "Pick a date.";
-  else if (draft.mode === "one-time" && draft.startDate < today) errors.startDate = "Pick today or a later date.";
-  else if (draft.mode === "one-time" && draft.startDate === today && !draft.allDay && draft.dailyEnd <= nowTime) {
-    errors.time = "This time has already passed today.";
+  if (draft.mode === "one-time" && !draft.startDate) errors.startDate = "กรุณาเลือกวันที่";
+  else if (draft.mode === "one-time" && draft.startDate < today) errors.startDate = "กรุณาเลือกวันนี้หรือวันหลังจากวันนี้";
+  else if (draft.mode === "one-time" && stored !== null && !hasAiringLeft(stored, now)) {
+    errors.time = "ช่วงเวลาเล่นของวันนี้ผ่านไปแล้ว";
+  }
+  if (draft.mode !== "one-time" && Object.keys(errors).length === 0 && stored !== null && !hasAiringLeft(stored, now)) {
+    errors[draft.mode === "dates" ? "dates" : "endDate"] = "ช่วงเวลาเล่นสุดท้ายผ่านไปแล้ว กรุณาแก้วันหรือเวลาสิ้นสุด";
   }
   return errors;
 }
@@ -205,7 +211,7 @@ export function validateDraftNow(draft: ScheduleDraft, isStartLocked = false): D
 export const isDraftValid = (draft: ScheduleDraft) => Object.keys(validateDraftNow(draft)).length === 0;
 
 function dailyWindow(draft: ScheduleDraft): { start: string; end: string } {
-  return draft.allDay ? { start: "00:00", end: "23:59" } : { start: draft.dailyStart, end: draft.dailyEnd };
+  return draft.allDay ? { start: "00:00", end: END_OF_DAY } : { start: draft.dailyStart, end: draft.dailyEnd };
 }
 
 /** The stored shape. Call only on a draft with no `validateDraft` errors. */
@@ -250,29 +256,13 @@ export function draftToSchedule(draft: ScheduleDraft): PublicationSchedule {
   };
 }
 
-/** Does the draft air on this local day? Drives the preview list and week grid. */
-export function airsOn(draft: ScheduleDraft, ymd: string): boolean {
-  if (draft.mode === "one-time") return ymd === draft.startDate;
-  if (draft.mode === "dates") return draft.dates.includes(ymd);
-  if (draft.mode === "continuous") {
-    if (ymd < draft.startDate) return false;
-    // An end at exactly 00:00 closes before that day starts.
-    return !draft.endDate || ymd < draft.endDate || (ymd === draft.endDate && draft.endTime !== "00:00");
-  }
-  if (ymd < draft.startDate || (draft.endDate && ymd > draft.endDate)) return false;
-  if (draft.mode === "monthly") return draft.monthDays.includes(Number(ymd.slice(8)));
-  return draft.days.includes(ymdDow(ymd));
-}
-
-/** Next `limit` airing days from `from`, looking at most a year ahead. */
-export function upcomingDays(draft: ScheduleDraft, from: string, limit: number): string[] {
-  if (draft.mode === "dates") return [...draft.dates].sort().filter((d) => d >= from).slice(0, limit);
-  const days: string[] = [];
-  for (let i = 0; i <= MAX_DATES && days.length < limit; i++) {
-    const ymd = shiftYmd(from, i);
-    if (airsOn(draft, ymd)) days.push(ymd);
-  }
-  return days;
+/**
+ * The stored shape of a draft the module in schedule-airing.ts can read, or null while it is too
+ * incomplete to convert (no start date, or custom dates with no dates). Never throws for drafts the editor can produce (times are always HH:MM) (ADR 0128 §2).
+ */
+export function toStoredSchedule(draft: ScheduleDraft): PublicationSchedule | null {
+  if (draft.mode === "dates" ? draft.dates.length === 0 : !draft.startDate) return null;
+  return draftToSchedule(draft);
 }
 
 /** "5 hours 29 minutes" / "5 ชั่วโมง 29 นาที": whole minutes, never a rounded decimal (#340). */
@@ -287,6 +277,6 @@ export function windowLabel(draft: ScheduleDraft, locale: AppLocale): string {
   if (draft.allDay) return "All day (00:00 – 24:00)";
   const minutes = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5));
   // A daily end of 23:59 runs through the end of the day (ADR 0012, #240), so it counts to 24:00.
-  const end = draft.dailyEnd === "23:59" ? 24 * 60 : minutes(draft.dailyEnd);
+  const end = draft.dailyEnd === END_OF_DAY ? 24 * 60 : minutes(draft.dailyEnd);
   return `${draft.dailyStart} – ${draft.dailyEnd} (${durationLabel(end - minutes(draft.dailyStart), locale)})`;
 }

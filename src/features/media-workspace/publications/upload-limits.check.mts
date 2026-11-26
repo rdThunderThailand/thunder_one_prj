@@ -1,7 +1,7 @@
 /**
  * Runnable check for the upload format gate:
  *
- *     node src/features/publications/upload-limits.check.mts
+ *     node src/features/media-workspace/publications/upload-limits.check.mts
  *
  * The library already holds a 27MB `video/quicktime` file that no transcoding step
  * will ever normalise, so the gate has to hold at the picker. These assertions cover

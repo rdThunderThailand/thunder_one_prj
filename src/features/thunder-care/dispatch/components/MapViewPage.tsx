@@ -81,12 +81,12 @@ export function MapViewPage() {
               style={{ left: `${pin.xPercent}%`, top: `${pin.yPercent}%` }}
               className="absolute -translate-x-1/2 -translate-y-1/2"
             >
-              <span className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-semibold shadow ${statusColor[pin.status]}`}>
+              <span className={`flex h-6 w-6 items-center justify-center rounded-full text-2xs font-semibold shadow ${statusColor[pin.status]}`}>
                 {mapJobPins.indexOf(pin) + 1}
               </span>
             </div>
           ))}
-          <div className="absolute bottom-3 left-3 flex gap-3 rounded-lg bg-card/90 px-3 py-1.5 text-[11px] text-muted-foreground shadow">
+          <div className="absolute bottom-3 left-3 flex gap-3 rounded-lg bg-card/90 px-3 py-1.5 text-ui text-muted-foreground shadow">
             {(["in_progress", "waiting", "unassigned"] as const).map((s) => (
               <span key={s} className="flex items-center gap-1">
                 <span className={`h-2 w-2 rounded-full ${statusColor[s]}`} /> {statusLabel[s]}
@@ -104,7 +104,7 @@ export function MapViewPage() {
             <ul className="flex flex-col gap-3">
               {mapJobPins.map((pin, i) => (
                 <li key={pin.woId} className="flex items-start gap-2.5">
-                  <span className={`mt-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[9px] font-semibold ${statusColor[pin.status]}`}>
+                  <span className={`mt-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-2xs font-semibold ${statusColor[pin.status]}`}>
                     {i + 1}
                   </span>
                   <div className="min-w-0 flex-1">

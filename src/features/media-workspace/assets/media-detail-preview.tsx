@@ -61,7 +61,7 @@ export function SectionCard({ title, icon: Ico, rows }: { title: string; icon: I
         {rows
           .filter(([, value]) => value)
           .map(([label, value]) => (
-            <div key={label} className="flex items-start justify-between gap-4 py-2.5 text-[11px]">
+            <div key={label} className="flex items-start justify-between gap-4 py-2.5 text-ui">
               <span className="text-muted-foreground">{label}</span>
               <span className="break-all text-right font-semibold">{value}</span>
             </div>

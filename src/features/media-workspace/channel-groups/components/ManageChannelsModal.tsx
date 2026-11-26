@@ -1,7 +1,7 @@
 "use client";
 
-import { classifyApiError, isDuplicateName } from "@/lib/api/api-error";
-import { isSyncConflict, setChannelGroupMembers } from "../services/channel-groups-api";
+import { classifyApiError } from "@/lib/api/api-error";
+import { setChannelGroupMembers } from "../services/channel-groups-api";
 import type { ChannelListItem } from "../../channels/types";
 import type { ChannelGroup } from "../types";
 import { CreateGroupChannelsModal } from "./CreateGroupChannelsModal";
@@ -23,11 +23,7 @@ export function ManageChannelsModal({
       onSaved(await setChannelGroupMembers(group.id, Array.from(selected)));
       onClose();
     } catch (caught) {
-      if (caught instanceof Error && isSyncConflict(caught.message)) {
-        return "A channel can only belong to one synchronized Group at a time. Remove it from the other Group first.";
-      }
-      if (caught instanceof Error && isDuplicateName(caught.message)) return caught.message;
-      return classifyApiError(caught, "Could not update this Group's members. Try again.").message;
+      return classifyApiError(caught, "อัปเดต Channel ใน Group ไม่สำเร็จ กรุณาลองใหม่").message;
     }
   };
 

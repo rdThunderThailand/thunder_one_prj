@@ -3,12 +3,13 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button, buttonClasses } from "@/components/ui/Button";
 import { NoAccess } from "@/components/ui/NoAccess";
 import { ArrowLeftIcon } from "@/components/ui/icons";
-import { classifyApiError, isDuplicateName, type ClassifiedError } from "@/lib/api/api-error";
-import { draftFromChannel, geometryMismatch, step1Valid, step2Valid, toUpdateChannelPayload, type CreateChannelDraft } from "../create-wizard-state";
+import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
+import { draftFromChannel, geometryMismatch, step1Valid, toUpdateChannelPayload, type CreateChannelDraft } from "../create-wizard-state";
 import { fetchChannel, fetchChannelReferenceData } from "../services/channels-api";
 import { updateChannelV2 } from "../services/channel-write-api";
 import { fetchChannelPlayerCandidates } from "../services/player-candidates-api";
@@ -18,12 +19,6 @@ import { ChannelEditorForm } from "./ChannelEditorForm";
 import { GeometryMismatchWarning } from "./GeometryMismatchWarning";
 import { EditChannelSidebar } from "./EditChannelSidebar";
 import { EditorLoadError, EditorSkeleton } from "./ChannelEditorStates";
-
-/** `channel_set_devices` refuses removing the Player while a live Publication targets the
- *  Channel — every other write error goes through `classifyApiError`'s generic path instead. */
-function isPlayerChangeBlocked(message: string): boolean {
-  return message.includes("cannot remove") && message.includes("target this channel");
-}
 
 export function ChannelEditorPage({ channelId }: { channelId: string }) {
   const router = useRouter();
@@ -51,7 +46,7 @@ export function ChannelEditorPage({ channelId }: { channelId: string }) {
         setConfirmedMismatchKey(null);
         setLoadError(null);
       })
-      .catch((caught) => setLoadError(classifyApiError(caught, "Could not load this Channel. Try again.")));
+      .catch((caught) => setLoadError(classifyApiError(caught, "โหลด Channel นี้ไม่สำเร็จ กรุณาลองใหม่")));
   };
 
   const refreshCandidates = () => {
@@ -80,26 +75,25 @@ export function ChannelEditorPage({ channelId }: { channelId: string }) {
       setNameError("Channel name is required");
       return;
     }
-    if (!step2Valid(draft)) return;
     if (geometryWarning && !mismatchConfirmed) return;
     setNameError(undefined);
     setSaving(true);
     setSaveError(null);
     try {
       const updated = await updateChannelV2(channelId, toUpdateChannelPayload(draft, channel.revision, mismatchConfirmed));
+      toast.success("Channel saved");
       router.push("/media-workspace/channels");
       return updated;
     } catch (caught) {
-      if (caught instanceof Error && isDuplicateName(caught.message)) {
-        setNameError("A Channel with this name already exists.");
-      } else if (caught instanceof Error && isPlayerChangeBlocked(caught.message)) {
-        setSaveError("Can't change the Player — an active or scheduled Publication still targets this Channel.");
-      } else if (caught instanceof Error && caught.message.includes("confirm to continue")) {
-        setSaveError("The Player display information changed. Refresh the Player list, review the warning, and confirm again.");
-        setConfirmedMismatchKey(null);
-        refreshCandidates();
+      const failure = classifyApiError(caught, "บันทึกการเปลี่ยนแปลง Channel ไม่สำเร็จ กรุณาลองใหม่");
+      if (failure.reason === "duplicate-name") {
+        setNameError(failure.message);
       } else {
-        setSaveError(classifyApiError(caught, "Could not save Channel changes. Try again.").message);
+        setSaveError(failure.message);
+        if (failure.reason === "needs-confirm") {
+          setConfirmedMismatchKey(null);
+          refreshCandidates();
+        }
       }
     } finally {
       setSaving(false);
@@ -144,6 +138,8 @@ export function ChannelEditorPage({ channelId }: { channelId: string }) {
               candidatesLoading={candidatesLoading}
               nameError={nameError}
               excludeChannelId={channelId}
+              allowNoPlayer={channel.lifecycle !== "active"}
+              blockingPrograms={channel.blocking_programs}
               onChange={setDraft}
               onRefreshCandidates={refreshCandidates}
             />

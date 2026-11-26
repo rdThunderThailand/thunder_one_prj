@@ -38,7 +38,7 @@ export function CompositionContentBrowser({ binding, selectedZoneLabel, assets, 
   return (
     <section className="flex min-h-0 flex-col border-r border-border bg-card">
       <div className="border-b border-border p-3">
-        <h2 className="text-[11px] font-bold text-foreground">Insert to Zone</h2>
+        <h2 className="text-ui font-bold text-foreground">Insert to Zone</h2>
         <p className="text-xs text-muted-foreground">
           {selectedZoneLabel ? `Assigning to Zone ${selectedZoneLabel}` : "Select a zone to assign content."}
         </p>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactNode, type Ref } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { ExpandIcon, MoreIcon, PlayIcon } from "@/components/ui/icons";
 import { Button } from "@/components/ui/Button";
 import {
@@ -14,7 +14,7 @@ const SPEED_OPTIONS = [1, 2, 3];
 export function PreviewControls({
   conflictCount, geometryControls, timeSeconds, timelineSeconds, muted, playing, speed,
   isFullscreen, placement = "panel",
-  bodyRef, portalContainer, onTimeline, onPlaying, onSpeed, onMuted, onFullscreen,
+  portalContainer, onTimeline, onPlaying, onSpeed, onMuted, onFullscreen,
 }: {
   conflictCount: number;
   geometryControls: ReactNode;
@@ -24,8 +24,7 @@ export function PreviewControls({
   playing: boolean;
   speed: number;
   isFullscreen: boolean;
-  placement?: "panel" | "overlay" | "footer";
-  bodyRef?: Ref<HTMLDivElement>;
+  placement?: "panel" | "footer";
   portalContainer?: HTMLElement | null;
   onTimeline: (seconds: number) => void;
   onPlaying: (playing: boolean) => void;
@@ -34,18 +33,12 @@ export function PreviewControls({
   onFullscreen: () => void;
 }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const isOverlay = placement === "overlay";
   const isFooter = placement === "footer";
-  const isDark = isOverlay || isFooter;
-  const controlClass = isDark ? "text-primary-foreground hover:bg-primary-foreground/15 hover:text-primary-foreground" : "";
-  const mutedText = isDark ? "text-primary-foreground/80" : "text-muted-foreground";
+  const controlClass = isFooter ? "text-primary-foreground hover:bg-primary-foreground/15 hover:text-primary-foreground" : "";
+  const mutedText = isFooter ? "text-primary-foreground/80" : "text-muted-foreground";
   const timeLabel = isFooter
     ? `${formatDuration(timeSeconds)} / ${formatDuration(timelineSeconds)}`
     : `${Math.floor(timeSeconds)}s / ${Math.floor(timelineSeconds)}s`;
-  const overlayVisibility = playing && !isMenuOpen
-    ? "translate-y-2 opacity-0 group-hover/preview-stage:translate-y-0 group-hover/preview-stage:opacity-100 group-focus-within/preview-stage:translate-y-0 group-focus-within/preview-stage:opacity-100 [@media(hover:none)]:translate-y-0 [@media(hover:none)]:opacity-100 [@media(pointer:coarse)]:translate-y-0 [@media(pointer:coarse)]:opacity-100"
-    : "translate-y-0 opacity-100";
-
   useEffect(() => {
     let alive = true;
     Promise.resolve().then(() => alive && setIsMenuOpen(false));
@@ -55,13 +48,11 @@ export function PreviewControls({
   return (
     <div
       data-preview-controls={placement}
-      className={isOverlay
-        ? `absolute inset-x-0 bottom-0 rounded-b-xl border border-transparent bg-gradient-to-t from-foreground/85 via-foreground/70 to-transparent px-3 pb-3 pt-8 text-primary-foreground transition duration-200 motion-reduce:transition-none ${overlayVisibility}`
-        : isFooter
-          ? "shrink-0 border-t border-primary-foreground/10 px-5 py-3 text-primary-foreground"
-          : "rounded-lg border border-border bg-muted p-3"}
+      className={isFooter
+        ? "shrink-0 border-t border-primary-foreground/10 px-5 py-3 text-primary-foreground"
+        : "rounded-lg border border-border bg-muted p-3"}
     >
-      <div ref={bodyRef} className="@container/preview-controls min-w-0">
+      <div className="@container/preview-controls min-w-0">
         {conflictCount > 0 && (
           <p className="mb-3 rounded-md border border-warning/30 bg-warning-muted px-2.5 py-2 text-xs text-warning" role="status">
             Preview shows this draft alone. {conflictCount} other publication{conflictCount === 1 ? "" : "s"} may merge on the same screen.
@@ -80,7 +71,7 @@ export function PreviewControls({
             >
               {playing ? <PauseGlyph /> : <PlayIcon className="h-4 w-4" />}
             </Button>
-            <span className={`min-w-0 max-w-[min(8rem,35%)] shrink truncate text-[11px] tabular-nums @max-[9.5rem]/preview-controls:max-w-[calc(100%-2.5rem)] ${mutedText}`} title={timeLabel} aria-label={timeLabel}>
+            <span className={`min-w-0 max-w-[min(8rem,35%)] shrink truncate text-ui tabular-nums @max-[9.5rem]/preview-controls:max-w-[calc(100%-2.5rem)] ${mutedText}`} title={timeLabel} aria-label={timeLabel}>
               {timeLabel}
             </span>
             <input
@@ -138,8 +129,8 @@ export function PreviewControls({
         </div>
         {isFooter && (
           <div className="mt-2 text-right">
-            <p className="text-[11px] font-semibold">Preview Mode</p>
-            <p className="text-[10px] text-primary-foreground/55">This is a simulation of how your layout will appear on screens.</p>
+            <p className="text-ui font-semibold">Preview Mode</p>
+            <p className="text-2xs text-primary-foreground/55">This is a simulation of how your layout will appear on screens.</p>
           </div>
         )}
       </div>

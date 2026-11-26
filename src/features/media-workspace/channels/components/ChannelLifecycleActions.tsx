@@ -5,34 +5,59 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
 import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
-import { deactivateChannel, deleteDraftChannel } from "../services/channels-api";
-import type { ChannelDetail, ChannelLifecycle } from "../types";
+import { toast } from "sonner";
+import { IN_USE_LEAD, programLinks } from "../../in-use/in-use-links";
+import { InUseRefusal } from "../../in-use/InUseRefusal";
+import { lifecycleActionsFor } from "../lifecycle-actions";
+import { activateChannel, deactivateChannel, fetchChannel } from "../services/channels-api";
+import type { BlockingProgram, ChannelDetail, ChannelLifecycle } from "../types";
+import { DeleteChannelDialog } from "./DeleteChannelDialog";
 
 /**
- * Deactivate / Delete for an existing Channel. Split out of ChannelEditorPage (already at the
- * file-size limit) and only rendered in edit mode.
+ * Activate / Deactivate / Delete for an existing Channel. Split out of ChannelEditorPage (already at
+ * the file-size limit) and only rendered in edit mode.
  *
- * There is no Activate here by design (ADR 0037): a Channel is committed by the Create button and
- * reads Active only while a Publication targets it. Deactivate remains the operator's way to
- * release the Channel's device reservations, and is refused while a live Publication needs them.
+ * Actions follow the Channel's lifecycle (ADR 0122 rule 3, ADR 0129): Deactivate releases the
+ * Channel's device reservations and is refused while a live Publication needs them; Activate needs a
+ * Player; Delete (any lifecycle) is refused by Core once the Channel was ever used. Programs that are
+ * live or scheduled disable Deactivate and Delete up front (`blockingPrograms`).
  */
 export function ChannelLifecycleActions({
   channelId,
+  channelName,
   lifecycle,
+  playerName,
+  blockingPrograms,
   revision,
   onChanged,
   onDeleted,
 }: {
   channelId: string;
+  channelName: string;
   lifecycle: ChannelLifecycle;
+  playerName: string | null;
+  blockingPrograms: BlockingProgram[];
   revision: number;
   onChanged: (detail: ChannelDetail) => void;
   onDeleted: () => void;
 }) {
-  const [pending, setPending] = useState<"deactivate" | "delete" | null>(null);
+  const [pending, setPending] = useState<"activate" | "deactivate" | null>(null);
   const [error, setError] = useState<ClassifiedError | null>(null);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [isConfirmingDeactivate, setIsConfirmingDeactivate] = useState(false);
+
+  const activate = async () => {
+    setPending("activate");
+    setError(null);
+    try {
+      onChanged(await activateChannel(channelId, revision));
+      toast.success("Channel activated");
+    } catch (caught) {
+      setError(classifyApiError(caught, "เปิดใช้งาน Channel นี้ไม่สำเร็จ กรุณาลองใหม่"));
+    } finally {
+      setPending(null);
+    }
+  };
 
   const deactivate = async () => {
     setPending("deactivate");
@@ -40,60 +65,66 @@ export function ChannelLifecycleActions({
     try {
       onChanged(await deactivateChannel(channelId, revision));
       setIsConfirmingDeactivate(false);
+      toast.success(playerName ? `Channel deactivated — ${playerName} is free` : "Channel deactivated");
     } catch (caught) {
       setIsConfirmingDeactivate(false);
-      setError(classifyApiError(caught, "Could not deactivate this Channel. Try again."));
-    } finally {
-      setPending(null);
-    }
-  };
-
-  const confirmDelete = async () => {
-    setPending("delete");
-    setError(null);
-    try {
-      await deleteDraftChannel(channelId, revision);
-      setConfirmingDelete(false);
-      onDeleted();
-    } catch (caught) {
-      setConfirmingDelete(false);
-      setError(classifyApiError(caught, "Could not delete this Channel. Try again."));
+      setError(classifyApiError(caught, "ปิดใช้งาน Channel นี้ไม่สำเร็จ กรุณาลองใหม่"));
     } finally {
       setPending(null);
     }
   };
 
   const busy = pending !== null;
-  // ADR 0037 derives `inactive` for a committed Channel that nothing publishes to, and neither
-  // action applies to it — without this the card renders as an empty box under the summary, which
-  // reads as a missing Delete button rather than as "there is nothing to do here".
-  if (lifecycle === "inactive") return null;
+  const actions = lifecycleActionsFor({ lifecycle, hasPlayer: playerName !== null, blockingPrograms });
 
   return (
     <Card className="p-5">
-      <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Lifecycle</p>
-      {error && (
-        <p role="alert" className="mt-2 text-sm text-error">
-          {error.message}
-        </p>
-      )}
+      <p className="text-ui font-semibold uppercase tracking-wide text-muted-foreground">Lifecycle</p>
+      {error &&
+        (error.reason === "in-use" ? (
+          <InUseRefusal
+            message={error.message}
+            lead={IN_USE_LEAD.channel}
+            load={() => fetchChannel(channelId).then((d) => programLinks(d.blocking_programs))}
+            className="mt-2 text-sm text-error"
+          />
+        ) : (
+          <p role="alert" className="mt-2 text-sm text-error">
+            {error.message}
+          </p>
+        ))}
       <div className="mt-3 flex flex-wrap gap-2">
         {lifecycle === "active" && (
-          <Button type="button" variant="outline" disabled={busy} onClick={() => setIsConfirmingDeactivate(true)}>
-            Deactivate
-          </Button>
-        )}
-        {lifecycle === "draft" && (
           <Button
             type="button"
             variant="outline"
-            disabled={busy}
-            onClick={() => setConfirmingDelete(true)}
-            className="text-error hover:bg-error-muted"
+            disabled={busy || !actions.canDeactivate}
+            title={actions.blockedReason ?? undefined}
+            onClick={() => setIsConfirmingDeactivate(true)}
           >
-            Delete Channel
+            Deactivate
           </Button>
         )}
+        {lifecycle !== "active" && (
+          <Button
+            type="button"
+            disabled={busy || !actions.canActivate}
+            title={actions.activateBlockedReason ?? undefined}
+            onClick={() => void activate()}
+          >
+            {pending === "activate" ? "Activating…" : "Activate"}
+          </Button>
+        )}
+        <Button
+          type="button"
+          variant="outline"
+          disabled={busy || !actions.canDelete}
+          title={actions.blockedReason ?? undefined}
+          onClick={() => setConfirmingDelete(true)}
+          className="text-error hover:bg-error-muted"
+        >
+          Delete Channel
+        </Button>
       </div>
 
       {/* Spec §6.4: Disable/Deactivate is a sensitive action and needs a confirmation. */}
@@ -115,23 +146,15 @@ export function ChannelLifecycleActions({
         <p>The Channel stops reserving its devices. It is refused while a live Program still targets it.</p>
       </Modal>
 
-      <Modal
+      <DeleteChannelDialog
         open={confirmingDelete}
         onClose={() => setConfirmingDelete(false)}
-        title="Delete this Channel?"
-        footer={
-          <>
-            <Button type="button" variant="outline" disabled={busy} onClick={() => setConfirmingDelete(false)}>
-              Cancel
-            </Button>
-            <Button type="button" disabled={busy} onClick={() => void confirmDelete()}>
-              {pending === "delete" ? "Deleting…" : "Delete"}
-            </Button>
-          </>
-        }
-      >
-        <p>This cannot be undone. A Channel that has ever been active cannot be deleted.</p>
-      </Modal>
+        channelId={channelId}
+        channelName={channelName}
+        playerName={playerName}
+        revision={revision}
+        onDeleted={onDeleted}
+      />
     </Card>
   );
 }

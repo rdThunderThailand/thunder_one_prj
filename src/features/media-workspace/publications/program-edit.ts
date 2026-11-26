@@ -165,27 +165,6 @@ export function removedTargetLabels(
   return stored.filter((t) => !kept.has(targetKey(t))).map((t) => t.name || targetKey(t));
 }
 
-export type UpdatePublishedFailure = {
-  /** Set when the backend tagged the message `[details]`, `[content]`, `[targets]`, `[schedule]`
-   *  or `[publish]`; the card to bind the error to. */
-  part: "details" | "content" | "targets" | "schedule" | "publish" | null;
-  /** True for `Already modified:` — reload, do not retry. */
-  isStale: boolean;
-  message: string;
-};
-
-const PART_TAG = /\[(details|content|targets|schedule|publish)\]\s*/;
-
-export function parseUpdatePublishedError(raw: string): UpdatePublishedFailure {
-  const isStale = raw.startsWith("Already modified:");
-  const match = PART_TAG.exec(raw);
-  return {
-    part: match ? (match[1] as UpdatePublishedFailure["part"]) : null,
-    isStale,
-    message: match ? raw.replace(PART_TAG, "") : raw,
-  };
-}
-
 type ChannelLike = {
   id: string;
   player: { id: string } | null;

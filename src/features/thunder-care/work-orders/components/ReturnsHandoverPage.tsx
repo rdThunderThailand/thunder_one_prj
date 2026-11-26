@@ -123,7 +123,7 @@ export function ReturnsHandoverPage() {
                   <Badge variant="pill" color={RH_STATUS_COLOR[row.status]}>
                     {RH_STATUS_LABEL[row.kind][row.status]}
                   </Badge>
-                  {row.statusDetailLabel && <p className="mt-0.5 text-[11px] text-t1-gray-400">{row.statusDetailLabel}</p>}
+                  {row.statusDetailLabel && <p className="mt-0.5 text-ui text-t1-gray-400">{row.statusDetailLabel}</p>}
                 </td>
                 <td className="px-2 py-2">
                   <button type="button" disabled title="ยังไม่เปิดใช้งาน" className="cursor-not-allowed rounded-lg border border-border px-2.5 py-1 text-xs text-muted-foreground">

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { SearchIcon } from "@/components/ui/icons";
 import { classifyApiError } from "@/lib/api/api-error";
-import { fetchChannelGroupOptions, isChannelGroupSyncConflict, setChannelGroups } from "../services/channels-api";
+import { fetchChannelGroupOptions, setChannelGroups } from "../services/channels-api";
 import type { ChannelDetail, ChannelGroupSummary, ChannelListItem } from "../types";
 
 /** D9: search + checklist, replace-the-whole-set on Save (same convention as D16's members PUT). */
@@ -29,7 +29,7 @@ export function ChannelGroupsPickerModal({
     let alive = true;
     fetchChannelGroupOptions()
       .then((groups) => alive && setOptions(groups))
-      .catch((caught) => alive && setLoadError(classifyApiError(caught, "Could not load Channel Groups.").message));
+      .catch((caught) => alive && setLoadError(classifyApiError(caught, "โหลด Channel Group ไม่สำเร็จ กรุณาลองใหม่").message));
     return () => {
       alive = false;
     };
@@ -57,11 +57,7 @@ export function ChannelGroupsPickerModal({
     try {
       onSaved(await setChannelGroups(channel.id, Array.from(checked)));
     } catch (caught) {
-      if (caught instanceof Error && isChannelGroupSyncConflict(caught.message)) {
-        setError("A channel can only belong to one synchronized Group at a time. Remove it from the other Group first.");
-      } else {
-        setError(classifyApiError(caught, "Could not update this channel's Groups. Try again.").message);
-      }
+      setError(classifyApiError(caught, "อัปเดต Group ของ Channel นี้ไม่สำเร็จ กรุณาลองใหม่").message);
     } finally {
       setSaving(false);
     }

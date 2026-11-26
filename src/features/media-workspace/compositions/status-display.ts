@@ -1,12 +1,9 @@
 import type { CompositionStatus } from "./types";
+import { mediaStatus, type MediaStatusEntry } from "../media-status.ts";
 
-type BadgeColor = "green" | "yellow" | "zinc";
-
-/** draft → active ↔ inactive, copied from Playlist's lifecycle (ADR 0049 §10). */
-export function statusBadge(status: CompositionStatus): { color: BadgeColor; label: string } {
-  if (status === "active") return { color: "green", label: "Active" };
-  if (status === "draft") return { color: "yellow", label: "Draft" };
-  return { color: "zinc", label: "Inactive" };
+/** draft → active ↔ inactive, copied from Playlist's lifecycle (ADR 0049 §10); tones per ADR 0125. */
+export function statusBadge(status: CompositionStatus): MediaStatusEntry {
+  return mediaStatus(status);
 }
 
 export function saveAction(status: CompositionStatus): { label: "Save Layout" | "Save"; canActivate: boolean } {
@@ -14,50 +11,13 @@ export function saveAction(status: CompositionStatus): { label: "Save Layout" | 
 }
 
 /**
- * `media_composition_upsert` / `media_composition_set_zones` / `media_composition_set_status`
- * raise the exact wordings below (Thunder_Core migration 20260826120000). Anything unrecognised
- * degrades to a generic retry message rather than leaking the raw RPC/Postgres text (CLAUDE.md §8).
- *
- * `media_layout_upsert` reaches here too, because the editor's save writes geometry before it
- * writes the Composition — a first save names the `layouts` row after the Composition, and
- * `Save as Template` names it whatever the operator chose. Both collide against the same
- * `UNIQUE (tenant_id, name)`, and both raise "a layout named …" rather than "a composition
- * named …", which is the only thing separating the two collisions.
+ * Why a Layout cannot be published yet, or null when it can. Core's `media_publication_activate`
+ * accepts only an Active Layout (a Draft or Inactive one raises "composition is not active"), and
+ * Core refuses to activate a Layout with unbound Zones, so Active alone covers both.
  */
-export function describeSaveError(message: string): string {
-  // Checked before the generic case below, which would otherwise blame the Composition for a
-  // name the operator gave a Template. Every `layouts` row an operator can name is a Template:
-  // private geometry is named `comp:<uuid>` and cannot collide with anything typed.
-  if (message.includes("a layout named")) {
-    return "บันทึกไม่ได้ — มี Template ชื่อนี้อยู่แล้ว กรุณาตั้งชื่ออื่น";
-  }
-  // `media_layout_upsert` numbers Zones by their order in the request (1-based), which is the
-  // editor's own order — the same list a duplicate is appended to.
-  const overlap = /zones (\d+) and (\d+) overlap/.exec(message);
-  if (overlap) return `บันทึกไม่ได้ — Zone ลำดับที่ ${overlap[1]} และ ${overlap[2]} ซ้อนทับกัน กรุณาปรับขนาดหรือตำแหน่งใหม่`;
-  if (message.includes("Already exists") || /duplicate key|unique constraint/i.test(message)) {
-    return "บันทึกไม่ได้ — มี Composition ชื่อนี้อยู่แล้ว";
-  }
-  if (message.includes("Already modified")) {
-    return "Composition นี้ถูกแก้ไขจากที่อื่น กรุณาโหลดใหม่แล้วลองอีกครั้ง";
-  }
-  // Only a shared Template still raises this — a Composition may drop Zones of its own Layout (#221).
-  const zoneInUse = /zone is used by composition\(s\) (.+)/.exec(message);
-  if (zoneInUse) return `ลบ Zone ไม่ได้ — Template นี้ยังถูกใช้ใน: ${zoneInUse[1]}`;
-  if (message.includes("cannot change the layout of an active composition")) {
-    return "เปลี่ยน Layout ไม่ได้ขณะ Composition กำลัง Active";
-  }
-  return "บันทึก Composition ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง";
-}
-
-/** `media_composition_set_zones` / `media_composition_set_status` name the unbound Zones in
- *  the raised message, e.g. "zone(s) Ticker, Main are unbound" — shown as-is (already Thai-safe
- *  Zone names), just stripped of the RPC's own English scaffolding. */
-export function describeActivateError(message: string): string {
-  const match = /zone\(s\) (.+) are unbound/.exec(message);
-  if (match) return `เปิดใช้งานไม่ได้ — ยังไม่ได้ผูก Content ให้ Zone: ${match[1]}`;
-  if (message.includes("cannot move a composition back to draft")) {
-    return "ย้าย Composition กลับไป Draft ไม่ได้";
-  }
-  return describeSaveError(message);
+export function layoutPublishBlock(status: CompositionStatus): string | null {
+  if (status === "active") return null;
+  return status === "draft"
+    ? "Activate Layout ก่อนเผยแพร่"
+    : "Layout นี้ถูกปิดใช้งาน กรุณา Activate Layout ก่อนเผยแพร่";
 }

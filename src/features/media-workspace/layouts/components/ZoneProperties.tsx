@@ -5,7 +5,7 @@ import type { LayoutZone } from "../types";
 
 const inputClasses =
   "h-9 w-full rounded-lg border border-border bg-card px-3 text-xs text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30";
-const labelClasses = "text-[9px] font-medium uppercase tracking-wide text-muted-foreground";
+const labelClasses = "text-2xs font-medium uppercase tracking-wide text-muted-foreground";
 
 /** Editing a number here is just another path into the same validated state as
  *  dragging on the canvas — both go through `roundPercent`, so stored geometry always
@@ -29,7 +29,7 @@ export function ZoneProperties({
     <div className="flex flex-col gap-3">
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-[11px] font-bold text-foreground">Zone Properties</p>
+          <p className="text-ui font-bold text-foreground">Zone Properties</p>
           <p className="text-xs font-semibold text-primary">Zone {String.fromCharCode(65 + zoneIndex)} ({zone.name})</p>
         </div>
         <button

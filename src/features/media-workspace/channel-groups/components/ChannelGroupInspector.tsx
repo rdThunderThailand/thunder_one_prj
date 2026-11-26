@@ -2,26 +2,25 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Badge, type BadgeColor } from "@/components/ui/Badge";
+import { Badge } from "@/components/ui/Badge";
 import { buttonClasses } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { EditIcon, MonitorIcon, MoreIcon, PlusIcon, XIcon } from "@/components/ui/icons";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/lovable/popover";
-import { classifyApiError } from "@/lib/api/api-error";
-import { deleteChannelGroup, isGroupInUse, updateChannelGroup } from "../services/channel-groups-api";
+import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
+import { deleteChannelGroup, updateChannelGroup } from "../services/channel-groups-api";
 import { memberHealthCounts } from "../channel-groups-logic";
+import { mediaStatus } from "../../media-status";
+import { groupDeleteLinks, IN_USE_LEAD } from "../../in-use/in-use-links";
+import { InUseRefusal } from "../../in-use/InUseRefusal";
+import { fetchPublicationsPage } from "@/features/media-workspace/publications/services/publications-api";
 import type { ChannelListItem } from "../../channels/types";
 import type { ChannelGroup } from "../types";
 import { CreateEditGroupModal } from "./CreateEditGroupModal";
 import { ChannelGroupInspectorSections } from "./ChannelGroupInspectorSections";
 import { ManageChannelsModal } from "./ManageChannelsModal";
-
-const STATUS_BADGE: Record<ChannelGroup["status"], { label: string; color: BadgeColor }> = {
-  active: { label: "Active", color: "green" },
-  disabled: { label: "Inactive", color: "zinc" },
-};
 
 /** D11 §2's Group Inspector — actions A (Create Program), B (Edit Group), C (Manage Channels),
  *  D (More → Disable / Delete). */
@@ -43,9 +42,9 @@ export function ChannelGroupInspector({
   const [managingChannels, setManagingChannels] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ClassifiedError | null>(null);
 
-  const status = STATUS_BADGE[group.status];
+  const status = mediaStatus(group.status === "disabled" ? "inactive" : group.status);
   const health = memberHealthCounts(group, new Map(channels.map((c) => [c.id, c])));
 
   const toggleStatus = async () => {
@@ -55,7 +54,7 @@ export function ChannelGroupInspector({
       onChanged(await updateChannelGroup(group.id, { status: group.status === "active" ? "disabled" : "active" }));
       setMenuOpen(false);
     } catch (caught) {
-      setError(classifyApiError(caught, "Could not update this Group. Try again.").message);
+      setError(classifyApiError(caught, "อัปเดต Group ไม่สำเร็จ กรุณาลองใหม่"));
     } finally {
       setBusy(false);
     }
@@ -70,10 +69,7 @@ export function ChannelGroupInspector({
       onDeleted();
     } catch (caught) {
       setConfirmingDelete(false);
-      const message = caught instanceof Error && isGroupInUse(caught.message)
-        ? caught.message
-        : classifyApiError(caught, "Could not delete this Group. Try again.").message;
-      setError(message);
+      setError(classifyApiError(caught, "ลบ Group ไม่สำเร็จ กรุณาลองใหม่"));
     } finally {
       setBusy(false);
     }
@@ -111,11 +107,19 @@ export function ChannelGroupInspector({
         <p className="mt-2 text-sm leading-5 text-muted-foreground">{group.description}</p>
       )}
 
-      {error && (
-        <p role="alert" className="mt-3 text-sm text-error">
-          {error}
-        </p>
-      )}
+      {error &&
+        (error.reason === "in-use" ? (
+          <InUseRefusal
+            message={error.message}
+            lead={IN_USE_LEAD.groupDelete}
+            load={() => fetchPublicationsPage({ group_id: group.id }).then((page) => groupDeleteLinks(page.publications))}
+            className="mt-3 text-sm text-error"
+          />
+        ) : (
+          <p role="alert" className="mt-3 text-sm text-error">
+            {error.message}
+          </p>
+        ))}
 
       <div className="mt-4 flex flex-nowrap items-center gap-2">
         <Link href={`/media-workspace/program/create`} className={buttonClasses("primary", "min-w-0 flex-1 whitespace-nowrap px-3")}>

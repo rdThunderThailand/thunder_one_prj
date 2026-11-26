@@ -7,7 +7,6 @@ const createChannel = (id: string, overrides: Partial<ChannelListItem>): Channel
   name: id,
   description: null,
   lifecycle: "active",
-  status: "active",
   category: "dooh",
   channel_type: null,
   location: null,
@@ -60,4 +59,4 @@ assert.deepStrictEqual(
   ["I", "H", "G", "F"],
 );
 
-console.log("src/features/channels/list-filtering.check.mts — all assertions passed");
+console.log("src/features/media-workspace/channels/list-filtering.check.mts — all assertions passed");

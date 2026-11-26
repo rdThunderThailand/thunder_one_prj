@@ -56,7 +56,7 @@ export function PreviewStage({
   seekRequest?: { seconds: number; id: number } | null;
   /** `footer`: the frame fills the host and the controls sit in a flat bar under it (the
    *  Lovable preview dialog). */
-  controlsPlacement?: "panel" | "overlay" | "footer";
+  controlsPlacement?: "panel" | "footer";
   frameViewportHeight?: string;
   /** Stretch the frame to the host's full width instead of deriving width from
    *  `frameViewportHeight` — the aspect ratio still governs height (CSS `aspect-ratio`), so
@@ -73,7 +73,7 @@ export function PreviewStage({
   const [geometryId, setGeometryId] = useState<string | null>(null);
   // "fit" sizes the frame to the window; a number is that fraction of the real pixels.
   const [scale, setScale] = useState<number | "fit">("fit");
-  const { stageRef, frameRef, controlsBodyRef, canOverlay, fullscreenContext, toggleFullscreen } = usePreviewControlsLayout(controlsPlacement === "overlay");
+  const { stageRef, frameRef, fullscreenContext, toggleFullscreen } = usePreviewControlsLayout();
   const isFullscreen = fullscreenContext.isStageFullscreen;
   const [urls, setUrls] = useState<Record<string, string | undefined>>({});
   const [thumbnailUrls, setThumbnailUrls] = useState<Record<string, string | undefined>>({});
@@ -127,9 +127,9 @@ export function PreviewStage({
   // Zones stretch into it; PreviewSurface resolves each item's own media_fit inside that box.
   const geometryFit = selectedGeometry ? deviceFit(selectedGeometry.resolution, aspectRatio) : "fits";
   const framePixels = resolveFramePixels(selectedGeometry, referenceResolution);
-  // Cards that overlay their controls on the frame are too small for real pixels: at 1.0 the
-  // controls end up a frame-height scroll away. Scale lives in the modal and the full preview.
-  const canScale = allowActualSize && framePixels !== null && controlsPlacement !== "overlay";
+  // Inline cards are too small for real pixels (PreviewPanel passes allowActualSize=false);
+  // scale lives in the modal and the full preview.
+  const canScale = allowActualSize && framePixels !== null;
   const frameWidth = canScale && scale !== "fit"
     ? `${framePixels[0] * scale}px`
     : fillWidth && !isFullscreen
@@ -211,10 +211,9 @@ export function PreviewStage({
     initialTime.current = next;
     startedAt.current = performance.now();
   };
-  const controlsPosition = controlsPlacement === "overlay" && !canOverlay ? "panel" : controlsPlacement;
   const geometryControls = geometryOptions.length > 0 ? (
     <div className="mb-3 space-y-2">
-      <label className={`flex flex-wrap items-center gap-2 text-xs ${controlsPosition === "panel" ? "text-muted-foreground" : "text-primary-foreground/70"}`}>
+      <label className={`flex flex-wrap items-center gap-2 text-xs ${controlsPlacement === "panel" ? "text-muted-foreground" : "text-primary-foreground/70"}`}>
         <span>Preview shape</span>
         <select
           value={selectedGeometry?.id ?? ""}
@@ -250,8 +249,7 @@ export function PreviewStage({
       playing={playing}
       speed={speed}
       isFullscreen={fullscreenContext.owner !== null}
-      placement={controlsPosition}
-      bodyRef={controlsBodyRef}
+      placement={controlsPlacement}
       portalContainer={fullscreenContext.owner}
       onTimeline={setTimelineTime}
       onPlaying={(next) => {
@@ -272,7 +270,7 @@ export function PreviewStage({
       {/* m-auto rather than justify-center: a frame wider than the box must still scroll to its left edge. */}
       <div className={controlsPlacement === "footer" && !isFullscreen ? "flex min-h-0 flex-1 overflow-auto p-8" : "overflow-auto"}>
         <div
-          className="group/preview-stage relative m-auto shrink-0"
+          className="relative m-auto shrink-0"
           style={{ width: frameWidth }}
         >
           <div
@@ -299,11 +297,10 @@ export function PreviewStage({
               </div>
             )}
           </div>
-          {controlsPlacement === "overlay" && controls}
         </div>
       </div>
 
-      {controlsPlacement !== "overlay" && controls}
+      {controls}
     </div>
   );
 }

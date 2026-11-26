@@ -1,7 +1,7 @@
 // The list thumbnail, the template rail tile and (later) the wizard's read-only canvas are
 // the same picture at three sizes: rectangles derived from the Zone percentages at display
 // time. Nothing is generated, stored or invalidated, so a thumbnail can never drift from the
-// geometry it depicts (docs/layouts/plan-layout-ui.md §2.5).
+// geometry it depicts (docs/media-workspace/layouts/phase-0/plan-layout-ui.md §2.5).
 //
 // ponytail: preserveAspectRatio="none" plus a CSS aspect-ratio does the letterboxing, which
 // removes the ratio arithmetic entirely — the Zone percentages are the SVG coordinates.

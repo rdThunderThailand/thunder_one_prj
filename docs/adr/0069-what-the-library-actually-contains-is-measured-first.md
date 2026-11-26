@@ -57,7 +57,7 @@ read-only pass.
   anyway, so it costs nothing extra there.
 - **Ask the player team how many files they are refusing:** rejected. The players emit the reason and
   it goes nowhere — asking for that callback is Q9 in
-  `docs/media-library/player-codec-questions.md` and is worth having, but it reports only on media
+  `docs/media-workspace/media-library/player-codec-questions.md` and is worth having, but it reports only on media
   that has already aired and cannot see the library.
 - **ffprobe over every file:** rejected as disproportionate. Deciding whether a file is H.264 High
   needs one byte: the `avcC` box in an MP4 carries `profile_idc` (66 Baseline, 77 Main, 100 High) and
@@ -109,7 +109,7 @@ so a meaningful share of the library is committed to snapshots either way.
 The report is a deliverable, not a log line. **It is handed over as a file and is not committed** —
 it carries Asset titles and filenames, which are customer content, and a repository is the wrong
 place for that. It goes to the player team alongside
-`docs/media-library/player-codec-questions.md`, where it answers the one question they cannot answer
+`docs/media-workspace/media-library/player-codec-questions.md`, where it answers the one question they cannot answer
 for us and we have been unable to answer for them.
 
 ## Consequences

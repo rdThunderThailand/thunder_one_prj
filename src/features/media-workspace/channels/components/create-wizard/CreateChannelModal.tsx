@@ -3,12 +3,11 @@
 import { useEffect, useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
-import { classifyApiError, isDuplicateName } from "@/lib/api/api-error";
+import { classifyApiError } from "@/lib/api/api-error";
 import {
   DEFAULT_CREATE_CHANNEL_DRAFT,
   geometryMismatch,
   step1Valid,
-  step2Valid,
   toCreateChannelPayload,
   type CreateChannelDraft,
 } from "../../create-wizard-state";
@@ -116,7 +115,7 @@ export function CreateChannelModal({
       }
       setNameError(undefined);
       setStep(2);
-    } else if (step === 2 && step2Valid(draft)) {
+    } else if (step === 2) {
       setStep(3);
     }
   };
@@ -131,15 +130,13 @@ export function CreateChannelModal({
       setCreatedChannel(channel);
       setStep("success");
     } catch (caught) {
-      if (caught instanceof Error && isDuplicateName(caught.message)) {
-        setSubmitError("A Channel with this name already exists.");
+      const failure = classifyApiError(caught, "สร้าง Channel ไม่สำเร็จ กรุณาลองใหม่");
+      setSubmitError(failure.message);
+      if (failure.reason === "duplicate-name") {
         setStep(1);
-      } else if (caught instanceof Error && caught.message.includes("confirm to continue")) {
-        setSubmitError("The Player display information changed. Refresh the Player list, review the warning, and confirm again.");
+      } else if (failure.reason === "needs-confirm") {
         setConfirmedMismatchKey(null);
         refreshCandidates();
-      } else {
-        setSubmitError(classifyApiError(caught, "Could not create Channel. Try again.").message);
       }
     } finally {
       setSubmitting(false);
@@ -157,11 +154,11 @@ export function CreateChannelModal({
             Cancel
           </Button>
           <Button onClick={() => void handleSubmit()} disabled={submitting || Boolean(geometryWarning && !mismatchConfirmed)}>
-            {submitting ? "Creating…" : "Create Channel"}
+            {submitting ? "Creating…" : draft.playerId ? "Create Channel" : "Save as Draft"}
           </Button>
         </div>
       ) : (
-        <Button onClick={handleNext} disabled={step === 2 && !step2Valid(draft)}>
+        <Button onClick={handleNext}>
           Next →
         </Button>
       )}
@@ -208,6 +205,7 @@ export function CreateChannelModal({
       {step === "success" && createdChannel && (
         <CreateChannelSuccessCard
           channelName={createdChannel.name}
+          isDraft={createdChannel.lifecycle === "draft"}
           onViewChannel={() => {
             onViewChannel(createdChannel.id);
             onClose();

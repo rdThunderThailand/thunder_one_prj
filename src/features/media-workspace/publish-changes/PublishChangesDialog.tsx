@@ -11,11 +11,8 @@ import {
   DialogTitle,
 } from "@/components/ui/Dialog";
 import { CheckIcon } from "@/components/ui/icons";
-import {
-  describePublishChangesError,
-  type AffectedProgram,
-  type PublishChangesResult,
-} from "./publish-changes-api";
+import { classifyApiError } from "@/lib/api/api-error";
+import type { AffectedProgram, PublishChangesResult } from "./publish-changes-api";
 
 type Phase =
   | { kind: "confirm" }
@@ -62,9 +59,14 @@ export function PublishChangesDialog({
         setPhase({ kind: "done", result });
         onPublished();
       })
-      .catch((err: unknown) =>
-        setPhase({ kind: "failed", ...describePublishChangesError(err instanceof Error ? err.message : "") }),
-      );
+      .catch((err: unknown) => {
+        const failure = classifyApiError(err, "Publish ไม่สำเร็จ ยังไม่มีการเปลี่ยนแปลงกับ Program ใดเลย");
+        setPhase({
+          kind: "failed",
+          programName: failure.reason === "program-refused" ? (failure.names?.[0] ?? null) : null,
+          reason: failure.message,
+        });
+      });
   };
 
   return (

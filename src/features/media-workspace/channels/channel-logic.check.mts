@@ -1,6 +1,7 @@
-/** Run: node src/features/channels/channel-logic.check.mts */
+/** Run: node src/features/media-workspace/channels/channel-logic.check.mts */
 import assert from "node:assert/strict";
 import {
+  deletedChannelLabel,
   channelStatus,
   channelTypeKey,
   channelTypeLabel,
@@ -17,7 +18,6 @@ const fixtures: ChannelListItem[] = [
     name: "Flagship Store Channel",
     description: null,
     lifecycle: "active",
-    status: "active",
     category: "in_store",
     channel_type: { id: "type-menu-board", code: "menu_board", name: "Menu Board", channel_category: "in_store" },
     location: { id: "location-central-world", name: "Central World" },
@@ -47,7 +47,6 @@ const fixtures: ChannelListItem[] = [
     name: "Siam Square Billboard",
     description: null,
     lifecycle: "active",
-    status: "active",
     category: "dooh",
     channel_type: { id: "type-led-display", code: "led_display", name: "LED Display", channel_category: "dooh" },
     location: { id: "location-siam", name: "Siam Square" },
@@ -77,7 +76,6 @@ const fixtures: ChannelListItem[] = [
     name: "Rama Nine LED Display",
     description: null,
     lifecycle: "draft",
-    status: "draft",
     category: "dooh",
     channel_type: { id: "type-led-display", code: "led_display", name: "LED Display", channel_category: "dooh" },
     location: { id: "location-rama-nine", name: "Rama Nine" },
@@ -114,7 +112,6 @@ const fixtures: ChannelListItem[] = [
     name: "Archive Menu Board",
     description: null,
     lifecycle: "inactive",
-    status: "inactive",
     category: "in_store",
     channel_type: { id: "type-menu-board", code: "menu_board", name: "Menu Board", channel_category: "in_store" },
     location: null,
@@ -192,5 +189,9 @@ assert.equal(
   formatChannelLastSeen(fixtures[0]!.player!.last_heartbeat_at, Date.parse("2026-08-20T00:01:00.000Z")),
   "Last seen 1m ago",
 );
+
+assert.equal(deletedChannelLabel("Lobby", true), "Lobby (deleted)");
+assert.equal(deletedChannelLabel("Lobby", false), "Lobby");
+assert.equal(deletedChannelLabel("Lobby", undefined), "Lobby");
 
 console.log("channel-logic.check.mts — all assertions passed");

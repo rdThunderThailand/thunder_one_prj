@@ -86,7 +86,7 @@ export function ZoneOverview({ zones, bindings, unboundZoneIds, activeZoneId, re
           // Ticket 27: report the Zone's actual bound source — Playlist, Media, or unbound.
           // "Media" rather than "Assets" matches the frames' label for a Zone bound to
           // picked assets; a widget-rendered Zone would be "Media" too, but Widgets are
-          // deferred (docs/layouts/Phase1/tickets/README.md) so that case does not exist yet.
+          // deferred (docs/media-workspace/layouts/phase-1/tickets/README.md) so that case does not exist yet.
           const sourceLabel = isUnbound ? "Unbound" : binding?.source === "assets" ? "Media" : "Playlist";
           return (
             <button

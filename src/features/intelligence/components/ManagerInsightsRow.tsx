@@ -44,7 +44,7 @@ export function ManagerInsightsRow() {
           <Card key={insight.id} className="flex flex-col p-4">
             <div className="mb-2 flex items-start justify-between">
               <span
-                className={`rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${kindBadgeTone[insight.kind]}`}
+                className={`rounded-full px-2 py-0.5 text-ui font-semibold uppercase tracking-wide ${kindBadgeTone[insight.kind]}`}
               >
                 {kindLabel[insight.kind]}
               </span>

@@ -1,4 +1,4 @@
-/** Run: node src/features/playlists/list-filtering.check.mts */
+/** Run: node src/features/media-workspace/playlists/list-filtering.check.mts */
 import assert from "node:assert/strict";
 import { copyName, filterPlaylists, paginate, playlistContentType, playlistType, summarize } from "./list-filtering.ts";
 import type { PlaylistListItem } from "../../../types/domain.ts";
@@ -73,18 +73,12 @@ assert.deepEqual(paginate([1, 2, 3, 4, 5], 9, 2), { rows: [5], page: 3, totalPag
 assert.deepEqual(paginate([1, 2, 3], 0, 10), { rows: [1, 2, 3], page: 1, totalPages: 1 });
 assert.deepEqual(paginate([], 4, 10), { rows: [], page: 1, totalPages: 1 });
 
-// "legacy" is stored as active but nothing references it, so both the cards and the
-// Inactive filter must read it as inactive — that derivation is the whole point of 0028.
-assert.deepEqual(summarize(playlists), { total: 3, active: 1, inactive: 1, draft: 1 });
-assert.deepEqual(summarize([]), { total: 0, active: 0, inactive: 0, draft: 0 });
-assert.deepEqual(filterPlaylists(playlists, { ...all, status: "inactive" }).map((p) => p.id), ["legacy"]);
-assert.deepEqual(filterPlaylists(playlists, { ...all, status: "active" }).map((p) => p.id), ["kfc"]);
-// A row the backend has not caught up with yet keeps its stored status instead of
-// collapsing into Inactive.
-assert.deepEqual(
-  summarize([row({ id: "pending", status: "active" })]),
-  { total: 1, active: 1, inactive: 0, draft: 0 }
-);
+// ADR 0125: "legacy" is stored as active and nothing references it, and it is still Active —
+// use (`in_use_count`) is a tag, not a status, so it never moves a row out of Active.
+assert.deepEqual(summarize(playlists), { total: 3, active: 2, draft: 1 });
+assert.deepEqual(summarize([]), { total: 0, active: 0, draft: 0 });
+assert.deepEqual(filterPlaylists(playlists, { ...all, status: "active" }).map((p) => p.id), ["kfc", "legacy"]);
+assert.deepEqual(filterPlaylists(playlists, { ...all, status: "draft" }).map((p) => p.id), ["coffee"]);
 
 // A copy never collides with a name already on the page.
 assert.equal(copyName("KFC Wednesday", []), "KFC Wednesday (Copy)");
@@ -112,7 +106,7 @@ const p1 = row({
 const p2 = row({
   id: "p2",
   name: "A Playlist",
-  status: "draft", // draft wins over the count (2)
+  status: "draft", // draft wins over the count (1)
   publication_count: 1,
   total_duration_seconds: 50,
   updated_at: "2024-01-01",
@@ -122,7 +116,7 @@ const p3 = row({
   id: "p3",
   name: "C Playlist",
   status: "active",
-  publication_count: 0, // referenced by nobody -> derives to inactive (1)
+  publication_count: 0, // referenced by nobody -> still active (0)
   total_duration_seconds: undefined, // empty
   updated_at: "invalid-date", // empty
 });
@@ -157,11 +151,10 @@ assert.deepEqual(
   ["p1", "p2", "p3", "p4"]
 );
 
-// status asc -> active (p1, p4), inactive (p3), draft (p2) — p3 is stored "active",
-// so this only holds if the sort derives the status the badge shows.
+// status asc -> active (p1, p3, p4), draft (p2) — ties break on name, then id.
 assert.deepEqual(
   sortPlaylists(sortInput, { key: "status", dir: "asc" }).map(p => p.id),
-  ["p1", "p4", "p3", "p2"] // p1 and p4 tiebreak on name B vs C
+  ["p1", "p3", "p4", "p2"]
 );
 
 // updated desc -> 2024-01-02 (p1), 2024-01-01 (p2), empty (p3, p4)

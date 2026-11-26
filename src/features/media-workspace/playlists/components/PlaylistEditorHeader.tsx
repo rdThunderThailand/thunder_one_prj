@@ -2,9 +2,14 @@
 
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
-import { StatusBadge } from "@/components/ui/Badge";
+import { Badge } from "@/components/ui/Badge";
+import { Tag } from "@/components/ui/Tag";
 import { CheckIcon, EditIcon, RedoIcon, UndoIcon } from "@/components/ui/icons";
 import { PublishSplitButton } from "@/features/media-workspace/publish-changes/PublishSplitButton";
+import type { PublishPrep } from "@/features/media-workspace/publish-changes/PublishPrepDialog";
+import { SaveSplitButton } from "@/features/media-workspace/publish-changes/SaveSplitButton";
+import { mediaStatus } from "@/features/media-workspace/media-status";
+import { playlistInUseLabel } from "@/features/media-workspace/playlists/status-display";
 import { useShortcutPlatform } from "@/components/layout/ShortcutPlatform";
 import { shortcutAria, shortcutLabel } from "@/lib/keyboard-shortcut";
 
@@ -12,7 +17,9 @@ import { shortcutAria, shortcutLabel } from "@/lib/keyboard-shortcut";
 export function PlaylistEditorHeader({
   name,
   status,
+  inUseCount,
   savedLabel,
+  isUnsaved,
   lastUpdatedAt,
   hasItems,
   saving,
@@ -24,15 +31,19 @@ export function PlaylistEditorHeader({
   onCancel,
   onPreview,
   onPublish,
-  publishDisabledReason,
+  publishPrep,
   affectedCount,
   onPublishChanges,
   onShowPrograms,
   onSave,
+  onSaveDraft,
 }: {
   name: string;
   status: string;
+  /** Programs holding this Playlist (ADR 0120); the tag shows only when above zero. */
+  inUseCount?: number;
   savedLabel: string;
+  isUnsaved: boolean;
   lastUpdatedAt: Date | null;
   hasItems: boolean;
   saving: boolean;
@@ -43,13 +54,16 @@ export function PlaylistEditorHeader({
   onRedo: () => void;
   onCancel: () => void;
   onPreview: () => void;
-  onPublish: () => void;
-  publishDisabledReason: string | null;
+  onPublish: (id?: string) => void;
+  publishPrep: PublishPrep | null;
   /** Active or scheduled Programs Publish Changes would re-publish (ADR 0078). */
   affectedCount: number;
   onPublishChanges: () => void;
   onShowPrograms: () => void;
-  onSave: () => void;
+  /** Saves and, for a draft, marks it ready so the Program wizard lists it (#404). */
+  onSave: (nameOverride?: string) => void;
+  /** Saves without changing the draft status; offered only while the Playlist is a draft. */
+  onSaveDraft: (nameOverride?: string) => void;
 }) {
   // ⌘Z / ⇧⌘Z on Apple; Ctrl+Z / Ctrl+Y elsewhere (Ctrl+Shift+Z works too).
   const shortcutPlatform = useShortcutPlatform();
@@ -61,19 +75,38 @@ export function PlaylistEditorHeader({
       : `${shortcutAria(shortcutPlatform, "y")} ${shortcutAria(shortcutPlatform, "z", { shift: true })}`;
   const [editing, setEditing] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const badge = mediaStatus(status);
+  const inUse = playlistInUseLabel({ in_use_count: inUseCount });
   const displayName = name.trim() || "Untitled Playlist";
-  const isUnsaved = savedLabel.includes("unsaved") || savedLabel.includes("not saved");
+  // Leaving the field keeps what was typed, so a Save or Publish click that blurs it sees the new
+  // name (UAT A8). Enter / ✓ / Escape close the field themselves; their own blur is skipped.
+  const isClosingName = useRef(false);
   const commitName = () => {
-    onName(inputRef.current?.value ?? name);
+    isClosingName.current = true;
+    const value = inputRef.current?.value ?? name;
+    if (value !== name) onName(value);
     setEditing(false);
   };
+  const cancelName = () => {
+    isClosingName.current = true;
+    setEditing(false);
+  };
+
+  // An empty name is "Untitled Playlist" on screen, so a disabled Save gave no hint; the save guard
+  // states the reason, and the name field opens so the fix is one keystroke away.
+  const saveOrAskName = (save: (nameOverride?: string) => void) => {
+    const nameOverride = editing ? inputRef.current?.value : undefined;
+    setEditing(!(nameOverride ?? name).trim());
+    save(nameOverride);
+  };
+  const isDraft = status === "draft";
 
   return (
     <div className="min-h-[70px] shrink-0 space-y-1">
       <button
         type="button"
         onClick={onCancel}
-        className="text-[11px] font-medium text-muted-foreground hover:text-foreground"
+        className="text-ui font-medium text-muted-foreground hover:text-foreground"
       >
         Playlists <span aria-hidden="true">›</span> {displayName} <span aria-hidden="true">›</span> Editor
       </button>
@@ -86,9 +119,15 @@ export function PlaylistEditorHeader({
                   ref={inputRef}
                   autoFocus
                   defaultValue={name}
+                  onFocus={() => {
+                    isClosingName.current = false;
+                  }}
+                  onBlur={() => {
+                    if (!isClosingName.current) commitName();
+                  }}
                   onKeyDown={(event) => {
                     if (event.key === "Enter") commitName();
-                    if (event.key === "Escape") setEditing(false);
+                    if (event.key === "Escape") cancelName();
                   }}
                   placeholder="Untitled Playlist"
                   maxLength={100}
@@ -108,7 +147,8 @@ export function PlaylistEditorHeader({
                 <h1 className="min-w-0 break-words text-lg font-semibold leading-tight text-foreground">
                   {displayName}
                 </h1>
-                <StatusBadge status={status} label={status[0].toUpperCase() + status.slice(1)} />
+                <Badge variant="pill" color={badge.color}>{badge.label}</Badge>
+                {inUse && <Tag>{inUse}</Tag>}
                 <button
                   type="button"
                   onClick={() => setEditing(true)}
@@ -170,13 +210,17 @@ export function PlaylistEditorHeader({
         >
           Preview
         </Button>
-        <Button size="sm" onClick={onSave} disabled={saving || name.trim() === ""}>
-          {saving ? "กำลังบันทึก..." : "Save"}
-        </Button>
+        <SaveSplitButton
+          label={isDraft ? "Save & Activate" : "Save"}
+          saving={saving}
+          disabledReason={null}
+          onSave={() => saveOrAskName(onSave)}
+          alternate={isDraft ? { label: "Save Draft", disabledReason: null, onSelect: () => saveOrAskName(onSaveDraft) } : undefined}
+        />
         <PublishSplitButton
           disabled={saving}
           hasAffectedPrograms={affectedCount > 0}
-          publishToChannelDisabledReason={publishDisabledReason}
+          publishToChannelPrep={publishPrep}
           onPublishChanges={onPublishChanges}
           onPublishToChannel={onPublish}
         />

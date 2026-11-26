@@ -1,5 +1,5 @@
 /**
- * Run: node src/features/playlists/metadata.check.mts
+ * Run: node src/features/media-workspace/playlists/metadata.check.mts
  *
  * Covers the two things that silently corrupt data if they break: the encode → decode
  * round trip, and the cover fallback that the list and detail views both render off.

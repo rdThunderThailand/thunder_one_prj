@@ -12,7 +12,7 @@ export type PlaybackProofEntry = {
   duration_played_seconds: number;
   outcome: "played" | "failed" | "interrupted";
   failure_reason: FailureReason | null;
-  channel: { id: string; name: string; status: string } | null;
+  channel: { id: string; name: string; status: string; deleted?: boolean } | null;
   device: { id: string; name: string | null };
   program: { id: string; name: string; status: string } | null;
   source: { type: "playlist" | "composition" | "media"; id: string | null; name: string | null; in_trash: boolean } | null;

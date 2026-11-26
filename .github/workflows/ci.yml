@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [dev, main]
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # Required status check name for the `dev` and `main` rulesets (#432): `check`.
+  # Same four commands as step 1 of docs/agents/versioning.md. `*.check.mts` run locally (#431).
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v7
+      # The repo pins neither pnpm nor Node (no `packageManager`, `engines` or `.nvmrc`); these match
+      # the lockfile (v9, written by pnpm 10) and the maintainers' machines.
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 10
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec tsc --noEmit
+      - run: pnpm exec eslint .
+      # No env vars on purpose: every variable the build reads falls back to "" (src/config/env.ts).
+      - run: pnpm exec next build

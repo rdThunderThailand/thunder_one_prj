@@ -2,7 +2,7 @@
 
 ## Context
 
-Reverses the 2026-08-04 "YAGNI" call on `docs/publications/plan-revision-409.md` §3 item A.
+Reverses the 2026-08-04 "YAGNI" call on `docs/media-workspace/publications/v1/plan-revision-409.md` §3 item A.
 That call gated the work on evidence ("wait until someone reports losing data"). The gate was
 lifted deliberately on 2026-08-05 for two reasons that are not evidence of past loss:
 
@@ -20,7 +20,7 @@ State verified from prod and from both codebases, not from documents:
   (`src/app/api/proxy/[...path]/route.ts:41`, cookie `to_at`), and the media API ignores it.
   `activate/route.ts` passes `p_actor_id: null` hardcoded; `published_by` is NULL on all 27 rows.
   `src/features/auth/services/auth.service.ts` says so itself: "No backend exists yet".
-- `persistDraft` (`src/features/publications/hooks/usePublishDraft.ts:174`) writes the same
+- `persistDraft` (`src/features/media-workspace/publications/hooks/usePublishDraft.ts:174`) writes the same
   publication row up to **three times in sequence** per save: `media_publication_upsert` →
   `media_publication_set_content` → `media_publication_set_schedule`.
 - Error plumbing is prefix-driven at both hops. `media.ts:29`
@@ -83,7 +83,7 @@ this ADR is for. A side-by-side diff was rejected as disproportionate for Phase 
 
 **Draft shape — bump the persisted key.** `revision` enters the persisted draft, so
 `thunderone.publications.create-draft.v3` becomes `…v4`
-(`src/features/publications/store/usePublicationDraftStore.ts:138`). Without the bump, an
+(`src/features/media-workspace/publications/store/usePublicationDraftStore.ts:138`). Without the bump, an
 existing draft rehydrates into a shape the new code does not expect.
 
 **Identity stays out.** Optimistic locking prevents the lost update regardless of who the

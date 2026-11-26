@@ -107,11 +107,11 @@ function ContactRow({ label, value, badge, note }: { label: string; value: strin
       <span className="flex items-center gap-2">
         <span className={`font-semibold ${TEXT_NAVY}`}>{value}</span>
         {badge && (
-          <span className="inline-flex shrink-0 items-center rounded-full bg-accent px-2 py-0.5 text-[11px] font-semibold text-primary">
+          <span className="inline-flex shrink-0 items-center rounded-full bg-accent px-2 py-0.5 text-ui font-semibold text-primary">
             {badge}
           </span>
         )}
-        {note && <span className={`shrink-0 text-[11px] ${TEXT_MUTED}`}>{note}</span>}
+        {note && <span className={`shrink-0 text-ui ${TEXT_MUTED}`}>{note}</span>}
       </span>
     </div>
   );
@@ -336,7 +336,7 @@ export function ProfilePage({ me, tenantName, roleName, membership, departmentNa
                   <div className="mb-1 flex items-center gap-2">
                     <h2 className={`text-sm font-bold ${TEXT_NAVY}`}>ข้อมูลติดต่อจากองค์กร (Work Contact)</h2>
                     <span
-                      className={`text-[11px] ${TEXT_MUTED}`}
+                      className={`text-ui ${TEXT_MUTED}`}
                       title="ข้อมูลนี้จัดการโดยฝ่ายบุคคลผ่าน People Workspace"
                     >
                       จัดการโดยองค์กร
@@ -434,7 +434,7 @@ export function ProfilePage({ me, tenantName, roleName, membership, departmentNa
                         คัดลอกอีเมลงาน
                         <CopyIcon className="h-3.5 w-3.5" />
                       </button>
-                      {copiedEmail && <p className="mt-1 text-[11px] font-medium text-t1-green-700">คัดลอกแล้ว</p>}
+                      {copiedEmail && <p className="mt-1 text-ui font-medium text-t1-green-700">คัดลอกแล้ว</p>}
                     </div>
                     <div>
                       <button
@@ -449,7 +449,7 @@ export function ProfilePage({ me, tenantName, roleName, membership, departmentNa
                         คัดลอกเบอร์มือถือ
                         <CopyIcon className="h-3.5 w-3.5" />
                       </button>
-                      {copiedPhone && <p className="mt-1 text-[11px] font-medium text-t1-green-700">คัดลอกแล้ว</p>}
+                      {copiedPhone && <p className="mt-1 text-ui font-medium text-t1-green-700">คัดลอกแล้ว</p>}
                     </div>
                   </div>
                 </div>

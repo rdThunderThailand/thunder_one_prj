@@ -155,7 +155,7 @@ export function UnassignedQueuePage() {
                     </td>
                     <td className="px-2 py-2">
                       <p className="font-medium text-foreground">{row.id}</p>
-                      <p className="text-[11px] text-primary">{row.statusTagLabel}</p>
+                      <p className="text-ui text-primary">{row.statusTagLabel}</p>
                     </td>
                     <td className="px-2 py-2 text-foreground">
                       <p>{row.issueTitle}</p>

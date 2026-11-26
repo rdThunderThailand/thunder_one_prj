@@ -17,7 +17,7 @@ Change-request roster + approve/reject detail panel (`/people/changes`) — HR M
   - `ChangesFilterBar` — search + type/unit/date/status filters + view toggle, all inert, same
     convention as `people/personnel`'s `PersonnelFilterBar`
   - `ChangeTableControls` — decorative pagination, single page (8 rows), same as
-    `people/new-hires`'s `NewHireTableControls`
+    `people/personnel`'s `PersonnelTableControls`
   - `ChangeTable` — **real row selection** (click opens the row in `ChangeDetailPanel`, same
     "select, don't navigate" pattern as `people/org-structure`'s chart nodes and
     `people/new-hires`'s table). Exports `statusBadge`, reused by the detail panel so both stay in

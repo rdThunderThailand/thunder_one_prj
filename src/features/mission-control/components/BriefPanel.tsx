@@ -86,7 +86,7 @@ export function BriefPanel({ open, onClose }: BriefPanelProps) {
           <div className="flex items-center gap-2">
             <SparklesIcon className="h-4 w-4 text-primary" />
             <h2 className="text-sm font-semibold text-foreground">ThunderOne Brief</h2>
-            <span className="rounded-full bg-accent px-2 py-0.5 text-[11px] font-medium text-primary">
+            <span className="rounded-full bg-accent px-2 py-0.5 text-ui font-medium text-primary">
               เร็ว ๆ นี้
             </span>
           </div>
@@ -160,7 +160,7 @@ export function BriefPanel({ open, onClose }: BriefPanelProps) {
                     <Icon className="h-4 w-4" />
                   </span>
                   <span className="text-xs font-semibold text-foreground">{label}</span>
-                  <span className="text-[11px] leading-tight text-muted-foreground">{sub}</span>
+                  <span className="text-ui leading-tight text-muted-foreground">{sub}</span>
                 </div>
               ))}
             </div>

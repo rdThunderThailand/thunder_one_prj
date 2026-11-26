@@ -4,7 +4,7 @@
 
 Supersedes the single-file draft `0030-channel-endpoints-and-monitoring.md`, which bundled
 membership, lifecycle, snapshot and monitoring into one undivided decision. That draft is replaced
-by this ADR plus 0038, 0039, 0035 and `docs/channels/plan-channels-monitoring.md`. (0031 and 0032
+by this ADR plus 0038, 0039, 0035 and `docs/media-workspace/channels/v1/plan-channels-monitoring.md`. (0031 and 0032
 went to concurrent playlist work while this set was being reviewed, so the Channel ADRs are not
 contiguous.)
 
@@ -188,7 +188,7 @@ furniture (`LED Display`, `Menu Board`) that decides nothing technical. Collapsi
   (expand → migrate `website → online` → narrow); add the `channel_types` reference table and
   `channels.channel_type_id`; create `channel_device_reservations`; comment `channel_devices.role`
   as deprecated. Sequence and preflight queries live in
-  `docs/channels/plan-channels-monitoring.md`.
+  `docs/media-workspace/channels/v1/plan-channels-monitoring.md`.
 - Activation can now fail with a conflict that names another Channel. That response shape is part of
   the API contract, not an error string — the UI has to render "held by *Channel X*", so the
   conflict payload carries the holding `channel_id` and name.

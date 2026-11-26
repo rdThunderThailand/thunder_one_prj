@@ -17,7 +17,7 @@ export function EmployeeAttentionCard() {
     <Card className="flex h-full flex-col p-4">
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-sm font-semibold text-foreground">Needs Your Attention</h2>
-        <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-error px-1 text-[11px] font-semibold text-error-foreground">
+        <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-error px-1 text-ui font-semibold text-error-foreground">
           {employeeAttentionItems.length}
         </span>
       </div>
@@ -32,7 +32,7 @@ export function EmployeeAttentionCard() {
             <div className="min-w-0 flex-1 basis-48">
               <div className="flex items-center gap-2">
                 <p className="truncate text-sm font-medium text-foreground">{item.title}</p>
-                <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${badge[item.status].tone}`}>
+                <span className={`shrink-0 rounded-full px-2 py-0.5 text-ui font-medium ${badge[item.status].tone}`}>
                   {badge[item.status].label}
                 </span>
               </div>

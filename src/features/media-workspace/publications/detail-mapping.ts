@@ -1,6 +1,7 @@
 import type { PlaylistDetail, PublicationDetail, DraftAssetItem } from "./types";
 import type { BasicInfoState } from "./components/BasicInfoForm";
 import { DEFAULT_TIMEZONE } from "./schedule.ts";
+import { problemTargets, type ProblemTarget } from "./problem-targets.ts";
 import { scheduleToDraft, todayIn, type ScheduleDraft } from "./schedule-preset.ts";
 
 export type ResumedDraft = {
@@ -12,6 +13,9 @@ export type ResumedDraft = {
   schedule: ScheduleDraft;
   playlistId: string | null;
   compositionId: string | null;
+  publicationId: string;
+  revision: number | null;
+  problemTargets: ProblemTarget[];
 };
 
 export function detailToDraft(
@@ -62,5 +66,8 @@ export function detailToDraft(
     schedule,
     playlistId: detail.playlist?.id ?? null,
     compositionId: detail.composition?.id ?? null,
+    publicationId: detail.id,
+    revision: detail.revision ?? null,
+    problemTargets: problemTargets(targets),
   };
 }

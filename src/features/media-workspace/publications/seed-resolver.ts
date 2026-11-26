@@ -1,4 +1,6 @@
 // ADR 0086: an editor seed wins unless unfinished work needs a choice first.
+import { DEFAULT_IMAGE_DURATION_SECONDS } from "./draft-mapping.ts";
+import type { DraftAssetItem, PublicationType } from "./types/index.ts";
 
 export type SeedChoice = "continue" | "fresh" | null;
 
@@ -38,4 +40,27 @@ export function resolveSeed(args: {
   if (choice === "fresh") return "apply"; // caller clears the draft first
   if (choice === "continue") return "discard";
   return "wait";
+}
+
+export type ReadySeed = { name: string; publicationType: PublicationType };
+
+/** What a seed puts on an otherwise empty draft; `ready` carries the type the caller resolved. */
+export function seedContent(seed: PublicationSeed, ready: ReadySeed): {
+  publicationType: PublicationType;
+  assetItems: DraftAssetItem[];
+  playlistId: string | null;
+  compositionId: string | null;
+} {
+  return {
+    publicationType: ready.publicationType,
+    assetItems: seed.kind === "asset"
+      ? [{
+        media_asset_id: seed.id,
+        duration_seconds: ready.publicationType === "image" ? DEFAULT_IMAGE_DURATION_SECONDS : null,
+        transition: "cut",
+      }]
+      : [],
+    playlistId: seed.kind === "playlist" ? seed.id : null,
+    compositionId: seed.kind === "composition" ? seed.id : null,
+  };
 }

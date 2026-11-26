@@ -2,16 +2,17 @@
 
 import { Card } from "@/components/ui/Card";
 import { CalendarIcon, MonitorIcon, PlayIcon } from "@/components/ui/icons";
-import { PreviewStage } from "@/features/media-workspace/preview/PreviewStage";
+import { PreviewPanel } from "@/features/media-workspace/preview/PreviewPanel";
 import type { ChannelListItem } from "../../channels/types";
 import type { MediaAsset } from "../types";
 import { priorities, publicationTypes } from "../mock-data";
 import { formatDmy, WEEKDAYS } from "../schedule";
-import { describeSchedule, scheduleEdges } from "../schedule-describe";
+import { describeSchedule, scheduleEdges } from "../schedule-airing";
 import { draftToSchedule, isDraftValid } from "../schedule-preset";
 import { isVideoPreview } from "../preview-kind";
 import { usePlaylistPreview } from "../hooks/usePlaylistPreview";
 import { usePublicationStagePreview } from "../hooks/usePublicationStagePreview";
+import { useWizardProblemTargets } from "../hooks/useWizardProblemTargets";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 import { publicationTypeIcons } from "./publicationTypeIcons";
 
@@ -41,12 +42,13 @@ export function ProgramSummaryRail({
   const groupIds = usePublicationDraftStore((s) => s.groupIds);
   const groupNamesById = usePublicationDraftStore((s) => s.groupNamesById);
   const schedule = usePublicationDraftStore((s) => s.schedule);
+  const { targets: problemChannels } = useWizardProblemTargets();
 
   const isPlaylist = basicInfo.publicationType === "playlist";
   const { playlist, durationLabel } = usePlaylistPreview(playlistId, isPlaylist);
   // Same projection as Prepare Content's stage, so every content type previews here too (#199).
   // Loaded in the review variant as well — it is where a Layout's name comes from.
-  const { preview, branch, loading } = usePublicationStagePreview(assets, true, refreshKey);
+  const { preview, loading } = usePublicationStagePreview(assets, true, refreshKey);
 
   const selectedAsset = assets.find((a) => a.id === assetItems[0]?.media_asset_id);
   const isVideo = isVideoPreview(selectedAsset, undefined);
@@ -63,8 +65,10 @@ export function ProgramSummaryRail({
     channels.length > 0
       ? channels.filter((c) => channelIds.includes(c.id)).map((c) => c.name)
       : [];
+  // A deleted Channel is not in the list; its saved name keeps it counted (ADR 0122 rule 17).
+  const unlistedProblemNames = problemChannels.filter((p) => !channels.some((c) => c.id === p.id)).map((p) => p.name);
   const selectedGroupNames = groupIds.map((id) => groupNamesById[id] ?? id);
-  const selectedNames = [...selectedChannelNames, ...selectedGroupNames];
+  const selectedNames = [...selectedChannelNames, ...unlistedProblemNames, ...selectedGroupNames];
   const channelSummary =
     selectedNames.length > 0
       ? selectedNames.join(", ")
@@ -127,25 +131,14 @@ export function ProgramSummaryRail({
 
   return (
     <Card className="flex flex-col gap-4 p-5">
-      <h2 className="text-base font-semibold text-foreground">{title}</h2>
-      <p className="-mt-3 text-xs text-muted-foreground">{subtitle}</p>
-
-      {preview ? (
-        <PreviewStage
-          zones={preview.zones}
-          assets={assets}
-          aspectRatio={preview.aspectRatio}
-          referenceResolution={preview.referenceResolution}
-          background={preview.background}
-          allowActualSize={branch !== "playlist"}
-          controlsPlacement="overlay"
-          fillWidth
-        />
-      ) : (
-        <div className="flex aspect-video w-full items-center justify-center rounded-xl border border-dashed border-border bg-muted text-muted-foreground">
-          <p className="text-xs">{loading ? "กำลังโหลดตัวอย่าง…" : "ตัวอย่างคอนเทนต์จะแสดงที่นี่"}</p>
-        </div>
-      )}
+      <PreviewPanel
+        title={title}
+        subtitle={subtitle}
+        preview={preview}
+        assets={assets}
+        loading={loading}
+        emptyMessage="ตัวอย่างคอนเทนต์จะแสดงที่นี่"
+      />
 
       <Section title="Content">
         <Row label="Type">
@@ -157,7 +150,7 @@ export function ProgramSummaryRail({
         <Row label="Name">{basicInfo.name || "—"}</Row>
         <Row label="Content">{contentLabel}</Row>
         {isMismatch && (
-          <p className="text-right text-[11px] text-warning">
+          <p className="text-right text-ui text-warning">
             Selected asset is a {selectedAsset?.kind} while publication type is {basicInfo.publicationType}.
           </p>
         )}
@@ -212,7 +205,7 @@ function ReviewFact({ icon, label, value }: { icon: React.ReactNode; label: stri
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="border-t border-border pt-3">
-      <p className="mb-2 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">{title}</p>
+      <p className="mb-2 text-2xs font-bold uppercase tracking-wide text-muted-foreground">{title}</p>
       <dl className="flex flex-col gap-2 text-sm">{children}</dl>
     </div>
   );

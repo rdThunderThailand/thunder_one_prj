@@ -25,11 +25,11 @@ import { PlaylistItemsPane } from "./PlaylistItemsPane";
 import { PlaylistTimelinePane } from "./PlaylistTimelinePane";
 import { PlaylistPlaybackSettings } from "./PlaylistPlaybackSettings";
 import { PlaylistPropertiesPane } from "./PlaylistPropertiesPane";
-import { RevisionConflictCard } from "./RevisionConflictCard";
-import { UnsavedLeaveConfirm } from "./UnsavedLeaveConfirm";
+import { RevisionConflictCard } from "../../editor-lifecycle/components/RevisionConflictCard";
 import { usePlaylistEditorRow } from "./usePlaylistEditorRow";
 import { PublishChangesDialog } from "@/features/media-workspace/publish-changes/PublishChangesDialog";
 import { publishChanges } from "@/features/media-workspace/publish-changes/publish-changes-api";
+import type { PublishPrep } from "@/features/media-workspace/publish-changes/PublishPrepDialog";
 import { useAffectedPrograms } from "@/features/media-workspace/publish-changes/useAffectedPrograms";
 import { useShortcutPlatform } from "@/components/layout/ShortcutPlatform";
 import { isModShortcut, isTypingTarget } from "@/lib/keyboard-shortcut";
@@ -44,7 +44,6 @@ export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null 
   const [info, setInfo] = useState<PlaylistInfo>({ playlistType: "standard" });
   const [assets, setAssets] = useState<MediaAsset[]>([]);
   const [assetsLoading, setAssetsLoading] = useState(true);
-  const [confirmLeave, setConfirmLeave] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [nowPlayingItemId, setNowPlayingItemId] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -73,13 +72,6 @@ export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null 
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [history, shortcutPlatform]);
-
-  useEffect(() => {
-    if (!row.isDirty) return;
-    const warn = (event: BeforeUnloadEvent) => event.preventDefault();
-    window.addEventListener("beforeunload", warn);
-    return () => window.removeEventListener("beforeunload", warn);
-  }, [row.isDirty]);
 
   useEffect(() => {
     let alive = true;
@@ -133,13 +125,7 @@ export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null 
     [present.name, present.items, present.playback],
   );
 
-  const goBack = () => {
-    if (row.isDirty) {
-      setConfirmLeave(true);
-      return;
-    }
-    router.push(LIST_PATH);
-  };
+  const goBack = () => row.requestLeave(LIST_PATH);
 
   if (row.loading) return <p className="p-6 text-sm text-muted-foreground">กำลังโหลด...</p>;
   if (row.loadError) {
@@ -155,16 +141,23 @@ export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null 
 
   // ADR 0078 §6: unsaved edits are saved first, and a failed save stops the flow before any re-publish.
   const publishPlaylistChanges = async () => {
-    if (row.isDirty && !(await row.save())) throw new Error("save failed");
+    if (!(await row.ensureSaved())) throw new Error("save failed");
     return publishChanges("playlists", row.serverId!);
   };
-  const publish = () => router.push(`/media-workspace/program/create?playlistId=${row.serverId}`);
+  const publish = (id = row.serverId) => router.push(`/media-workspace/program/create?playlistId=${id}`);
+  // ADR 0116 §6: Publish to Channel… asks for the missing save / activation instead of being disabled.
+  const publishPrep: PublishPrep | null =
+    row.status === "draft"
+      ? { title: "Playlist นี้ยังเป็น Draft", description: "ต้องบันทึกและเปิดใช้งานก่อน จึงจะเผยแพร่ไปยัง Channel ได้", action: { label: "Save & Activate แล้วไปต่อ", run: () => row.save(true) } }
+      : row.isDirty
+        ? { title: "มีการแก้ไขที่ยังไม่บันทึก", description: "บันทึกการแก้ไขล่าสุดก่อน แล้วไปสร้าง Program ต่อ", action: { label: "Save แล้วไปต่อ", run: () => row.save() } }
+        : null;
   const publishDisabledReason = !row.serverId
     ? "บันทึก Playlist ก่อนเผยแพร่"
     : row.isDirty
       ? "บันทึกการแก้ไขล่าสุดก่อนเผยแพร่"
       : null;
-  const savedLabel = savedStateLabel(row.isDirty, row.lastSavedAt, !!row.serverId);
+  const savedLabel = savedStateLabel(row.saveStatus, row.lastSavedAt);
   const effectiveSelectedItemId = selectedItemId ?? present.items[0]?.key ?? null;
   const selectedItem = present.items.find((i) => i.key === effectiveSelectedItemId) ?? null;
   // `itemIndex` is the authored index, so a repeated asset lights up only the row on air.
@@ -176,7 +169,9 @@ export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null 
       <PlaylistEditorHeader
         name={present.name}
         status={row.status}
+        inUseCount={row.inUseCount}
         savedLabel={savedLabel}
+        isUnsaved={row.saveStatus !== "saved"}
         lastUpdatedAt={row.lastSavedAt}
         hasItems={present.items.length > 0}
         saving={row.saving}
@@ -187,12 +182,13 @@ export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null 
         onRedo={history.redo}
         onCancel={goBack}
         onPreview={() => setPreviewOpen(true)}
-        onPublish={publish}
-        publishDisabledReason={publishDisabledReason}
+        onPublish={(id) => publish(id ?? row.serverId)}
+        publishPrep={publishPrep}
         affectedCount={affected.programs.length}
         onPublishChanges={() => { affected.reload(); setPublishDialog("changes"); }}
         onShowPrograms={() => { affected.reload(); setPublishDialog("list"); }}
-        onSave={() => void row.save()}
+        onSave={(name) => void row.save(true, name)}
+        onSaveDraft={(name) => void row.save(false, name)}
       />
 
       {publishDialog && (
@@ -205,9 +201,7 @@ export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null 
         />
       )}
 
-      {confirmLeave && (
-        <UnsavedLeaveConfirm onStay={() => setConfirmLeave(false)} onLeave={() => router.push(LIST_PATH)} />
-      )}
+      {row.leaveDialog}
       {row.saveError && (
         <div className="rounded-lg border border-error/30 bg-error-muted p-4">
           <p className="text-sm text-error">{row.saveError}</p>

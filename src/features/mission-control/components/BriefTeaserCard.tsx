@@ -28,7 +28,7 @@ export function BriefTeaserCard() {
         <div className="mb-2 flex items-center gap-2">
           <SparklesIcon className="h-4 w-4 text-primary" />
           <h2 className="text-sm font-semibold text-foreground">ThunderOne Brief</h2>
-          <span className="rounded-full bg-accent px-2 py-0.5 text-[11px] font-medium text-primary">
+          <span className="rounded-full bg-accent px-2 py-0.5 text-ui font-medium text-primary">
             เร็ว ๆ นี้
           </span>
         </div>

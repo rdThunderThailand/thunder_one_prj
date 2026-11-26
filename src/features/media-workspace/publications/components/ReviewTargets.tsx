@@ -56,7 +56,7 @@ export function ReviewTargets({
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-xs font-semibold text-foreground" title={item?.name}>{item?.name}</p>
-                  <p className="truncate text-[10px] text-muted-foreground">
+                  <p className="truncate text-2xs text-muted-foreground">
                     {isDirect ? "Direct" : inheritedGroups.map((group) => group.name).join(", ")} · {item?.subLabel}
                   </p>
                 </div>
@@ -76,7 +76,7 @@ export function ReviewTargets({
                 <UsersIcon className="h-3.5 w-3.5" />
               </span>
               <p className="min-w-0 flex-1 truncate text-xs font-semibold text-foreground" title={group.name}>{group.name}</p>
-              <span className="shrink-0 text-[10px] text-muted-foreground">{group.members} channels</span>
+              <span className="shrink-0 text-2xs text-muted-foreground">{group.members} channels</span>
             </div>
           ))}
           {selectedGroups.length === 0 && <EmptyTargets label="No channel groups selected" />}
@@ -95,7 +95,7 @@ function TargetTabButton({ label, active, disabled = false, onClick }: { label: 
       disabled={disabled}
       title={disabled ? "ยังไม่เปิดใช้งาน" : undefined}
       onClick={onClick}
-      className={`flex-1 whitespace-nowrap rounded-md px-2 py-1.5 text-[10px] font-medium transition-colors ${active ? "bg-card text-foreground shadow-sm" : disabled ? "cursor-not-allowed text-muted-foreground" : "text-muted-foreground hover:text-foreground"}`}
+      className={`flex-1 whitespace-nowrap rounded-md px-2 py-1.5 text-2xs font-medium transition-colors ${active ? "bg-card text-foreground shadow-sm" : disabled ? "cursor-not-allowed text-muted-foreground" : "text-muted-foreground hover:text-foreground"}`}
     >
       {label}
     </button>

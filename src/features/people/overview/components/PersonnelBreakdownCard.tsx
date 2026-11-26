@@ -22,7 +22,7 @@ export function PersonnelBreakdownCard({ personnelBreakdown, totalHeadcount }: P
           <DonutChart segments={personnelBreakdown} size={128} strokeWidth={18} />
           <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
             <span className="text-xl font-semibold text-foreground">{totalHeadcount}</span>
-            <span className="text-[11px] text-t1-gray-400">คน</span>
+            <span className="text-ui text-t1-gray-400">คน</span>
           </div>
         </div>
         <ul className="min-w-0 flex-1 space-y-2">

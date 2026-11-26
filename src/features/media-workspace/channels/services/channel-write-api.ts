@@ -9,7 +9,7 @@ export async function createChannelV2(payload: CreateChannelPayload): Promise<Ch
   const { requestApi } = await import("../../../../lib/api/media-api.ts");
   const body = {
     ...payload,
-    as_draft: false,
+    as_draft: payload.player_id === null,
   };
   return parseChannelDetail(await requestApi<unknown>("POST", "/media/channels", body));
 }

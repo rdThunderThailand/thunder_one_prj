@@ -2,7 +2,7 @@
 
 **Status:** accepted · 2026-09-10
 **Extends:** `0052-merged-layout-authoring.md` §1 (operator words differ from contract words), `0064-zone-media-presentation.md` (Zone beats Playlist), `0003-draft-optimistic-locking.md`, `0045-publication-snapshot-materialization.md`
-**Source:** the eight ver02 frames in `docs/publications/ver02/design/`
+**Source:** the eight ver02 frames in `docs/media-workspace/publications/v2/design/`
 
 ## Context
 
@@ -112,7 +112,7 @@ an input in the mockup" is not a decision:
 The rule the implementer follows when a control is not listed anywhere: a field that describes the
 file is read-only; a field that describes this program is editable; anything that would write to the
 Asset is dropped. Every control in all eight frames is enumerated with its disposition in
-`docs/publications/ver02/plan-create-wizard.md` so this rule never has to be re-derived.
+`docs/media-workspace/publications/v2/plan-create-wizard.md` so this rule never has to be re-derived.
 
 ### 5. Where to Play ships Channels only
 

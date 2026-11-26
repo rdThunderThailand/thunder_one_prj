@@ -15,8 +15,8 @@ export function RecentAlertsCard({ channels, loadFailed }: { channels: ChannelLi
   return (
     <Card className="flex h-[240px] flex-col overflow-hidden rounded-xl border-border p-4 shadow-panel transition-[box-shadow,border-color] duration-200 hover:border-foreground/20 hover:shadow-float">
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-[11px] font-extrabold uppercase tracking-[0.08em] text-foreground">Needs Attention</h2>
-        <Link href="/media-workspace/channels?q=attention" className="flex items-center gap-1 text-[10px] font-semibold text-primary hover:underline">
+        <h2 className="text-ui font-extrabold uppercase tracking-[0.08em] text-foreground">Needs Attention</h2>
+        <Link href="/media-workspace/channels?q=attention" className="flex items-center gap-1 text-2xs font-semibold text-primary hover:underline">
           View all alerts
           <ArrowRight className="h-3 w-3" />
         </Link>
@@ -38,12 +38,12 @@ export function RecentAlertsCard({ channels, loadFailed }: { channels: ChannelLi
                     <Icon className="h-3.5 w-3.5" />
                   </span>
                   <span className="min-w-0">
-                    <span className="block truncate text-[11px] font-semibold leading-4 text-foreground">{channel.name} · {device.name}</span>
-                    <span className="mt-0.5 block truncate text-[9px] capitalize leading-3 text-muted-foreground">Player {device.health}</span>
+                    <span className="block truncate text-ui font-semibold leading-4 text-foreground">{channel.name} · {device.name}</span>
+                    <span className="mt-0.5 block truncate text-2xs capitalize leading-3 text-muted-foreground">Player {device.health}</span>
                   </span>
                   <span className="flex items-center gap-2">
-                    <span className="text-[9px] text-muted-foreground">{lastSeen}</span>
-                    <span className="rounded-full border border-border px-2 py-0.5 text-[8px] font-semibold text-muted-foreground">{channelTypeLabel(channel)}</span>
+                    <span className="text-2xs text-muted-foreground">{lastSeen}</span>
+                    <span className="rounded-full border border-border px-2 py-0.5 text-3xs font-semibold text-muted-foreground">{channelTypeLabel(channel)}</span>
                   </span>
                 </Link>
               </li>

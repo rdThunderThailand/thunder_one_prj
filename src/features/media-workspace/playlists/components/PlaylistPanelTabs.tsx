@@ -8,18 +8,14 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/Badge";
 import { MediaThumb } from "@/components/ui/MediaThumb";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
-import { fetchPublications } from "@/features/media-workspace/publications/services/publications-api";
-import type { PublicationListItem } from "@/features/media-workspace/publications/types";
-import {
-  isPastPublication,
-  publicationDisplayStatus,
-  publicationStatusColor,
-} from "@/features/media-workspace/publications/publication-status";
+import { isPastPublication } from "@/features/media-workspace/publications/publication-status";
+import { mediaStatus } from "@/features/media-workspace/media-status";
 import { decodeMetadata } from "../metadata";
 import { resolutionLabel } from "../output-profile";
 import { formatDuration, totalDurationSeconds } from "../duration";
 import { paginate } from "../list-filtering";
-import type { PlaylistDetail } from "../types";
+import { fetchPlaylistPrograms } from "../services/playlists-api";
+import type { PlaylistDetail, PlaylistProgram } from "../types";
 
 function Row({ label, value }: { label: string; value: React.ReactNode }) {
   return (
@@ -107,21 +103,21 @@ export function ContentTab({ detail }: { detail: PlaylistDetail }) {
 
 /** A playlist has no schedule of its own (ADR 0011) — what it has is the publications
  *  that point at it, so these tabs list those, split into what's live and what's past
- *  (ADR 0015). Loaded only when a tab is first opened.
- *  ponytail: no dates — the publications list carries no starts_at, that would need one
+ *  (ADR 0015). Loaded only when a tab is first opened. The rows come from the playlist's own
+ *  endpoint and include Programs that hold it through a Layout (ADR 0121).
+ *  ponytail: no dates — the rows carry no starts_at, that would need one
  *  detail call per publication. */
 const PER_PAGE = 5;
 
-function usePlaylistPublications(playlistId: string) {
-  const [publications, setPublications] = useState<PublicationListItem[] | null>(null);
+function usePlaylistPrograms(playlistId: string) {
+  const [publications, setPublications] = useState<PlaylistProgram[] | null>(null);
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     let alive = true;
-    fetchPublications()
-      .then((all) => {
-        if (!alive) return;
-        setPublications(all.filter((p) => p.playlist_id === playlistId));
+    fetchPlaylistPrograms(playlistId)
+      .then((programs) => {
+        if (alive) setPublications(programs);
       })
       .catch(() => alive && setFailed(true));
     return () => {
@@ -167,22 +163,32 @@ function PageNav({
   );
 }
 
-function PublicationRow({ publication }: { publication: PublicationListItem }) {
-  const color = publicationStatusColor(publication.effective_status ?? publication.status);
+function PublicationRow({ publication }: { publication: PlaylistProgram }) {
+  // The same badge as the Programs list (ADR 0125 decision 4); none on a Core that predates the key.
+  const status = publication.display_status ? mediaStatus(publication.display_status) : null;
   return (
     <li className="flex items-center justify-between gap-2 rounded-lg border border-border p-2">
-      <Link
-        href={`/media-workspace/program/${publication.id}`}
-        className="min-w-0 flex-1 truncate text-sm text-primary hover:underline"
-      >
-        {publication.name}
-      </Link>
+      <div className="min-w-0 flex-1">
+        <Link
+          href={`/media-workspace/program/${publication.id}`}
+          className="block truncate text-sm text-primary hover:underline"
+        >
+          {publication.name}
+        </Link>
+        {publication.via_composition && (
+          <span className="block truncate text-xs text-muted-foreground">
+            ผ่าน Layout: {publication.via_composition.name}
+          </span>
+        )}
+      </div>
       <span className="shrink-0 text-xs text-muted-foreground">
         {publication.campaign_name ?? "—"}
       </span>
-      <Badge variant={color === "green" ? "success" : color === "yellow" ? "warning" : color === "red" ? "danger" : "neutral"} className="rounded-full">
-        {publicationDisplayStatus(publication)}
-      </Badge>
+      {status && (
+        <Badge variant="pill" color={status.color}>
+          {status.label}
+        </Badge>
+      )}
     </li>
   );
 }
@@ -190,7 +196,7 @@ function PublicationRow({ publication }: { publication: PublicationListItem }) {
 const SCHEDULE_STATUS_RANK: Record<string, number> = { active: 0, scheduled: 1, draft: 2 };
 
 export function ScheduleTab({ playlistId }: { playlistId: string }) {
-  const { publications, failed } = usePlaylistPublications(playlistId);
+  const { publications, failed } = usePlaylistPrograms(playlistId);
   const [page, setPage] = useState(1);
 
   if (failed) {
@@ -231,7 +237,7 @@ export function ScheduleTab({ playlistId }: { playlistId: string }) {
 }
 
 export function HistoryTab({ playlistId }: { playlistId: string }) {
-  const { publications, failed } = usePlaylistPublications(playlistId);
+  const { publications, failed } = usePlaylistPrograms(playlistId);
   const [page, setPage] = useState(1);
 
   if (failed) {

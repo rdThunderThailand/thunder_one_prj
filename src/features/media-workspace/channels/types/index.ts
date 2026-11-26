@@ -1,8 +1,7 @@
 import type { MediaDeviceHealth } from "../../../../types/domain.ts";
 
 /**
- * ADR 0037: one status, three values. `draft` is stored; `active` / `inactive` are derived
- * server-side from `publication_count` — a committed Channel that nothing publishes to is Inactive.
+ * ADR 0129: the stored lifecycle `Draft → Active ↔ Inactive`. Only Active can be a Program target.
  * Device liveness is no longer a second status axis; it is read off `devices[].health`.
  */
 export type ChannelLifecycle = "draft" | "active" | "inactive";
@@ -80,12 +79,8 @@ export interface ChannelListItem {
   id: string;
   name: string;
   description: string | null;
+  /** Stored lifecycle (ADR 0129): Draft → Active ↔ Inactive. Read from Core's `status` key. */
   lifecycle: ChannelLifecycle;
-  /**
-   * Stored status (ADR 0099). `lifecycle` "inactive" also covers an active Channel with no Program,
-   * so only this tells a deactivated Channel apart; only "active" may be targeted.
-   */
-  status: ChannelLifecycle;
   category: ChannelCategory;
   channel_type: ChannelTypeOption | null;
   location: { id: string; name: string } | null;
@@ -104,9 +99,24 @@ export interface ChannelListItem {
   updated_at: string;
 }
 
+/** A Program that is live or scheduled and reaches a Channel (ADR 0122 rule 7). */
+export interface BlockingProgram {
+  id: string;
+  name: string;
+}
+
 export interface ChannelDetail extends ChannelListItem {
   created_at: string;
+  /** Only the detail endpoint returns it; empty when nothing blocks. */
+  blocking_programs: BlockingProgram[];
+  /** Draft Programs that lose this Channel when it is deleted (ADR 0122 rule 20); `[]` from a Core without it. */
+  draft_programs: BlockingProgram[];
+  /** Whether Delete would Tombstone the Channel instead of removing it; `false` from a Core without it. */
+  has_history: boolean;
 }
+
+/** What `DELETE /media/channels/{id}` did (ADR 0122 rule 11); absent from a Core that predates it. */
+export type ChannelDeleteMode = "removed" | "tombstoned";
 
 /** "multi" is a Channel whose `display_config.mode` is `"multi"`, independent of its Output Kind. */
 export type ChannelTypeFilter = ChannelOutputKind | "multi";

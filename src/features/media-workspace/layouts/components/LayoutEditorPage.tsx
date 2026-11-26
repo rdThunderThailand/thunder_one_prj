@@ -5,14 +5,13 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { LayoutInformationCard } from "@/features/media-workspace/compositions/components/LayoutInformationCard";
 import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
-// Reused rather than re-written — see docs/layouts/plan-layout-execution.md Task 7 Step 5.
-import { UnsavedLeaveConfirm } from "../../playlists/components/UnsavedLeaveConfirm";
+import { useEditorLifecycle } from "../../editor-lifecycle/useEditorLifecycle";
 import { deriveAspectRatio, parseResolution, sameRatio, validateZones } from "../geometry";
 import { fetchLayout, upsertLayout } from "../services/layouts-api";
-import { describeSaveError } from "../status-display";
 import { DEFAULT_ASPECT_RATIO, DEFAULT_BACKGROUND, DEFAULT_RESOLUTION, type LayoutDraft, type LayoutZone } from "../types";
 import { LayoutCanvas } from "./LayoutCanvas";
 import { LayoutEditorHeader, LayoutEditorToolbar, LayoutZoneOverview } from "./LayoutEditorChrome";
+import { LayoutSaveError } from "./LayoutSaveError";
 import { LayoutSettingsPanel } from "./LayoutSettingsPanel";
 import { useConfirmDialog } from "../../content-library/useConfirmDialog";
 import { TemplateRail } from "./TemplateRail";
@@ -41,15 +40,28 @@ function reindex(zones: LayoutZone[]): LayoutZone[] {
 export function LayoutEditorPage({ layoutId }: { layoutId?: string | null }) {
   const router = useRouter();
   const [draft, setDraft] = useState<LayoutDraft>(emptyDraft);
-  const [initial, setInitial] = useState<LayoutDraft>(emptyDraft);
   const [loading, setLoading] = useState(!!layoutId);
   const [loadError, setLoadError] = useState<ClassifiedError | null>(null);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
-  const [confirmLeave, setConfirmLeave] = useState(false);
   const { confirm, dialog: confirmDialog } = useConfirmDialog();
-  const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
   const [usageCount, setUsageCount] = useState(0);
+  // ADR 0127 §8: no `reload` — Core has no Layout revision yet, so a save stays last-write-wins.
+  const lifecycle = useEditorLifecycle({
+    snapshot: draft,
+    hasRow: !!draft.id,
+    write: (d: LayoutDraft) =>
+      upsertLayout({
+        layoutId: d.id,
+        name: d.name,
+        aspectRatio: d.aspectRatio,
+        referenceResolution: d.referenceResolution,
+        background: d.background,
+        status: d.status,
+        zones: d.zones,
+      }),
+    fallbackError: "บันทึก Layout ไม่สำเร็จ",
+    onSaved: () => router.push("/media-workspace/layouts/templates"),
+  });
 
   useEffect(() => {
     if (!layoutId) return;
@@ -67,7 +79,7 @@ export function LayoutEditorPage({ layoutId }: { layoutId?: string | null }) {
           zones: detail.zones,
         };
         setDraft(loaded);
-        setInitial(loaded);
+        lifecycle.resetBaseline(loaded);
         setUsageCount(detail.usage_count ?? 0);
       })
       .catch((err) => alive && setLoadError(classifyApiError(err, "โหลด Layout ไม่สำเร็จ")))
@@ -75,9 +87,9 @@ export function LayoutEditorPage({ layoutId }: { layoutId?: string | null }) {
     return () => {
       alive = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [layoutId]);
 
-  const isDirty = JSON.stringify(draft) !== JSON.stringify(initial);
   const geometryErrors = validateZones(draft.zones);
   const selectedZone = selectedIndex !== null ? (draft.zones[selectedIndex] ?? null) : null;
 
@@ -116,13 +128,7 @@ export function LayoutEditorPage({ layoutId }: { layoutId?: string | null }) {
     setDraft((d) => ({ ...d, ...next }));
   };
 
-  const goBack = () => {
-    if (isDirty) {
-      setConfirmLeave(true);
-      return;
-    }
-    router.push("/media-workspace/layouts/templates");
-  };
+  const goBack = () => lifecycle.requestLeave("/media-workspace/layouts/templates");
 
   const handleSave = async () => {
     if (usageCount > 1) {
@@ -133,25 +139,7 @@ export function LayoutEditorPage({ layoutId }: { layoutId?: string | null }) {
       });
       if (!confirmed) return;
     }
-    setSaveError(null);
-    setSaving(true);
-    try {
-      await upsertLayout({
-        layoutId: draft.id,
-        name: draft.name,
-        aspectRatio: draft.aspectRatio,
-        referenceResolution: draft.referenceResolution,
-        background: draft.background,
-        status: draft.status,
-        zones: draft.zones,
-      });
-      router.push("/media-workspace/layouts/templates");
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "";
-      setSaveError(message.startsWith("Invalid input:") ? describeSaveError(message) : classifyApiError(err, "บันทึก Layout ไม่สำเร็จ").message);
-    } finally {
-      setSaving(false);
-    }
+    await lifecycle.save();
   };
 
   if (loading) {
@@ -190,8 +178,8 @@ export function LayoutEditorPage({ layoutId }: { layoutId?: string | null }) {
         referenceResolution={draft.referenceResolution}
         aspectRatio={draft.aspectRatio}
         zoneCount={draft.zones.length}
-        isDirty={isDirty}
-        saving={saving}
+        isDirty={lifecycle.isDirty}
+        saving={lifecycle.isSaving}
         saveDisabledReason={saveDisabledReason}
         onBack={goBack}
         onSave={handleSave}
@@ -199,17 +187,15 @@ export function LayoutEditorPage({ layoutId }: { layoutId?: string | null }) {
       </div>
 
       {confirmDialog}
-      {confirmLeave && (
-        <UnsavedLeaveConfirm
-          onStay={() => setConfirmLeave(false)}
-          onLeave={() => router.push("/media-workspace/layouts/templates")}
-        />
-      )}
+      {lifecycle.leaveDialog}
 
-      {saveError && (
-        <div className="shrink-0 border-b border-error/30 bg-error-muted px-4 py-2">
-          <p className="text-sm text-error">{saveError}</p>
-        </div>
+      {lifecycle.saveError && (
+        <LayoutSaveError
+          message={lifecycle.saveError}
+          reason={lifecycle.saveReason}
+          templateId={draft.id}
+          zones={draft.zones}
+        />
       )}
 
       {usageCount > 1 && (

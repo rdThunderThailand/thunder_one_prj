@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import type { CompositionLibraryItem } from "../compositions/types";
-import { compositionLayoutDisplayName, defaultCompositionPickerFilters, filterCompositionPickerItems, publishableCompositions } from "./composition-picker-filter.ts";
+import { compositionLayoutDisplayName, defaultCompositionPickerFilters, filterCompositionPickerItems } from "./composition-picker-filter.ts";
 
 const base = { layout_id: "l", revision: 1, zone_count: 2, bound_count: 2 };
 const rows: CompositionLibraryItem[] = [
@@ -9,10 +9,9 @@ const rows: CompositionLibraryItem[] = [
   { ...base, id: "c", name: "Draft One", layout_name: "Split", status: "draft", referenceResolution: "1920x1080", tags: [] },
 ];
 
-assert.deepEqual(publishableCompositions(rows).map((r) => r.id), ["a", "b"]);
 assert.deepEqual(filterCompositionPickerItems(rows, { ...defaultCompositionPickerFilters, query: "retail" }).map((r) => r.id), ["a"]);
 assert.deepEqual(filterCompositionPickerItems(rows, { ...defaultCompositionPickerFilters, orientation: "portrait" }).map((r) => r.id), ["b"]);
-assert.deepEqual(filterCompositionPickerItems(rows, { ...defaultCompositionPickerFilters, status: "active", aspectRatio: "1920x1080" }).map((r) => r.id), ["a"]);
+assert.deepEqual(filterCompositionPickerItems(rows, { ...defaultCompositionPickerFilters, aspectRatio: "1920x1080" }).map((r) => r.id), ["a", "c"]);
 
 const presetCopy: CompositionLibraryItem = {
   ...base,

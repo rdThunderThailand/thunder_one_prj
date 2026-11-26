@@ -3,7 +3,7 @@
 // The drag-resize surface. Coordinates never leave percent — the container's CSS
 // aspect-ratio makes it the same shape the display will be, so a pointer delta divided
 // by the container's own measured box is already the right unit, with no px/frame
-// conversion layer to get wrong (docs/layouts/plan-layout-execution.md Task 7 Step 2).
+// conversion layer to get wrong (docs/media-workspace/layouts/phase-0/plan-layout-execution.md Task 7 Step 2).
 
 import { useEffect, useRef, useState } from "react";
 import { MediaThumb } from "@/components/ui/MediaThumb";
@@ -161,7 +161,7 @@ export function LayoutCanvas({
   return (
     <div className={`flex flex-col gap-2 ${fillAvailable ? "min-h-0 flex-1" : ""}`}>
       {fillAvailable ? (
-        <div className="flex justify-between px-1 text-[10px] text-muted-foreground" aria-hidden="true">
+        <div className="flex justify-between px-1 text-2xs text-muted-foreground" aria-hidden="true">
           {[0, 0.25, 0.5, 0.75, 1].map((fraction) => (
             <span key={fraction}>{resolution ? Math.round(resolution[0] * fraction) : `${fraction * 100}%`}</span>
           ))}
@@ -229,7 +229,7 @@ export function LayoutCanvas({
                 className="pointer-events-none absolute inset-0 h-full w-full rounded-none"
               />
             )}
-            <span className={`absolute left-2 top-2 rounded px-2 py-1 text-[10px] font-bold text-primary-foreground ${selectedIndex === index ? "bg-primary" : "bg-overlay"}`}>
+            <span className={`absolute left-2 top-2 rounded px-2 py-1 text-2xs font-bold text-primary-foreground ${selectedIndex === index ? "bg-primary" : "bg-overlay"}`}>
               {fillAvailable ? `${String.fromCharCode(65 + index)} ${zone.name}` : `${zone.name} · ${resolution
                 ? `${referencePixels(zone.width, resolution[0])}×${referencePixels(zone.height, resolution[1])}px`
                 : `${zone.width.toFixed(3)}×${zone.height.toFixed(3)}%`}`}
@@ -259,8 +259,8 @@ export function LayoutCanvas({
           <span className="min-w-12 text-center text-xs text-muted-foreground">{Math.round(zoom * 100)} %</span>
           <button type="button" aria-label="Zoom in" title="Zoom in" disabled={zoom >= 2} onClick={() => setZoom((value) => Math.min(2, value + 0.25))} className="rounded-md border border-border p-1 text-muted-foreground disabled:opacity-40"><PlusIcon /></button>
           <button type="button" aria-label="Fit to Screen" title="Fit to Screen" onClick={() => setZoom(1)} className="rounded-md border border-border p-1 text-muted-foreground"><ExpandIcon /></button>
-          <button type="button" onClick={() => setShowGrid((value) => !value)} aria-pressed={showGrid} className={`ml-2 rounded-md border px-2 py-1 text-[10px] font-medium ${showGrid ? "border-primary bg-accent text-primary" : "border-border text-muted-foreground"}`}>Show grid</button>
-          <button type="button" onClick={() => setSnap((value) => !value)} aria-pressed={snap} className={`rounded-md border px-2 py-1 text-[10px] font-medium ${snap ? "border-primary bg-accent text-primary" : "border-border text-muted-foreground"}`}>Snap to grid</button>
+          <button type="button" onClick={() => setShowGrid((value) => !value)} aria-pressed={showGrid} className={`ml-2 rounded-md border px-2 py-1 text-2xs font-medium ${showGrid ? "border-primary bg-accent text-primary" : "border-border text-muted-foreground"}`}>Show grid</button>
+          <button type="button" onClick={() => setSnap((value) => !value)} aria-pressed={snap} className={`rounded-md border px-2 py-1 text-2xs font-medium ${snap ? "border-primary bg-accent text-primary" : "border-border text-muted-foreground"}`}>Snap to grid</button>
         </div>
       )}
 

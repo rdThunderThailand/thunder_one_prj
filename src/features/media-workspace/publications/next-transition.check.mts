@@ -1,7 +1,7 @@
 /**
  * Runnable check for the Next-click transition and the resume guard:
  *
- *     node src/features/publications/next-transition.check.mts
+ *     node src/features/media-workspace/publications/next-transition.check.mts
  *
  * ponytail: node:assert plus Node's native TS stripping, same as
  * schedule.check.mts. Everything imported here is React-free on purpose —
@@ -66,13 +66,13 @@ assert.deepEqual(await attemptNext(1, validDraft, ok), { kind: "saved" });
 // if this ever comes back "saved", the wizard advances past unsaved work.
 const failed = await attemptNext(1, validDraft, boom);
 assert.equal(failed.kind, "failed");
-assert.equal(failed.kind === "failed" && failed.message, "network down");
+// The thrown value reaches the caller as it is, so `classifyApiError` sees its status and text.
+assert.equal(failed.kind === "failed" && (failed.error as Error).message, "network down");
 
-// Non-Error throws still produce a usable message rather than "[object Object]".
 const thrownString = await attemptNext(1, validDraft, async () => {
   throw "nope";
 });
-assert.equal(thrownString.kind === "failed" && thrownString.message, "Failed to save draft.");
+assert.equal(thrownString.kind === "failed" && thrownString.error, "nope");
 
 // Retry after a failure: same inputs, working backend, resolves clean.
 assert.deepEqual(await attemptNext(1, validDraft, ok), { kind: "saved" });

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { classifyApiError } from "@/lib/api/api-error";
 import { fetchPublication } from "../services/publications-api";
 import { deliveryPollIntervalMs, summarizeDelivery } from "../delivery-progress";
 import type { PublicationDetail } from "../types";
@@ -48,7 +49,7 @@ export function useDeliveryProgress(id: string, initialDetail?: PublicationDetai
         })
         .catch((err) => {
           if (!alive) return;
-          setError(err instanceof Error ? err.message : "โหลดสถานะ delivery ไม่สำเร็จ");
+          setError(classifyApiError(err, "โหลดสถานะ delivery ไม่สำเร็จ").message);
           setLoading(false);
         });
     }

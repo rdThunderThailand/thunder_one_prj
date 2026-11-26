@@ -224,6 +224,9 @@ export type PublicationTarget = {
   device_id?: string | null;
   group_id?: string | null;
   name?: string | null;
+  /** Channel targets only (ADR 0122 rule 17); absent from a Core that predates it. */
+  status?: string | null;
+  deleted?: boolean;
 };
 
 export type ContentItem = {

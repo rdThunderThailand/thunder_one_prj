@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { WEEKDAYS } from "../schedule";
-import { describeSchedule } from "../schedule-describe";
+import { describeSchedule } from "../schedule-airing";
 import { draftToSchedule, scheduleToDraft, todayIn, validateDraftNow } from "../schedule-preset";
 import type { ScheduleConflict } from "../types";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";

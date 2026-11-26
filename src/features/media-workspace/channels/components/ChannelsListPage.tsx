@@ -90,7 +90,7 @@ export function ChannelsListPage() {
     let alive = true;
     load().catch((caught) => {
       if (!alive) return;
-      setError(classifyApiError(caught, "Could not load Channels. Try again."));
+      setError(classifyApiError(caught, "โหลดรายการ Channel ไม่สำเร็จ กรุณาลองใหม่"));
     });
     // Now Playing and the Groups tile are read-only extras — a failure here shows as an empty
     // "–" / skeleton rather than the page-level LoadError, so it must not throw into `load()`.
@@ -112,7 +112,7 @@ export function ChannelsListPage() {
   const retry = () => {
     setRetrying(true);
     load()
-      .catch((caught) => setError(classifyApiError(caught, "Could not load Channels. Try again.")))
+      .catch((caught) => setError(classifyApiError(caught, "โหลดรายการ Channel ไม่สำเร็จ กรุณาลองใหม่")))
       .finally(() => setRetrying(false));
   };
 
@@ -135,6 +135,10 @@ export function ChannelsListPage() {
 
   const handleChanged = (updated: ChannelListItem) => {
     setChannels((current) => current?.map((c) => (c.id === updated.id ? updated : c)) ?? current);
+  };
+
+  const handleDeleted = (id: string) => {
+    setChannels((current) => current?.filter((c) => c.id !== id) ?? current);
   };
 
   const handleCreated = (created: ChannelDetail) => {
@@ -217,6 +221,7 @@ export function ChannelsListPage() {
                     setSelectedId(channel.id);
                   }}
                   onChanged={handleChanged}
+                  onDeleted={handleDeleted}
                 />
                 <div className="shrink-0 border-t border-border px-4 py-3">
                   <Pagination
@@ -226,6 +231,7 @@ export function ChannelsListPage() {
                     totalItems={filtered.length}
                     rangeStart={(page.page - 1) * state.perPage + 1}
                     rangeEnd={Math.min(page.page * state.perPage, filtered.length)}
+                    itemLabel="channels"
                     onPageChange={(p) => setState({ ...state, page: p })}
                     onPerPageChange={(per) => setState({ ...state, perPage: per, page: 1 })}
                   />

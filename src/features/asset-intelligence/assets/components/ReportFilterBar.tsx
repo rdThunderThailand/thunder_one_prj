@@ -8,7 +8,7 @@ function FilterSelect({ label, options }: { label: string; options: string[] }) 
       title="Not built yet"
       className="flex cursor-not-allowed flex-col gap-0.5 rounded-lg border border-border px-3 py-1.5"
     >
-      <span className="text-[10px] text-t1-gray-400">{label}</span>
+      <span className="text-2xs text-t1-gray-400">{label}</span>
       <span className="flex items-center justify-between gap-2 text-sm text-foreground">
         {options[0]}
         <ChevronDownIcon className="h-3.5 w-3.5 text-t1-gray-400" />

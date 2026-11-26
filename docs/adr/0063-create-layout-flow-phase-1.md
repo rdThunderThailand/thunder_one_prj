@@ -3,7 +3,7 @@
 **Status:** accepted · 2026-09-05
 **Amends:** `0052-merged-layout-authoring.md` §5, §6, §7
 **Extends:** `0049-composition-layout-with-content.md`, `0044-multi-zone-layout.md` §7
-**Source:** `docs/layouts/Phase1/*.png` (four frames, reviewed 2026-09-05)
+**Source:** `docs/media-workspace/layouts/phase-1/*.png` (four frames, reviewed 2026-09-05)
 
 ## Context
 

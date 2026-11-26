@@ -17,6 +17,21 @@ import type {
 export { TRANSITIONS, PLAYLIST_STATUSES };
 export type { Transition, PlaylistStatus, Creator, PlaylistItem, PlaylistListItem, PlaylistDetail };
 
+/** One row of `GET /media/playlists/:id/programs` (ADR 0121): a Program that holds the playlist
+ *  directly or through a Layout zone. A subset of `PublicationListItem`. */
+export type PlaylistProgram = {
+  id: string;
+  name: string;
+  status: string;
+  effective_status?: string;
+  /** ADR 0080 badge, the same value the Programs list shows (Core 20261125070000). */
+  display_status?: string;
+  campaign_name?: string | null;
+  created_at?: string;
+  updated_at?: string;
+  via_composition: { id: string; name: string } | null;
+};
+
 /** Every type the system knows. `loop` and `manual` were dropped — nothing ever produced one
  *  and no prod row holds either (ADR 0032). */
 export const PLAYLIST_TYPES = ["standard", "dynamic"] as const;

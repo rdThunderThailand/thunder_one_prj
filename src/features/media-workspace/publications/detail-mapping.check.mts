@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { detailToDraft } from "./detail-mapping.ts";
 import { targetsFromSelection } from "./draft-mapping.ts";
 import type { ChannelListItem } from "../channels/types/index.ts";
-import type { PublicationDetail } from "./types/index.ts";
+import type { PlaylistDetail, PublicationDetail } from "./types/index.ts";
 
 const compositionPublication = {
   id: "publication-1",
@@ -33,7 +33,6 @@ const channel = {
   name: "Lobby",
   description: null,
   lifecycle: "active",
-  status: "active",
   category: "dooh",
   channel_type: null,
   location: null,
@@ -80,5 +79,39 @@ const datesPublication = {
 const resumedDates = detailToDraft(datesPublication, null, "2026-10-01").schedule;
 assert.equal(resumedDates.mode, "dates");
 assert.deepEqual(resumedDates.dates, ["2026-11-03", "2026-11-10"]);
+
+// openDraft takes everything it writes from the mapped detail.
+assert.equal(draft.publicationId, "publication-1");
+assert.equal(draft.revision, null);
+assert.equal(detailToDraft({ ...compositionPublication, revision: 7 }).revision, 7);
+
+const publicationWithProblems = {
+  ...compositionPublication,
+  publication_targets: [
+    { target_type: "channel", channel_id: "channel-gone", name: "Old lobby", deleted: true },
+    { target_type: "channel", channel_id: "channel-off", name: "Back room", status: "inactive" },
+    { target_type: "channel", channel_id: "channel-ok", name: "Lobby", status: "active" },
+  ],
+} satisfies PublicationDetail;
+assert.deepEqual(detailToDraft(publicationWithProblems).problemTargets, [
+  { id: "channel-gone", name: "Old lobby", deleted: true },
+  { id: "channel-off", name: "Back room", deleted: false },
+]);
+
+// A Playlist-type Draft keeps its playlist id and items in position order.
+const playlistDetail = {
+  id: "playlist-1",
+  name: "Existing playlist",
+  items: [
+    { media_asset_id: "asset-b", position: 2, duration_seconds: null, transition: "fade" },
+    { media_asset_id: "asset-a", position: 1, duration_seconds: 10 },
+  ],
+} as PlaylistDetail;
+const playlistDraft = detailToDraft(playlistPublication, playlistDetail);
+assert.equal(playlistDraft.playlistId, "playlist-1");
+assert.deepEqual(playlistDraft.assetItems, [
+  { media_asset_id: "asset-a", duration_seconds: 10, transition: "cut" },
+  { media_asset_id: "asset-b", duration_seconds: null, transition: "fade" },
+]);
 
 console.log("detail-mapping.check.mts — all assertions passed");

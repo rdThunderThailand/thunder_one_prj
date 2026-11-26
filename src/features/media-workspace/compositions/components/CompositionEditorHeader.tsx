@@ -6,39 +6,16 @@
 
 import { useRef, useState } from "react";
 import { Badge } from "@/components/ui/Badge";
-import { Button, buttonVariants } from "@/components/ui/Button";
+import { Button } from "@/components/ui/Button";
 import { ArrowLeftIcon, CheckIcon, EditIcon, EyeIcon, RedoIcon, UndoIcon } from "@/components/ui/icons";
 import { PublishSplitButton } from "@/features/media-workspace/publish-changes/PublishSplitButton";
+import type { PublishPrep } from "@/features/media-workspace/publish-changes/PublishPrepDialog";
+import { SaveSplitButton } from "@/features/media-workspace/publish-changes/SaveSplitButton";
 import { saveAction } from "../status-display";
 import type { CompositionStatus } from "../types";
+import { statusBadge } from "../status-display";
 import { useShortcutPlatform } from "@/components/layout/ShortcutPlatform";
 import { shortcutAria, shortcutLabel } from "@/lib/keyboard-shortcut";
-
-/** One row of the split button's menu. Closes the `<details>` it lives in on the way out, so
- *  the menu is not left hanging over the page the operator just navigated away from. */
-function MenuItem({ label, reason, disabled, onSelect }: {
-  label: string;
-  /** Why this action is unavailable, shown on hover. `null` means it is available. */
-  reason: string | null;
-  disabled: boolean;
-  onSelect: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      disabled={disabled || !!reason}
-      title={reason ?? undefined}
-      onClick={(event) => {
-        const menu = event.currentTarget.closest("details");
-        if (menu) menu.open = false;
-        onSelect();
-      }}
-      className="rounded px-3 py-2 text-left text-sm text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:text-muted-foreground disabled:hover:bg-transparent"
-    >
-      {label}
-    </button>
-  );
-}
 
 export function CompositionEditorHeader({
   isExisting,
@@ -52,6 +29,7 @@ export function CompositionEditorHeader({
   aspectRatio,
   zoneCount,
   hasLayout,
+  hasZoneOverlap,
   isComplete,
   unboundZoneNames,
   onBack,
@@ -62,6 +40,7 @@ export function CompositionEditorHeader({
   onRedo,
   hasUnsavedChanges,
   onPublish,
+  onSaveForPublish,
   affectedCount,
   onPublishChanges,
   onShowPrograms,
@@ -84,6 +63,8 @@ export function CompositionEditorHeader({
   aspectRatio: string;
   zoneCount: number;
   hasLayout: boolean;
+  /** Core refuses overlapping Zones (ADR 0044 §3), so the save is blocked here instead of failing there. */
+  hasZoneOverlap: boolean;
   isComplete: boolean;
   unboundZoneNames: string[];
   onBack: () => void;
@@ -94,7 +75,9 @@ export function CompositionEditorHeader({
   onRedo: () => void;
   hasUnsavedChanges: boolean;
   /** The editor has no schedule or target fields, so Publish hands the saved Composition to the wizard. */
-  onPublish: () => void;
+  onPublish: (id?: string) => void;
+  /** Saves (and with `activate`, activates) for Publish to Channel…; resolves to the id, `null` on failure. */
+  onSaveForPublish: (activate: boolean) => Promise<string | null>;
   /** Active or scheduled Programs Publish Changes would re-publish (ADR 0078). */
   affectedCount: number;
   onPublishChanges: () => void;
@@ -117,28 +100,46 @@ export function CompositionEditorHeader({
   // The buttons own the reasons they are off, so the page does not have to restate them.
   const saveDisabledReason = !name.trim()
     ? "กรุณากรอกชื่อ Layout"
-    : !hasLayout ? "กรุณาเลือก Template หรือ Start blank" : null;
+    : !hasLayout ? "กรุณาเลือก Template หรือ Start blank"
+      : hasZoneOverlap ? "แก้ Zone ที่ซ้อนทับกันก่อนบันทึก" : null;
   // ADR 0049 §10 via ADR 0063 §8: the menu item states *how many* Zones are still unbound,
   // which the frames' single button had no room to say.
   const activateDisabledReason = saveDisabledReason
     ?? (!isComplete ? `ยังไม่ได้ผูก Content ให้ ${unboundZoneNames.length} Zone: ${unboundZoneNames.join(", ")}` : null);
   const saveState = saveAction(status);
-  // QA 2026-10-08 #4: a Draft Layout cannot air, so the wizard would refuse it at the end; say so
-  // here instead. Same rule as the wizard's Layout picker (non-draft), which also offers Inactive.
-  const publishDisabledReason = !isExisting
-    ? "บันทึก Layout ก่อนเผยแพร่"
-    : hasUnsavedChanges
-      ? "บันทึกการแก้ไขล่าสุดก่อนเผยแพร่"
-      : status === "draft"
-        ? `Activate Layout ก่อนเผยแพร่${isComplete ? "" : ` — ยังไม่ผูก Content ${unboundZoneNames.length} Zone`}`
+  // QA 2026-10-08 #4: only an Active Layout can air (Core refuses Draft and Inactive alike). ADR 0116 §6:
+  // Publish to Channel… offers the save / activation it needs instead of a disabled item with a tooltip.
+  const publishPrep: PublishPrep | null =
+    status !== "active"
+      ? {
+          title: "Layout ต้อง Active ก่อนเผยแพร่",
+          description: activateDisabledReason
+            ? `ยังเปิดใช้งานไม่ได้: ${activateDisabledReason}`
+            : "ระบบจะบันทึกและเปิดใช้งาน Layout นี้ แล้วพาไปสร้าง Program ต่อ",
+          action: activateDisabledReason ? null : { label: "Save & Activate แล้วไปต่อ", run: () => onSaveForPublish(true) },
+        }
+      : hasUnsavedChanges
+        ? {
+            title: "มีการแก้ไขที่ยังไม่บันทึก",
+            description: saveDisabledReason ?? "บันทึกการแก้ไขล่าสุดก่อน แล้วไปสร้าง Program ต่อ",
+            action: saveDisabledReason ? null : { label: "Save แล้วไปต่อ", run: () => onSaveForPublish(false) },
+          }
         : null;
 
+  // Leaving the field keeps what was typed, as the Playlist editor does (ADR 0127 §10). Enter / ✓ / Escape
+  // close the field themselves; their own blur is skipped.
+  const isClosingName = useRef(false);
   const commitName = () => {
+    isClosingName.current = true;
     onNameChange(inputRef.current?.value ?? name);
     setEditing(false);
   };
+  const cancelName = () => {
+    isClosingName.current = true;
+    setEditing(false);
+  };
   const updatedLabel = savedAt ? `Updated ${savedAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}` : "Not saved";
-  const statusVariant: Record<CompositionStatus, "warning" | "success" | "neutral"> = { draft: "warning", active: "success", inactive: "neutral" };
+  const badge = statusBadge(status);
 
   return (
     <div className="flex min-h-[68px] shrink-0 flex-wrap items-center justify-between gap-3 py-2">
@@ -153,10 +154,21 @@ export function CompositionEditorHeader({
           <ArrowLeftIcon />
         </button>
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <p className="text-[11px] text-muted-foreground">Layouts <span aria-hidden="true">›</span> {name.trim() || "Untitled Layout"}</p>
+          <p className="text-ui text-muted-foreground">Layouts <span aria-hidden="true">›</span> {name.trim() || "Untitled Layout"}</p>
           <div className="flex min-w-0 items-center gap-2">
           {editing ? <>
-            <input ref={inputRef} autoFocus defaultValue={name} maxLength={100} aria-label="Layout name" placeholder={isExisting ? "Edit Layout" : "New Layout"} onKeyDown={(event) => { if (event.key === "Enter") commitName(); if (event.key === "Escape") setEditing(false); }} className="min-w-0 flex-1 border-b border-primary bg-transparent text-sm font-bold text-foreground outline-none" />
+            <input
+              ref={inputRef}
+              autoFocus
+              defaultValue={name}
+              maxLength={100}
+              aria-label="Layout name"
+              placeholder={isExisting ? "Edit Layout" : "New Layout"}
+              onFocus={() => { isClosingName.current = false; }}
+              onBlur={() => { if (!isClosingName.current) commitName(); }}
+              onKeyDown={(event) => { if (event.key === "Enter") commitName(); if (event.key === "Escape") cancelName(); }}
+              className="min-w-0 flex-1 border-b border-primary bg-transparent text-sm font-bold text-foreground outline-none"
+            />
             <button type="button" onClick={commitName} aria-label="ยืนยันชื่อ Layout" className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-primary hover:bg-accent"><CheckIcon /></button>
           </> : <>
             <h1 className="min-w-0 break-words text-sm font-bold leading-tight text-foreground">{name.trim() || "Untitled Layout"}</h1>
@@ -164,7 +176,7 @@ export function CompositionEditorHeader({
           </>}
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <Badge variant={statusVariant[status]} className="rounded-full px-2 py-0 text-[10px]">{status[0].toUpperCase() + status.slice(1)}</Badge>
+            <Badge variant="pill" color={badge.color} className="px-2 py-0 text-2xs">{badge.label}</Badge>
             <span className="text-xs text-muted-foreground">{referenceResolution ?? aspectRatio} · {zoneCount} {zoneCount === 1 ? "Zone" : "Zones"} · {updatedLabel}</span>
             {affectedCount > 0 && <button type="button" onClick={onShowPrograms} className="text-xs font-medium text-primary hover:underline">Used by {affectedCount} program{affectedCount === 1 ? "" : "s"}</button>}
           </div>
@@ -180,37 +192,17 @@ export function CompositionEditorHeader({
             Save as Template
           </Button>
 
-          <div className="flex">
-            <Button
-              size="sm"
-              className={saveState.canActivate ? "rounded-r-none" : undefined}
-              onClick={onSaveDraft}
-              disabled={saving || !!saveDisabledReason}
-              title={saveDisabledReason ?? undefined}
-            >
-              {saving ? "กำลังบันทึก..." : saveState.label}
-            </Button>
-            {saveState.canActivate && <details
-              className="relative"
-              onBlur={(event) => {
-                if (!event.currentTarget.contains(event.relatedTarget)) event.currentTarget.open = false;
-              }}
-            >
-              <summary
-                aria-label="ตัวเลือกการบันทึก"
-                className={`${buttonVariants({ size: "sm" })} cursor-pointer rounded-l-none border-l border-primary-foreground/25 px-2 list-none [&::-webkit-details-marker]:hidden`}
-              >
-                ▾
-              </summary>
-              <div className="absolute right-0 z-10 mt-1 flex w-56 flex-col rounded-lg border border-border bg-card p-1 shadow-lg">
-                <MenuItem label="Save & Activate" reason={activateDisabledReason} disabled={saving} onSelect={onActivate} />
-              </div>
-            </details>}
-          </div>
+          <SaveSplitButton
+            label={saveState.label}
+            saving={saving}
+            disabledReason={saveDisabledReason}
+            onSave={onSaveDraft}
+            alternate={saveState.canActivate ? { label: "Save & Activate", disabledReason: activateDisabledReason, onSelect: onActivate } : undefined}
+          />
           <PublishSplitButton
             disabled={saving}
             hasAffectedPrograms={affectedCount > 0}
-            publishToChannelDisabledReason={publishDisabledReason}
+            publishToChannelPrep={publishPrep}
             onPublishChanges={onPublishChanges}
             onPublishToChannel={onPublish}
           />

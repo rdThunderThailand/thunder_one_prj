@@ -6,10 +6,10 @@ import {
   draftFromChannel,
   geometryMismatch,
   step1Valid,
-  step2Valid,
   toCreateChannelPayload,
   toUpdateChannelPayload,
   withAutoMappedScreens,
+  withoutPlayer,
   withPlayer,
 } from "./create-wizard-state.ts";
 import type { ChannelDetail } from "./types/index.ts";
@@ -17,9 +17,6 @@ import type { ChannelDetail } from "./types/index.ts";
 assert.equal(step1Valid(DEFAULT_CREATE_CHANNEL_DRAFT), false);
 assert.equal(step1Valid({ ...DEFAULT_CREATE_CHANNEL_DRAFT, name: "  " }), false);
 assert.equal(step1Valid({ ...DEFAULT_CREATE_CHANNEL_DRAFT, name: "Cafe Menu Board" }), true);
-
-assert.equal(step2Valid(DEFAULT_CREATE_CHANNEL_DRAFT), false);
-assert.equal(step2Valid({ ...DEFAULT_CREATE_CHANNEL_DRAFT, playerId: "player-1" }), true);
 
 // Single mode: no screens, canvas = the picked resolution directly.
 assert.deepEqual(withAutoMappedScreens(DEFAULT_CREATE_CHANNEL_DRAFT).screens, []);
@@ -53,7 +50,9 @@ assert.equal(
   null,
 );
 
-assert.throws(() => toCreateChannelPayload({ ...DEFAULT_CREATE_CHANNEL_DRAFT, name: "Cafe" }));
+// ADR 0122 rule 4: a Channel may be saved with no Player yet (a Draft).
+assert.equal(toCreateChannelPayload(DEFAULT_CREATE_CHANNEL_DRAFT).player_id, null);
+assert.equal(withoutPlayer(withPlayer(DEFAULT_CREATE_CHANNEL_DRAFT, { id: "player-1", resolution: null })).playerId, null);
 
 const portraitPlayer = {
   id: "player-1",
@@ -92,7 +91,6 @@ function channelDetail(over: Partial<ChannelDetail> = {}): ChannelDetail {
     name: "Cafe Menu Board",
     description: "Menu display",
     lifecycle: "active",
-    status: "active",
     category: "dooh",
     channel_type: null,
     location: { id: "loc-1", name: "Main Restaurant" },
@@ -107,6 +105,9 @@ function channelDetail(over: Partial<ChannelDetail> = {}): ChannelDetail {
     revision: 2,
     updated_at: "2026-09-14T00:00:00Z",
     created_at: "2026-08-01T00:00:00Z",
+    blocking_programs: [],
+    draft_programs: [],
+    has_history: false,
     ...over,
   };
 }

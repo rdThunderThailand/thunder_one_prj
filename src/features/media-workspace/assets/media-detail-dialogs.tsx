@@ -63,7 +63,7 @@ export function MoveToFolderDialog({
             <div className="flex items-center gap-2 border-b border-border p-2">
               <label className="relative flex-1">
                 <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-                <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search folders..." className="h-8 py-1 pl-8 text-[11px]" />
+                <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search folders..." className="h-8 py-1 pl-8 text-ui" />
               </label>
             </div>
             <div className="max-h-64 overflow-y-auto p-2">
@@ -73,7 +73,7 @@ export function MoveToFolderDialog({
                   type="button"
                   onClick={() => setDestination(option.id)}
                   className={cn(
-                    "flex h-8 w-full items-center gap-2 rounded-md px-2 text-left text-[11px] font-medium",
+                    "flex h-8 w-full items-center gap-2 rounded-md px-2 text-left text-ui font-medium",
                     destination === option.id ? "bg-accent text-primary" : "hover:bg-muted",
                   )}
                 >
@@ -82,10 +82,10 @@ export function MoveToFolderDialog({
                   {option.name}
                 </button>
               ))}
-              {!list.length && <p className="p-2 text-[11px] text-muted-foreground">No folders match your search.</p>}
+              {!list.length && <p className="p-2 text-ui text-muted-foreground">No folders match your search.</p>}
             </div>
           </div>
-          <div className="space-y-3 rounded-lg border border-border p-3 text-[11px]">
+          <div className="space-y-3 rounded-lg border border-border p-3 text-ui">
             <div className="flex items-center gap-2">
               <div className="w-16 overflow-hidden rounded border border-border">
                 <MediaPreview asset={asset} thumbnailUrl={thumbnailUrl} />
@@ -100,7 +100,7 @@ export function MoveToFolderDialog({
               <p className="text-muted-foreground">Selected Destination</p>
               <strong>{destination === undefined ? "—" : folderPath(folders, destination)}</strong>
             </div>
-            <p className="text-[10px] text-muted-foreground">All existing usage will remain unchanged.</p>
+            <p className="text-2xs text-muted-foreground">All existing usage will remain unchanged.</p>
           </div>
         </div>
         <DialogFooter>

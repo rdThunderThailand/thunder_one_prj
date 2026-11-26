@@ -31,12 +31,21 @@ export function useTrashBatch({ inTrash, trashed, reload, onError }: {
     try {
       const results = await Promise.allSettled(emptyTrashTargets.map((playlist) => permanentlyDeletePlaylist(playlist.id)));
       const deleted = results.filter((result) => result.status === "fulfilled" && result.value.deleted).length;
-      const skipped = emptyTrashLocked + results.filter((result) => result.status === "fulfilled" && !result.value.deleted).length;
+      const refused = results.flatMap((result) => (result.status === "fulfilled" && !result.value.deleted ? [result.value] : []));
+      const inLayout = refused.filter((result) => result.reason === "in_layout").length;
+      const skipped = emptyTrashLocked + refused.length - inLayout;
       const failed = results.filter((result) => result.status === "rejected").length;
       await reload();
       setEmptyTrashOpen(false);
-      if (skipped || failed) {
-        onError(`ลบถาวรแล้ว ${deleted} playlist; ข้าม ${skipped} playlist ที่ถูกล็อก${failed ? `; ล้มเหลว ${failed} playlist` : ""}`);
+      if (skipped || inLayout || failed) {
+        onError(
+          [
+            `ลบถาวรแล้ว ${deleted} playlist`,
+            skipped ? `ข้าม ${skipped} playlist ที่ถูกล็อก` : "",
+            inLayout ? `ถูกใช้ใน Layout ${inLayout} playlist` : "",
+            failed ? `ล้มเหลว ${failed} playlist` : "",
+          ].filter(Boolean).join("; ")
+        );
       }
     } catch (err) {
       onError(classifyApiError(err, "ล้างถังขยะไม่สำเร็จ").message);

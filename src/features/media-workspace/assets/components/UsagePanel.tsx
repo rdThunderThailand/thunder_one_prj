@@ -17,16 +17,16 @@ export function UsagePanel({ assetId }: { assetId: string }) {
       </div>
       <div className="mt-3 space-y-3">
         {loading && (
-          <p role="status" className="text-[11px] text-muted-foreground">
+          <p role="status" className="text-ui text-muted-foreground">
             Loading usage…
           </p>
         )}
-        {failed && <p className="rounded-lg bg-muted p-3 text-[11px] leading-5 text-muted-foreground">Usage could not be loaded.</p>}
-        {current && (isInUse(current) ? <UsageGroups usage={current} /> : <p className="rounded-lg bg-muted p-3 text-[11px] leading-5 text-muted-foreground">Not used anywhere.</p>)}
+        {failed && <p className="rounded-lg bg-muted p-3 text-ui leading-5 text-muted-foreground">Usage could not be loaded.</p>}
+        {current && (isInUse(current) ? <UsageGroups usage={current} /> : <p className="rounded-lg bg-muted p-3 text-ui leading-5 text-muted-foreground">Not used anywhere.</p>)}
         {current && current.coverOf.length > 0 && (
-          <p className="text-[11px] text-muted-foreground">Cover of {current.coverOf.map((playlist) => playlist.name).join(", ")}.</p>
+          <p className="text-ui text-muted-foreground">Cover of {current.coverOf.map((playlist) => playlist.name).join(", ")}.</p>
         )}
-        {current?.history && <p className="text-[11px] text-muted-foreground">Has broadcast history — kept for Playback Proof.</p>}
+        {current?.history && <p className="text-ui text-muted-foreground">Has broadcast history — kept for Playback Proof.</p>}
       </div>
     </section>
   );

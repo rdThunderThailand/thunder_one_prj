@@ -5,6 +5,7 @@ import { FileImageIcon as FileImage } from "@/components/ui/icons";
 import { LazyVideo } from "@/components/ui/LazyVideo";
 import { Badge } from "@/components/ui/Badge";
 import { isVideoUrl } from "@/lib/media-kind";
+import { deletedChannelLabel } from "../../channels/channel-logic";
 import type { PlaybackProofEntry } from "../playback-proof-api";
 import { FAILURE_LABELS, OUTCOME_BADGES, formatDuration, formatPlayedAt, sourceLabel } from "../playback-proof-view";
 
@@ -39,7 +40,7 @@ function ResultCell({ entry }: { entry: PlaybackProofEntry }) {
   return (
     <div className="flex flex-col items-start gap-1">
       <Badge variant={badge.variant}>{badge.label}</Badge>
-      {entry.failure_reason && <span className="text-[9px] text-muted-foreground">{FAILURE_LABELS[entry.failure_reason]}</span>}
+      {entry.failure_reason && <span className="text-2xs text-muted-foreground">{FAILURE_LABELS[entry.failure_reason]}</span>}
     </div>
   );
 }
@@ -57,9 +58,9 @@ export function PlaybackProofTable({
 }) {
   return (
     <div className="overflow-x-auto">
-      <table className="w-full min-w-[1000px] text-left text-[10px]">
+      <table className="w-full min-w-[1000px] text-left text-2xs">
         <thead>
-          <tr className="text-[9px] text-muted-foreground">
+          <tr className="text-2xs text-muted-foreground">
             {HEADERS.map((header) => (
               <th
                 key={header}
@@ -92,35 +93,39 @@ export function PlaybackProofTable({
                     aria-label={`Open detail for ${entry.media.title} at ${playedAt.time}`}
                     className="text-left"
                   >
-                    <span className="block text-[11px] font-semibold text-foreground">{playedAt.time}</span>
-                    <span className="block text-[9px] text-muted-foreground">{playedAt.date}</span>
+                    <span className="block text-ui font-semibold text-foreground">{playedAt.time}</span>
+                    <span className="block text-2xs text-muted-foreground">{playedAt.date}</span>
                   </button>
                 </td>
                 <td className="max-w-56 px-4 py-3">
-                  {entry.channel ? (
+                  {entry.channel?.deleted ? (
+                    <span className="block truncate text-ui font-semibold text-muted-foreground">
+                      {deletedChannelLabel(entry.channel.name, true)}
+                    </span>
+                  ) : entry.channel ? (
                     <Link
                       href={`/media-workspace/channels?channel=${entry.channel.id}`}
                       onClick={(event) => event.stopPropagation()}
-                      className="block truncate text-[11px] font-semibold text-foreground hover:text-primary"
+                      className="block truncate text-ui font-semibold text-foreground hover:text-primary"
                     >
                       {entry.channel.name}
                     </Link>
                   ) : (
                     <span
                       title="This screen was not in an active Channel when it reported the play."
-                      className="block truncate text-[11px] font-semibold text-muted-foreground"
+                      className="block truncate text-ui font-semibold text-muted-foreground"
                     >
                       No active Channel
                     </span>
                   )}
-                  <p className="truncate text-[9px] text-muted-foreground">{entry.device.name ?? "Media Device"}</p>
+                  <p className="truncate text-2xs text-muted-foreground">{entry.device.name ?? "Media Device"}</p>
                 </td>
                 <td className="max-w-48 px-4 py-3">
                   {entry.program ? (
                     <Link
                       href={`/media-workspace/program/${entry.program.id}`}
                       onClick={(event) => event.stopPropagation()}
-                      className="block truncate text-[11px] font-semibold text-foreground hover:text-primary"
+                      className="block truncate text-ui font-semibold text-foreground hover:text-primary"
                     >
                       {entry.program.name}
                     </Link>
@@ -135,11 +140,11 @@ export function PlaybackProofTable({
                   <div className="flex min-w-0 items-center gap-2">
                     <MediaThumb url={entry.media.thumbnail_url} />
                     <div className="min-w-0">
-                      <p className="truncate text-[11px] font-semibold text-foreground">{entry.media.title}</p>
+                      <p className="truncate text-ui font-semibold text-foreground">{entry.media.title}</p>
                       {entry.media.in_trash && (
                         <Badge
                           variant="neutral"
-                          className="mt-0.5 px-1.5 py-0 text-[9px]"
+                          className="mt-0.5 px-1.5 py-0 text-2xs"
                         >
                           {entry.media.file_deleted ? "File deleted" : "In Trash"}
                         </Badge>

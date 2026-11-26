@@ -127,7 +127,7 @@ export function AssetPreview({ asset, previewUrl, thumbnailUrl }: { asset: Media
           <span className="pointer-events-none absolute inset-0 grid place-items-center">
             <i className="grid h-9 w-9 place-items-center rounded-full bg-overlay text-primary-foreground"><Play className="ml-0.5 h-4 w-4 fill-current" /></i>
           </span>
-          {duration && <span className="absolute bottom-2 right-2 rounded bg-overlay px-1.5 py-0.5 text-[8px] text-primary-foreground">{duration}</span>}
+          {duration && <span className="absolute bottom-2 right-2 rounded bg-overlay px-1.5 py-0.5 text-3xs text-primary-foreground">{duration}</span>}
         </>
       )}
     </div>
@@ -177,8 +177,8 @@ export function AssetCard({ asset, trash, folders, hasHistory = false, onRefresh
       <div className="flex items-start gap-2 p-2.5">
         <span className="mt-0.5 text-primary">{asset.kind === "video" ? <FileVideo className="h-3.5 w-3.5" /> : <ImageIcon className="h-3.5 w-3.5" />}</span>
         <div className="min-w-0 flex-1">
-          <Link href={href} className="block truncate text-[10px] font-semibold hover:text-primary">{label}</Link>
-          <p className="mt-1 truncate text-[8px] text-muted-foreground">
+          <Link href={href} className="block truncate text-2xs font-semibold hover:text-primary">{label}</Link>
+          <p className="mt-1 truncate text-3xs text-muted-foreground">
             {formatFormat(asset)} · {formatBytes(asset.file?.file_size_bytes)} · {formatDate(asset.created_at)}
           </p>
         </div>
@@ -186,11 +186,11 @@ export function AssetCard({ asset, trash, folders, hasHistory = false, onRefresh
       </div>
       {trash && (
         <div className="flex gap-2 border-t border-border p-2.5">
-          <Button variant="outline" size="sm" className="h-7 flex-1 text-[9px]" onClick={async () => { await restoreMediaAsset(asset.id); onRefresh(); }}>
+          <Button variant="outline" size="sm" className="h-7 flex-1 text-2xs" onClick={async () => { await restoreMediaAsset(asset.id); onRefresh(); }}>
             <Undo2 className="h-3 w-3" />
             Recover
           </Button>
-          <Button variant="outline" size="sm" className="h-7 flex-1 text-[9px] text-destructive" onClick={() => setConfirm("delete")}>
+          <Button variant="outline" size="sm" className="h-7 flex-1 text-2xs text-destructive" onClick={() => setConfirm("delete")}>
             <Trash2 className="h-3 w-3" />
             Delete
           </Button>
@@ -198,7 +198,7 @@ export function AssetCard({ asset, trash, folders, hasHistory = false, onRefresh
       )}
       {trash && hasHistory && (
         <div className="border-t border-border px-2.5 py-1.5">
-          <Badge variant="neutral" className="px-1.5 py-0 text-[8px]">Has broadcast history</Badge>
+          <Badge variant="neutral" className="px-1.5 py-0 text-3xs">Has broadcast history</Badge>
         </div>
       )}
       <TrashAssetsDialog items={items} open={confirm === "trash"} onOpenChange={(open) => { if (!open) setConfirm(null); }} onConfirm={() => void moveToTrash()} />

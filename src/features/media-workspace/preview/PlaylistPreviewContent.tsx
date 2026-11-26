@@ -41,7 +41,6 @@ export function PlaylistPreviewContent({ preview, assets, active = true }: {
           geometryOptions={[]}
           allowActualSize={false}
           active={active}
-          controlsPlacement="overlay"
           seekRequest={seekRequest}
           onFrameChange={setFrame}
         />
@@ -52,7 +51,7 @@ export function PlaylistPreviewContent({ preview, assets, active = true }: {
           frame={frame}
           onSeek={(seconds) => setSeekRequest((current) => ({ seconds, id: (current?.id ?? 0) + 1 }))}
         />
-        <p className="mt-2 rounded-lg border border-primary-foreground/15 bg-primary-foreground/5 px-3 py-2 text-[11px] text-primary-foreground/80">
+        <p className="mt-2 rounded-lg border border-primary-foreground/15 bg-primary-foreground/5 px-3 py-2 text-ui text-primary-foreground/80">
           This is a preview only. Actual playback may vary slightly depending on your screen and network.
         </p>
       </section>
@@ -83,7 +82,7 @@ function PlaylistTimelineStrip({ items, assets, schedule, frame, onSeek }: {
   const assetById = useMemo(() => Object.fromEntries(assets.map((asset) => [asset.id, asset])), [assets]);
   return (
     <section className="mt-4">
-      <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-primary-foreground/70">
+      <p className="text-ui font-bold uppercase tracking-[0.08em] text-primary-foreground/70">
         Playlist Timeline <span className="font-medium normal-case tracking-normal">(Total {formatDuration(schedule.totalSeconds)})</span>
       </p>
       <div className="mt-2 flex gap-2 overflow-x-auto pb-2">
@@ -100,10 +99,10 @@ function PlaylistTimelineStrip({ items, assets, schedule, frame, onSeek }: {
             >
               <span className={`relative block aspect-video overflow-hidden rounded-lg border-2 bg-t1-black ${active ? "border-primary" : "border-transparent hover:border-primary-foreground/30"}`}>
                 <MediaThumb url={previews.urls[item.mediaAssetId]} kind={asset?.kind} alt={item.label ?? ""} className="h-full w-full rounded-none" />
-                <span className="absolute left-1.5 top-1.5 grid h-4 min-w-4 place-items-center rounded bg-overlay px-1 text-[10px] font-bold text-primary-foreground">{index + 1}</span>
+                <span className="absolute left-1.5 top-1.5 grid h-4 min-w-4 place-items-center rounded bg-overlay px-1 text-2xs font-bold text-primary-foreground">{index + 1}</span>
               </span>
-              <span className="mt-1.5 block truncate text-[11px] font-semibold text-primary-foreground">{item.label ?? "Untitled item"}</span>
-              <span className="text-[10px] text-primary-foreground/60">{asset?.kind === "video" ? "Video" : "Image"} · {seconds != null ? formatDuration(seconds) : "—"}</span>
+              <span className="mt-1.5 block truncate text-ui font-semibold text-primary-foreground">{item.label ?? "Untitled item"}</span>
+              <span className="text-2xs text-primary-foreground/60">{asset?.kind === "video" ? "Video" : "Image"} · {seconds != null ? formatDuration(seconds) : "—"}</span>
             </button>
           );
         })}

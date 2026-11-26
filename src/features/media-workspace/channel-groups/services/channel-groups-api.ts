@@ -101,20 +101,3 @@ export async function setChannelGroupMembers(id: string, channelIds: string[]): 
     unwrapData(await requestApi<unknown>("PUT", `/media/channel-groups/${id}/members`, { channel_ids: channelIds }))
   );
 }
-
-/** `media_channel_groups_set_members` / `_update` / `media_channel_set_groups` all raise this
- *  shape from the same partial unique index (ADR 0074 §5) — the raw text already names both
- *  Groups, so it is shown as-is rather than routed through `classifyApiError`'s generic
- *  "Invalid input:" bucket, which would otherwise swallow the names. */
-export function isSyncConflict(message: string): boolean {
-  return (
-    message.includes("already synchronized elsewhere") ||
-    message.includes("already in another synchronized group") ||
-    message.includes("only one synchronized group")
-  );
-}
-
-/** `media_channel_groups_delete` refuses while any Publication still targets the Group. */
-export function isGroupInUse(message: string): boolean {
-  return message.startsWith("Already in use:");
-}

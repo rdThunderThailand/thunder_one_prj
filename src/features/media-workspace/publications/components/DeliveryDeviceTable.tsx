@@ -161,7 +161,7 @@ export function DeliveryDeviceTable({
                         <span>
                           {target.device_name ?? target.device_id}
                           {target.via_groups && target.via_groups.length > 0 && (
-                            <span className="mt-0.5 block text-[11px] font-normal text-muted-foreground">
+                            <span className="mt-0.5 block text-ui font-normal text-muted-foreground">
                               via {target.via_groups.join(", ")}
                             </span>
                           )}

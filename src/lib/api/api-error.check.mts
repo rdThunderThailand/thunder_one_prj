@@ -4,17 +4,20 @@
  *     node src/lib/api/api-error.check.mts
  *
  * ponytail: node:assert plus Node's native TS stripping, same as the other
- * *.check.mts files here. api-error.ts imports nothing, so this loads clean.
+ * *.check.mts files here. The rule fixtures live in core-refusal-rules.check.mts.
  */
 import assert from "node:assert/strict";
 import {
   ApiError,
   classifyApiError,
+  UserFacingError,
+  deletedChannelMessage,
   inactiveChannelMessage,
-  isConflict,
-  isDuplicateName,
+  layoutNotReadyMessage,
   trashedAssetNames,
   deletedFileNames,
+  scheduleEndedMessage,
+  type PublishCause,
 } from "./api-error.ts";
 
 const FALLBACK = "Failed to save draft.";
@@ -25,10 +28,8 @@ for (const status of [400, 409, 500]) {
   const c = classifyApiError(new ApiError("Already active: publication is not a draft", status), FALLBACK);
   assert.equal(c.kind, "already-active", `status ${status} should still classify as already-active`);
 }
-assert.equal(
-  classifyApiError(new Error("ALREADY ACTIVE"), FALLBACK).kind,
-  "already-active" // case-insensitive, and works on a plain Error too
-);
+// The match is the exact Core prefix now, so a lower-cased or unprefixed lookalike is not "already active".
+assert.equal(classifyApiError(new Error("ALREADY ACTIVE"), FALLBACK).kind, "rejected");
 
 // docs/adr/0003-draft-optimistic-locking.md: conflict is matched on the exact
 // "Already modified:" prefix media_publication_upsert raises, not on bare 409 —
@@ -38,7 +39,6 @@ const conflict = classifyApiError(new ApiError("Already modified: draft was chan
 assert.equal(conflict.kind, "conflict");
 assert.notEqual(conflict.message, "Already modified: draft was changed elsewhere"); // replaced with actionable guidance
 assert.ok(conflict.message.includes("โหลดหน้านี้ใหม่"));
-assert.ok(isConflict("Already modified: draft was changed elsewhere"));
 
 // media_channel_create/update raise "Already exists: a channel named X already exists" — this
 // must never reach the screen verbatim (raw backend text is not allowed to reach the user), and
@@ -48,25 +48,26 @@ const duplicate = classifyApiError(new ApiError("Already exists: a channel named
 assert.equal(duplicate.kind, "rejected");
 assert.notEqual(duplicate.message, "Already exists: a channel named Foo already exists");
 assert.ok(!duplicate.message.includes("Foo")); // no leaked backend text of any kind
-assert.ok(isDuplicateName("Already exists: a channel named Foo already exists"));
-assert.equal(isDuplicateName("Already modified: draft was changed elsewhere"), false);
+assert.equal(duplicate.reason, "duplicate-name");
+assert.equal(conflict.reason, undefined); // a revision conflict is not a name collision
 
 // A 409 that isn't our specific revision-conflict message must NOT be treated as
 // one — e.g. media_video_delete's "Already in use: ..." would otherwise tell a
 // user deleting a referenced video to go reload the publication wizard.
 assert.equal(classifyApiError(new ApiError("Already in use: video is still referenced by a playlist", 409), FALLBACK).kind, "rejected");
 assert.equal(classifyApiError(new ApiError("row version mismatch", 409), FALLBACK).kind, "rejected");
-assert.equal(isConflict("Already in use: video is still referenced by a playlist"), false);
 
 // ADR 0074 §5 activation guard: unlike the generic "Invalid input:" catch-all below, these two
-// name the Group and the missing/conflicting Channels — they must reach the operator verbatim,
-// not get swallowed into the generic Thai "ข้อมูลที่กรอกยังไม่ครบ" message.
+// name the Group and the missing/conflicting Channels — the names are kept (ADR 0114 translates the
+// English around them), not swallowed into the generic Thai "ข้อมูลที่กรอกยังไม่ครบ" message.
 const incompleteGroup = classifyApiError(
   new ApiError("Invalid input: synchronized group target is incomplete — S (missing: C2)", 400),
   FALLBACK,
 );
 assert.equal(incompleteGroup.kind, "rejected");
-assert.equal(incompleteGroup.message, "Invalid input: synchronized group target is incomplete — S (missing: C2)");
+assert.equal(incompleteGroup.cause, "targets");
+assert.ok(incompleteGroup.message.includes("S (ขาด: C2)"));
+assert.ok(!/synchronized|missing/.test(incompleteGroup.message));
 
 const directInGroup = classifyApiError(
   new ApiError(
@@ -76,7 +77,9 @@ const directInGroup = classifyApiError(
   FALLBACK,
 );
 assert.equal(directInGroup.kind, "rejected");
-assert.ok(directInGroup.message.includes("group: S"));
+assert.equal(directInGroup.cause, "targets");
+assert.ok(directInGroup.message.includes("Screen 01") && directInGroup.message.includes("กลุ่ม: S"));
+assert.ok(!/synchronized|channel:/.test(directInGroup.message));
 
 // 4xx means the request itself was refused — retrying it unchanged is pointless.
 assert.equal(classifyApiError(new ApiError("Invalid input: name required", 400), FALLBACK).kind, "rejected");
@@ -97,8 +100,15 @@ assert.equal(classifyApiError(new ApiError("gateway", 502), FALLBACK).kind, "ret
 // No status available (network drop, thrown string) — must NOT be reported as
 // "rejected", or the UI would hide the Retry the user actually needs.
 assert.equal(classifyApiError(new Error("Network Error"), FALLBACK).kind, "retryable");
-assert.equal(classifyApiError("something", FALLBACK).kind, "retryable");
-assert.equal(classifyApiError(undefined, FALLBACK).kind, "retryable");
+// ...and a thrown string or a frontend bug (a TypeError from a malformed payload) is not an outage:
+// retrying cannot fix it, so it is "rejected" with the caller's fallback (ADR 0126 §8).
+assert.equal(classifyApiError("something", FALLBACK).kind, "rejected");
+assert.equal(classifyApiError(undefined, FALLBACK).kind, "rejected");
+const malformed = classifyApiError(new TypeError("Malformed channel payload"), FALLBACK);
+assert.equal(malformed.kind, "rejected");
+assert.equal(malformed.message, FALLBACK);
+// tus-upload.ts marks its own fetch network failure with the axios code so it stays a retryable outage.
+assert.equal(classifyApiError(Object.assign(new TypeError("Failed to fetch"), { code: "ERR_NETWORK" }), FALLBACK).kind, "retryable");
 
 // A request that never got a response (axios "Network Error" / ERR_NETWORK /
 // timeout) must not reach the operator in English — the Thai retryable line
@@ -108,7 +118,10 @@ assert.equal(offline.kind, "retryable");
 assert.ok(offline.message.includes("เชื่อมต่อ"), "network failure should surface in Thai");
 assert.ok(!offline.message.includes("Network Error"));
 assert.equal(classifyApiError(Object.assign(new Error("timeout of 0ms exceeded"), { code: "ECONNABORTED" }), FALLBACK).message, offline.message);
-assert.equal(classifyApiError(new Error("อะไรบางอย่างพัง"), FALLBACK).message, "อะไรบางอย่างพัง");
+// Text the frontend wrote on purpose passes through; any other plain Error shows the fallback.
+assert.equal(classifyApiError(new UserFacingError("อะไรบางอย่างพัง"), FALLBACK).message, "อะไรบางอย่างพัง");
+assert.equal(classifyApiError(new Error("x"), FALLBACK).message, FALLBACK);
+assert.equal(classifyApiError(new TypeError("x"), FALLBACK).message, FALLBACK);
 
 // media_publication_activate refuses Targets that resolve to no device (Thunder_Core#134). The
 // backend wording must not reach the screen, and it must not fall into the generic "Invalid input:"
@@ -145,14 +158,17 @@ assert.ok(!trashed.message.includes("Invalid input"));
 // The fallback fills in only when there is no message to show.
 assert.equal(classifyApiError(undefined, FALLBACK).message, FALLBACK);
 assert.equal(classifyApiError(new Error(""), FALLBACK).message, FALLBACK);
-assert.equal(classifyApiError(new ApiError("HTTP Error 500", 500), FALLBACK).message, "HTTP Error 500");
+assert.equal(classifyApiError(new ApiError("HTTP Error 500", 500), FALLBACK).message, FALLBACK);
+const unmatched4xx = classifyApiError(new ApiError("Some Core text", 422), FALLBACK);
+assert.equal(unmatched4xx.kind, "rejected");
+assert.equal(unmatched4xx.message, FALLBACK);
 
-// ApiError must survive `instanceof Error` so existing message-matching keeps working
-// (usePublishDraft's isStaleDraftError relies on it).
-const stale = new ApiError("only draft publications can be edited", 400);
+// ApiError must survive `instanceof Error` so the table can read its message.
+const stale = new ApiError("Invalid input: only draft publications can be edited", 400);
 assert.ok(stale instanceof Error);
 assert.equal(stale.status, 400);
 assert.equal(stale.name, "ApiError");
+assert.equal(classifyApiError(stale, FALLBACK).reason, "stale-draft");
 
 // ADR 0099: each guard keeps the operator's names and drops the English, including the [publish]
 // tag Publish Changes puts in front.
@@ -161,6 +177,7 @@ const inactiveCases: [string, string][] = [
     "Invalid input: [publish] these channels are not active — activate them before publishing: boe_55, testandroid 1",
     "boe_55, testandroid 1",
   ],
+  ["Invalid input: these channels were deleted — remove them from this Program: Lobby, Hall", "Lobby, Hall"],
   ["Invalid input: only active channels can join a group — not active: Lobby", "Lobby"],
   ["Invalid input: only active channels can join a group — activate this channel first", "ช่องทางนี้"],
   ["Invalid input: remove this channel from its groups before deactivating: Floor 1, Floor 2", "Floor 1, Floor 2"],
@@ -172,5 +189,73 @@ for (const [raw, kept] of inactiveCases) {
   assert.ok(!/active|Invalid input/.test(c.message), `${raw} leaked English: ${c.message}`);
 }
 assert.equal(inactiveChannelMessage("Invalid input: the targets have no screens"), null);
+// ADR 0122 rule 16: a deleted target is its own cause, checked before "not active".
+assert.equal(
+  classifyApiError(new ApiError("Invalid input: these channels were deleted — remove them from this Program: Lobby", 400), FALLBACK).cause,
+  "channels-deleted",
+);
+assert.equal(deletedChannelMessage("Invalid input: the targets have no screens"), null);
+
+// Layout refusals from media_publication_activate: named in Thai, zone names kept, never the generic bucket.
+assert.ok(layoutNotReadyMessage("Invalid input: composition is not active — activate it before publishing")?.includes("Activate Layout"));
+// ADR 0126 §8: one neutral line for publish and Layout activate, which both raise "zone(s) … are unbound".
+assert.equal(
+  layoutNotReadyMessage("Invalid input: cannot activate an incomplete composition — zone(s) Main, Side are unbound"),
+  "Layout ยังไม่ได้ผูก Content ให้ Zone: Main, Side กรุณาผูก Content ให้ครบทุก Zone",
+);
+assert.equal(layoutNotReadyMessage("Invalid input: the targets have no screens"), null);
+const notActive = classifyApiError(new ApiError("Invalid input: composition is not active — activate it before publishing", 400), FALLBACK);
+assert.equal(notActive.kind, "rejected");
+assert.ok(!notActive.message.includes("ข้อมูลที่กรอกยังไม่ครบ"));
+
+// ADR 0114: every publish refusal names its cause, ahead of the generic and 404 buckets.
+const causeCases: [string, number, PublishCause][] = [
+  ["Invalid input: [schedule] end time is in the past", 400, "schedule-ended"],
+  ["Invalid input: starts_at is required", 400, "schedule-invalid"],
+  ["Invalid input: ends_at must be after starts_at", 400, "schedule-invalid"],
+  ["Invalid input: daily_start must be before daily_end", 400, "schedule-invalid"],
+  ["Invalid input: recurrence requires daily_start and daily_end", 400, "schedule-invalid"],
+  ["Invalid input: unknown timezone Mars/Base", 400, "schedule-invalid"],
+  ["Invalid input: recurrence.days must be integers 0-6 (0=Sun)", 400, "schedule-invalid"],
+  ["Invalid input: publication has no layout — add one before activating", 400, "no-content"],
+  ["Invalid input: publication has no playlist — add content before activating", 400, "no-content"],
+  ["not found: composition not found for this tenant", 404, "no-content"],
+  ["Invalid input: composition is not active — activate it before publishing", 400, "layout-not-active"],
+  ["Invalid input: cannot activate an incomplete composition — zone(s) Main, Side are unbound", 400, "zones-unbound"],
+  ["Invalid input: playlist 3f2a has no items — add content before activating", 400, "nothing-playable"],
+  ["Invalid input: composition 3f2a produced zero resolvable snapshot items", 400, "nothing-playable"],
+  ["Invalid input: at least one target is required", 400, "targets"],
+  ["not found: channel 3f2a not found for this tenant", 404, "targets"],
+  ["not found: channel group not found", 404, "targets"],
+  ["Invalid input: these channels are not active — activate them before publishing: Lobby", 400, "channels-inactive"],
+  ["Invalid input: these channels were deleted — remove them from this Program: Lobby", 400, "channels-deleted"],
+  ["Invalid input: the targets have no screens — add a screen", 400, "no-screens"],
+  ["Invalid input: cannot activate — replace this file: A.mp4", 400, "files"],
+];
+for (const [raw, status, cause] of causeCases) {
+  const c = classifyApiError(new ApiError(raw, status), FALLBACK);
+  assert.equal(c.cause, cause, raw);
+  assert.equal(c.kind, "rejected", raw);
+  assert.ok(/[฀-๿]/.test(c.message), `${raw} should be Thai: ${c.message}`);
+  assert.ok(!/Invalid input|not found:|cannot activate/.test(c.message), `${raw} leaked English: ${c.message}`);
+}
+// a channel *type* 404 and an overlap refusal are not publish causes
+assert.equal(classifyApiError(new ApiError("not found: channel type not found", 404), FALLBACK).cause, undefined);
+assert.equal(classifyApiError(new ApiError("Invalid input: cannot activate — equal-priority overlap with X; change priority", 400), FALLBACK).cause, undefined);
+assert.equal(classifyApiError(new ApiError("Invalid input: [schedule] end time is in the past — use End program instead", 400), FALLBACK).cause, undefined);
+assert.equal(classifyApiError(new ApiError("Invalid input: x", 400), FALLBACK).cause, undefined);
+
+// A mixed file refusal keeps every part and every name — none falls through to raw English.
+const mixed = classifyApiError(
+  new ApiError("Invalid input: cannot activate — replace this file: A.mp4; wait — conversion in flight: B.mp4; remove or restore from Trash: C.mp4; file was deleted, replace it: D.mp4", 400),
+  FALLBACK,
+);
+assert.equal(mixed.cause, "files");
+for (const name of ["A.mp4", "B.mp4", "C.mp4", "D.mp4"]) assert.ok(mixed.message.includes(name), name);
+assert.ok(!/replace this file|conversion in flight|Trash:/.test(mixed.message));
+
+assert.ok(scheduleEndedMessage("01/12/2026 09:00").includes("01/12/2026 09:00"));
+assert.ok(!scheduleEndedMessage().includes("undefined"));
+
 
 console.log("api-error.check.mts — all assertions passed");

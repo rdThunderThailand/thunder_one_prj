@@ -5,7 +5,7 @@ Identifier note: originally numbered0104 on the feature branch; renumbered0112 w
 **Status:** accepted · 2026-11-13 · scope decision only; implementation not started
 **Extends:** ADR 0096 and ADR 0098
 **Source:** owner acceptance of the shared-UI scope in the component-consolidation discussion
-**Plan:** `docs/design-system/plan-component-consolidation.md`
+**Plan:** `docs/shell/design-system/plan-component-consolidation.md`
 **Follow-up:** ADR 0105 resolves the Skeleton contract separately; the other family decisions remain open.
 
 Shared components serve Media, People, Thunder Care, Asset Workspace and Auth. Consolidate them

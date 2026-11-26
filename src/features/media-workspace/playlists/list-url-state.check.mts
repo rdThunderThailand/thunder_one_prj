@@ -29,6 +29,10 @@ assert.deepEqual(readListState(new URLSearchParams()), DEFAULT_STATE);
 const garbageParams = new URLSearchParams("status=nonsense&sort=xyz&page=-5&per=999&dir=sideways&type=invalid");
 assert.deepEqual(readListState(garbageParams), DEFAULT_STATE);
 
+// ADR 0125: an old ?status=inactive link falls back to "all" instead of matching nothing.
+assert.equal(readListState(new URLSearchParams("status=inactive")).filters.status, "all");
+assert.equal(readListState(new URLSearchParams("status=draft")).filters.status, "draft");
+
 // Valid dir but invalid sort -> both fall back
 const mismatchParams = new URLSearchParams("sort=xyz&dir=asc");
 assert.deepEqual(readListState(mismatchParams).sort, { key: "updated", dir: "desc" });

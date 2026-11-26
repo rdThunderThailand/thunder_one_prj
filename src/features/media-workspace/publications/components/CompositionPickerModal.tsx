@@ -20,7 +20,6 @@ import {
   compositionOrientation,
   defaultCompositionPickerFilters,
   filterCompositionPickerItems,
-  publishableCompositions,
   type CompositionPickerFilters,
 } from "../composition-picker-filter";
 import { pickerFolderCounts, pickerFolderMatcher, type PickerFolder } from "../picker-folder";
@@ -65,9 +64,15 @@ export function CompositionPickerModal({ selectedId, onClose, onSelect }: { sele
 
   useEffect(() => {
     let alive = true;
-    // ponytail: the endpoint's maximum page covers today's picker; page through it above 50 Layouts.
-    fetchCompositionLibrary({ pageSize: 50 })
-      .then((response) => { if (alive) setItems(publishableCompositions(response.data)); })
+    // ADR 0114: only Active Layouts are offered, so Core filters; a bound Layout that is not
+    // Active is dropped from the selection instead of staying selectable.
+    // ponytail: the endpoint's maximum page covers today's picker; page through it above 50 Active Layouts.
+    fetchCompositionLibrary({ pageSize: 50, status: "active" })
+      .then((response) => {
+        if (!alive) return;
+        setItems(response.data);
+        setStagedId((current) => (current && response.data.some((row) => row.id === current) ? current : null));
+      })
       .catch(() => { if (alive) setError("Failed to load Layouts."); });
     return () => { alive = false; };
   }, []);
@@ -152,23 +157,6 @@ export function CompositionPickerModal({ selectedId, onClose, onSelect }: { sele
       <div className="grid h-[min(42rem,calc(100vh-15rem))] min-h-[30rem] grid-cols-[11rem_minmax(0,1fr)_16rem] overflow-hidden border-b border-border">
         <PickerFilterPanel onClear={() => { setFilters(defaultCompositionPickerFilters); setFolder("all"); setPage(1); }}>
           <PickerFolderSection folders={folders} counts={folderCounts} value={folder} onChange={(next) => { setFolder(next); setPage(1); }} />
-          <PickerFilterSection label="Status" divided>
-            <div role="radiogroup" aria-label="Status">
-              <PickerFilterChoice checked={filters.status === "all"} label="All Status" onClick={() => update({ status: "all" })} />
-              <PickerFilterChoice
-                checked={filters.status === "active"}
-                label="Active"
-                marker={<span className="h-2 w-2 rounded-full bg-success" />}
-                onClick={() => update({ status: "active" })}
-              />
-              <PickerFilterChoice
-                checked={filters.status === "inactive"}
-                label="Inactive"
-                marker={<span className="h-2 w-2 rounded-full bg-border" />}
-                onClick={() => update({ status: "inactive" })}
-              />
-            </div>
-          </PickerFilterSection>
           <PickerFilterSection label="Orientation" divided>
             <div role="radiogroup" aria-label="Orientation">
               <PickerFilterChoice checked={filters.orientation === "all"} label="All Orientation" onClick={() => update({ orientation: "all" })} />
@@ -316,7 +304,7 @@ function LayoutGridCard({ item, selected, previews, onSelect }: CardProps) {
       <CompositionLibraryPreview zones={item.previewZones} referenceResolution={item.referenceResolution} previews={previews} className="w-full" />
       <div className="space-y-1 p-2">
         <p className="truncate text-xs font-semibold text-foreground">{item.name}</p>
-        <p className="text-[10px] text-muted-foreground">{compositionLayoutDisplayName(item)} · {item.zone_count} zones</p>
+        <p className="text-2xs text-muted-foreground">{compositionLayoutDisplayName(item)} · {item.zone_count} zones</p>
         <Badge color={badge.color} variant="pill">{badge.label}</Badge>
       </div>
     </button>
@@ -331,16 +319,16 @@ function LayoutRow({ item, selected, previews, onSelect }: CardProps) {
       onClick={onSelect}
       className={`grid w-full grid-cols-[1.5rem_5rem_minmax(0,1fr)_7rem] items-center gap-3 rounded-xl border p-2 text-left transition-colors ${selected ? "border-primary bg-accent ring-1 ring-primary/30" : "border-border hover:border-border hover:bg-muted"}`}
     >
-      <span className={`grid h-5 w-5 place-items-center rounded-full border text-[10px] ${selected ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card"}`}>
+      <span className={`grid h-5 w-5 place-items-center rounded-full border text-2xs ${selected ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card"}`}>
         {selected ? "✓" : ""}
       </span>
       <CompositionLibraryPreview zones={item.previewZones} referenceResolution={item.referenceResolution} previews={previews} className="h-12 w-20 rounded-lg" />
       <span className="min-w-0">
         <span className="flex items-center gap-2">
           <span className="truncate text-sm font-semibold text-foreground">{item.name}</span>
-          {item.tags?.[0] && <span className="shrink-0 rounded-full bg-t1-purple-50 px-2 py-0.5 text-[10px] font-medium text-t1-purple-700">{item.tags[0].name}</span>}
+          {item.tags?.[0] && <span className="shrink-0 rounded-full bg-t1-purple-50 px-2 py-0.5 text-2xs font-medium text-t1-purple-700">{item.tags[0].name}</span>}
         </span>
-        <span className="mt-1 flex flex-wrap gap-x-3 text-[11px] text-muted-foreground">
+        <span className="mt-1 flex flex-wrap gap-x-3 text-ui text-muted-foreground">
           <span>{compositionLayoutDisplayName(item)}</span>
           <span>{item.zone_count} zones</span>
           <span>{item.referenceResolution ?? "No resolution"}</span>
@@ -349,7 +337,7 @@ function LayoutRow({ item, selected, previews, onSelect }: CardProps) {
       </span>
       <span className="text-right">
         <Badge color={badge.color} variant="pill">{badge.label}</Badge>
-        <span className="mt-1 block truncate text-[10px] text-muted-foreground">{item.createdBy?.displayName ?? "—"}</span>
+        <span className="mt-1 block truncate text-2xs text-muted-foreground">{item.createdBy?.displayName ?? "—"}</span>
       </span>
     </button>
   );

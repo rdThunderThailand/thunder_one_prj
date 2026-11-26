@@ -14,23 +14,24 @@ import {
   republishPublication,
 } from "../services/publications-api";
 import { fetchPlaylist } from "@/features/media-workspace/playlists";
-import { publicationDisplayStatus, publicationStatusColor } from "../publication-status";
+import { mediaStatus } from "../../media-status";
 import { publicationDrift, type DriftFinding } from "../publication-drift";
-import type { PlaylistDetail, PublicationDetail } from "../types";
+import type { PlaylistDetail, PublicationDetail, PublicationSchedule } from "../types";
 import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
 import { NoAccess } from "@/components/ui/NoAccess";
+import { deletedChannelLabel } from "../../channels/channel-logic";
 import { DeliveryProgress } from "./DeliveryProgress";
-import { formatMonthDays } from "../schedule";
-import { lastAiringDay } from "../schedule-describe";
+import { formatDmy, WEEKDAYS } from "../schedule";
+import { describeSchedule, scheduleEdges } from "../schedule-airing";
 import { publicationPreviewTarget } from "@/features/media-workspace/preview/publication-preview-target";
 
 /** Names what changed, so re-publishing is a decision rather than a guess (ADR 0049 §11). */
 function describeDrift(finding: DriftFinding): string {
   switch (finding.level) {
     case "composition":
-      return "Composition ถูกแก้ไขหลังเผยแพร่";
+      return "Layout ถูกแก้ไขหลังเผยแพร่";
     case "layout":
-      return "Layout ของ Composition ถูกแก้ไขหลังเผยแพร่";
+      return "Template ของ Layout ถูกแก้ไขหลังเผยแพร่";
     case "playlist":
       return finding.zoneName
         ? `Playlist "${finding.playlistName}" ในโซน "${finding.zoneName}" ถูกแก้ไขหลังเผยแพร่`
@@ -52,6 +53,47 @@ function formatDate(dateStr?: string | null): string {
   } catch {
     return dateStr;
   }
+}
+
+/** The Schedule card's fields: the same summary text the wizard prints, read in the Schedule's own zone (ADR 0128 §7). */
+function ScheduleFields({ schedule }: { schedule: PublicationSchedule }) {
+  const summary = describeSchedule(schedule);
+  const edges = scheduleEdges(schedule);
+  const weekdays = WEEKDAYS.filter((d) => summary.days.includes(d.value)).map((d) => d.label).join(", ");
+  return (
+    <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div>
+        <dt className="text-xs font-medium text-muted-foreground">Starts At</dt>
+        <dd className="mt-1 text-sm text-foreground">
+          {`${formatDmy(edges.startDate)}, ${edges.startTime}`}
+        </dd>
+      </div>
+      <div>
+        <dt className="text-xs font-medium text-muted-foreground">Ends At</dt>
+        <dd className="mt-1 text-sm text-foreground">
+          {edges.endDate ? `${formatDmy(edges.endDate)}${edges.endTime ? `, ${edges.endTime}` : ""}` : "No end date"}
+        </dd>
+      </div>
+      <div>
+        <dt className="text-xs font-medium text-muted-foreground">Timezone</dt>
+        <dd className="mt-1 text-sm text-foreground">
+          {schedule.timezone}
+        </dd>
+      </div>
+      <div>
+        <dt className="text-xs font-medium text-muted-foreground">Recurrence</dt>
+        <dd className="mt-1 text-sm text-foreground">
+          <span>{[summary.title, summary.hours, summary.range].filter(Boolean).join(" · ")}</span>
+          {summary.days.length > 0 && (
+            <>
+              <br />
+              <span>{weekdays}</span>
+            </>
+          )}
+        </dd>
+      </div>
+    </dl>
+  );
 }
 
 export function PublicationDetailPage({ id }: { id: string }) {
@@ -84,7 +126,7 @@ export function PublicationDetailPage({ id }: { id: string }) {
             .catch((err) => {
               if (alive) {
                 setPlaylistError(
-                  err instanceof Error ? err.message : "ไม่สามารถโหลด playlist ได้"
+                  classifyApiError(err, "ไม่สามารถโหลด playlist ได้").message
                 );
               }
             });
@@ -108,7 +150,7 @@ export function PublicationDetailPage({ id }: { id: string }) {
       await deletePublication(id);
       router.push("/media-workspace/program");
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : "ลบไม่สำเร็จ");
+      setActionError(classifyApiError(err, "ลบไม่สำเร็จ").message);
       setActionBusy(false);
     }
   };
@@ -120,7 +162,7 @@ export function PublicationDetailPage({ id }: { id: string }) {
       await cancelPublication(id);
       router.push("/media-workspace/program");
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : "ยกเลิกไม่สำเร็จ");
+      setActionError(classifyApiError(err, "ยกเลิกไม่สำเร็จ").message);
       setActionBusy(false);
     }
   };
@@ -136,7 +178,7 @@ export function PublicationDetailPage({ id }: { id: string }) {
       setDetail(fresh);
       setRepublishConfirming(false);
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : "เผยแพร่ซ้ำไม่สำเร็จ");
+      setActionError(classifyApiError(err, "เผยแพร่ซ้ำไม่สำเร็จ").message);
     } finally {
       setActionBusy(false);
     }
@@ -176,9 +218,9 @@ export function PublicationDetailPage({ id }: { id: string }) {
   // the schedule window has since closed (docs/adr/0004).
   const isDraft = detail.status === "draft";
   const isActive = detail.status === "active";
-  // The label, by contrast, is the clock-aware one.
-  const displayStatus = publicationDisplayStatus(detail);
-  const statusColor = publicationStatusColor(displayStatus);
+  // The badge and subtitle show the server's `display_status` (ADR 0125 decision 4). It is absent
+  // only on a Core that predates ADR 0080, and then no badge shows rather than a guessed one.
+  const status = detail.display_status ? mediaStatus(detail.display_status) : null;
 
   const playlistItems = playlist?.items
     ? [...playlist.items].sort((a, b) => a.position - b.position)
@@ -194,7 +236,7 @@ export function PublicationDetailPage({ id }: { id: string }) {
       <PageHeader
         titleInTopbar
         title={detail.name}
-        subtitle={`Status: ${displayStatus}`}
+        subtitle={status ? `Status: ${status.label}` : undefined}
         actions={
           <div className="flex items-center gap-2">
             <Link href="/media-workspace/program" className={buttonClasses("secondary")}>
@@ -344,9 +386,13 @@ export function PublicationDetailPage({ id }: { id: string }) {
           <div>
             <dt className="text-xs font-medium text-muted-foreground">Status</dt>
             <dd className="mt-1">
-              <Badge color={statusColor} variant="pill">
-                {displayStatus}
-              </Badge>
+              {status ? (
+                <Badge color={status.color} variant="pill">
+                  {status.label}
+                </Badge>
+              ) : (
+                "—"
+              )}
             </dd>
           </div>
           <div>
@@ -474,7 +520,9 @@ export function PublicationDetailPage({ id }: { id: string }) {
                 {detail.publication_targets.map((target, idx) => (
                   <tr key={idx} className="border-t border-border">
                     <td className="py-2.5 pr-3 font-medium text-foreground">
-                      {target.name ?? target.device_id ?? target.channel_id ?? "—"}
+                      {target.name
+                        ? deletedChannelLabel(target.name, target.target_type === "channel" && target.deleted)
+                        : target.device_id ?? target.channel_id ?? "—"}
                     </td>
                     <td className="py-2.5 text-right text-muted-foreground">
                       {target.target_type}
@@ -495,51 +543,7 @@ export function PublicationDetailPage({ id }: { id: string }) {
           Schedule
         </h2>
         {detail.schedule ? (
-          <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <div>
-              <dt className="text-xs font-medium text-muted-foreground">Starts At</dt>
-              <dd className="mt-1 text-sm text-foreground">
-                {formatDate(detail.schedule.starts_at)}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-xs font-medium text-muted-foreground">Ends At</dt>
-              <dd className="mt-1 text-sm text-foreground">
-                {"freq" in detail.schedule.recurrence
-                  ? (lastAiringDay(detail.schedule) ?? "—")
-                  : formatDate(detail.schedule.ends_at)}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-xs font-medium text-muted-foreground">Timezone</dt>
-              <dd className="mt-1 text-sm text-foreground">
-                {detail.schedule.timezone}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-xs font-medium text-muted-foreground">Recurrence</dt>
-              <dd className="mt-1 text-sm text-foreground">
-                {detail.schedule.recurrence && "freq" in detail.schedule.recurrence ? (
-                  <>
-                    <span>
-                      {detail.schedule.recurrence.freq === "monthly"
-                        ? `Monthly: ${formatMonthDays(detail.schedule.recurrence.month_days)}`
-                        : detail.schedule.recurrence.freq === "dates"
-                          ? `Dates: ${detail.schedule.recurrence.dates.join(", ")}`
-                          : `Days: ${detail.schedule.recurrence.days.join(", ")}`}
-                    </span>
-                    <br />
-                    <span>
-                      Hours: {detail.schedule.recurrence.daily_start}–
-                      {detail.schedule.recurrence.daily_end}
-                    </span>
-                  </>
-                ) : (
-                  "One-time"
-                )}
-              </dd>
-            </div>
-          </dl>
+          <ScheduleFields schedule={detail.schedule} />
         ) : (
           <p className="text-sm text-muted-foreground">ยังไม่ได้ตั้งเวลา</p>
         )}

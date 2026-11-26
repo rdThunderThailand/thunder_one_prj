@@ -60,8 +60,8 @@ export function PlaylistTimelinePane({
   return (
     <div className="flex flex-none flex-col">
       <div className="mb-3 flex shrink-0 items-end justify-between border-b border-border">
-        <span className="border-b-2 border-primary px-3 pb-2 text-[11px] font-semibold text-primary">Timeline</span>
-        <span className="text-[10px] text-muted-foreground">Total Duration {total}</span>
+        <span className="border-b-2 border-primary px-3 pb-2 text-ui font-semibold text-primary">Timeline</span>
+        <span className="text-2xs text-muted-foreground">Total Duration {total}</span>
       </div>
 
       {items.length === 0 ? (
@@ -79,12 +79,11 @@ export function PlaylistTimelinePane({
             allowActualSize={false}
             onFrameChange={onFrame}
             seekRequest={seekRequest}
-            controlsPlacement="overlay"
             frameViewportHeight="34vh"
             fillWidth
           />
 
-          <div className="mt-3 flex justify-between text-[10px] font-medium text-muted-foreground">
+          <div className="mt-3 flex justify-between text-2xs font-medium text-muted-foreground">
             {Array.from({ length: 5 }, (_, index) => (
               <span key={index}>{formatDuration((totalSeconds * index) / 4)}</span>
             ))}
@@ -120,7 +119,7 @@ export function PlaylistTimelinePane({
                         className="aspect-video w-full rounded-none"
                       />
                     </span>
-                    <span className="mt-1 block truncate text-center text-[9px] text-muted-foreground">
+                    <span className="mt-1 block truncate text-center text-2xs text-muted-foreground">
                       {seconds != null ? shortDuration(seconds) : "—"}
                     </span>
                   </button>

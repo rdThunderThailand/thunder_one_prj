@@ -24,7 +24,7 @@ for (const edge of ["left", "center-h", "right", "top", "middle-v"] as const) {
   assert.deepEqual(errors, [], `${edge} produced an out-of-bounds Zone: ${JSON.stringify(errors)}`);
 }
 
-// Three decimal places preserved (docs/layouts/Phase0/contract-v2-zones.md).
+// Three decimal places preserved (docs/media-workspace/layouts/phase-0/contract-v2-zones.md).
 const oddWidth: LayoutZone = { ...zone, width: 33.333 };
 assert.equal(alignZone(oddWidth, "center-h").x, 33.334);
 

@@ -6,24 +6,23 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { LibrarySearch } from "../../content-library/LibraryShell";
 import { LibraryViewToggle } from "../../assets/components/LibraryToolbar";
 import { CONTENT_TYPES, type ContentType, type Sort, type SortKey } from "../list-filtering";
-import type { PlaylistStatus } from "../types";
+import type { PlaylistDisplayStatus } from "../status-display";
 
 export type FilterState = {
   query: string;
-  status: PlaylistStatus | "all";
+  status: PlaylistDisplayStatus | "all";
   type: ContentType | "all";
 };
 
 const TYPE_LABELS: Record<ContentType, string> = { video: "Video", image: "Image", mixed: "Mixed" };
 
-const STATUS_OPTIONS: { value: PlaylistStatus | "all"; label: string }[] = [
+const STATUS_OPTIONS: { value: PlaylistDisplayStatus | "all"; label: string }[] = [
   { value: "all", label: "All Status" },
   { value: "active", label: "Active" },
-  { value: "inactive", label: "Inactive" },
   { value: "draft", label: "Draft" },
 ];
 
-const triggerClass = "h-9 w-30 text-[10px] shadow-none";
+const triggerClass = "h-9 w-30 text-2xs shadow-none";
 
 /** Lovable toolbar controls (search + selects) on this list's real filters. */
 export function PlaylistsFilters({

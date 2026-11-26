@@ -3,6 +3,21 @@
  * left the UI unable to tell "retry this" from "fix your input" from "this
  * already succeeded". `ApiError` keeps the status code so it can.
  */
+import { classifyCoreRefusal, programPart, type ProgramPart, type RefusalReason } from "./core-refusal-rules.ts";
+import type { PublishCause } from "./publish-cause.ts";
+
+export {
+  deletedChannelMessage,
+  deletedFileMessage,
+  deletedFileNames,
+  inactiveChannelMessage,
+  layoutNotReadyMessage,
+  scheduleEndedMessage,
+  trashedAssetMessage,
+  trashedAssetNames,
+  type PublishCause,
+} from "./publish-cause.ts";
+
 export class ApiError extends Error {
   readonly status: number;
 
@@ -12,6 +27,9 @@ export class ApiError extends Error {
     this.status = status;
   }
 }
+
+/** Text written by the frontend for the user; `classifyApiError` shows it as-is. */
+export class UserFacingError extends Error {}
 
 export type ApiErrorKind =
   | "forbidden"
@@ -28,94 +46,17 @@ export type ApiErrorKind =
 
 export interface ClassifiedError {
   kind: ApiErrorKind;
-  /** Ready to show to the user, with the next action spelled out. */
+  /** Thai, ready to show with the next action spelled out; never Core's own text. */
   message: string;
+  /** Set only where a caller acts differently from showing `message` (ADR 0126 §4). */
+  reason?: RefusalReason;
+  /** Names a caller needs apart from `message` (today: the Program a Publish changes refusal names). */
+  names?: string[];
+  /** The `[details]`/`[content]`/... tag Core puts on a Program edit refusal. */
+  part?: ProgramPart;
+  /** Set for a publish-time refusal the page can turn into a button (ADR 0114). */
+  cause?: PublishCause;
 }
-
-/**
- * `media_publication_activate` raises this when the publication has left `draft`.
- * A retry after a timed-out publish hits it, which means the first attempt won.
- */
-function isAlreadyActive(message: string): boolean {
-  return message.toLowerCase().includes("already active");
-}
-
-/**
- * `media_publication_upsert` raises this exact prefix on a stale revision
- * (docs/adr/0003-draft-optimistic-locking.md). Matched on message, not on
- * HTTP 409 alone — 409 is a shared bucket (`api-utils.ts` maps any "already"
- * message to it) and other RPCs raise unrelated "Already " messages that are
- * not a revision conflict, so branching on status alone would misclassify
- * `media_video_delete`'s "Already in use: ..." as a draft conflict.
- */
-export function isConflict(message: string): boolean {
-  return message.startsWith("Already modified:");
-}
-
-/**
- * Raised by any RPC guarding a per-tenant unique name. The raw text names the
- * colliding value in English ("Already exists: a channel named X already exists"),
- * and `api-utils.ts` buckets it into the same 409 as every other "already" message,
- * so without this case it reaches the screen untranslated.
- */
-export function isDuplicateName(message: string): boolean {
-  return message.startsWith("Already exists:");
-}
-
-/**
- * `media_publication_activate`'s first-activation guard (ADR 0074 §5) — an incomplete
- * synchronized Group, or a direct `device` target inside one. Both already name the Group and
- * the missing/conflicting Channels in the raw text, so it is shown as-is rather than routed
- * through the generic "Invalid input:" bucket below, which would otherwise swallow those names.
- */
-function isIncompleteSyncGroupTarget(message: string): boolean {
-  return (
-    message.includes("synchronized group target is incomplete") ||
-    message.includes("cannot activate a direct device target inside a synchronized group")
-  );
-}
-
-/**
- * `media_publication_set_content` raises this when any item points at an asset that
- * is not `approved`. The UI blocks picking one, so reaching here means the asset lost
- * its approval after it was chosen — the raw wording names neither the asset nor the
- * way out, so it must not reach the user.
- */
-function isUnapprovedAsset(message: string): boolean {
-  return message.includes("media asset(s) are not approved");
-}
-
-/**
- * `media_publication_activate`'s codec-quarantine guard (Thunder_Core#66, ADR 0070) — a
- * `failed` or still-`processing` Asset in the snapshot. The raw text names every offending
- * file and tells the operator to replace it or wait, so it is shown as-is rather than routed
- * through the generic "Invalid input:" bucket below, which would otherwise swallow those names.
- */
-function isQuarantinedAsset(message: string): boolean {
-  return message.includes("cannot activate — replace this file:") || message.includes("wait — conversion in flight:");
-}
-
-/**
- * `media_publication_activate` refuses a snapshot that holds a trashed Asset (ADR 0091 Decision 2).
- * Returns the file names it lists, or null when the message is about something else. The names are
- * the operator's own titles, so they are safe to show; the surrounding English is not.
- */
-export function trashedAssetNames(message: string): string | null {
-  const match = /remove or restore from Trash: ([^;]+)/.exec(message);
-  return match ? match[1].trim() : null;
-}
-
-export const trashedAssetMessage = (names: string) =>
-  `มีไฟล์ที่อยู่ในถังขยะ (${names}) กรุณานำออกจาก Playlist/Layout หรือกู้คืนไฟล์ก่อนเผยแพร่`;
-
-/** Same refusal for an Asset whose file was permanently deleted, so Recover is not an option (ADR 0101). */
-export function deletedFileNames(message: string): string | null {
-  const match = /file was deleted, replace it: ([^;]+)/.exec(message);
-  return match ? match[1].trim() : null;
-}
-
-export const deletedFileMessage = (names: string) =>
-  `ไฟล์ถูกลบถาวรแล้ว (${names}) กรุณาเปลี่ยนเป็นไฟล์อื่นใน Playlist/Layout ก่อนเผยแพร่`;
 
 /**
  * A request that never got a response — the browser is offline, the host is
@@ -130,106 +71,29 @@ function isTransportFailure(err: unknown): boolean {
   return code === "ERR_NETWORK" || code === "ECONNABORTED" || err.message === "Network Error";
 }
 
-/**
- * `media_publication_activate` raises this when the Targets resolve to no device — a Channel or
- * Group with no screen (Thunder_Core#134). The raw wording is written for the backend, so it is
- * replaced with the way out rather than shown as-is or routed through the generic bucket below.
- */
-function isNoScreensTarget(message: string): boolean {
-  return message.includes("the targets have no screens");
-}
-
-/**
- * ADR 0099 guards: a Program reaches only active Channels, a Group takes only active Channels, and
- * a Channel in a Group cannot be deactivated. The raw text ends with the operator's own Channel or
- * Group names, which are safe to show; the English around them is not. Null when it is none of these.
- */
-export function inactiveChannelMessage(message: string): string | null {
-  const notActive = /channels are not active — activate them before publishing: ([^\n]+)/.exec(message);
-  if (notActive) {
-    return `ช่องทาง ${notActive[1].trim()} ยังไม่เปิดใช้งาน กรุณาเปิดใช้งานช่องทางก่อนเผยแพร่`;
-  }
-  const notActiveMembers = /only active channels can join a group — not active: ([^\n]+)/.exec(message);
-  if (notActiveMembers) {
-    return `เพิ่มเข้ากลุ่มได้เฉพาะช่องทางที่เปิดใช้งาน — ${notActiveMembers[1].trim()} ยังไม่เปิดใช้งาน`;
-  }
-  if (message.includes("only active channels can join a group — activate this channel first")) {
-    return "เพิ่มเข้ากลุ่มได้เฉพาะช่องทางที่เปิดใช้งาน กรุณาเปิดใช้งานช่องทางนี้ก่อน";
-  }
-  const groups = /remove this channel from its groups before deactivating: ([^\n]+)/.exec(message);
-  if (groups) {
-    return `ช่องทางนี้ยังอยู่ในกลุ่ม ${groups[1].trim()} กรุณานำออกจากกลุ่มก่อนปิดใช้งาน`;
-  }
-  return null;
-}
-
 export function classifyApiError(err: unknown, fallback: string): ClassifiedError {
+  if (err instanceof UserFacingError) return { kind: "rejected", message: err.message };
+
   const message = err instanceof Error && err.message ? err.message : fallback;
+  const classified = classifyMessage(err, message, fallback);
+  const part = programPart(message);
+  return part ? { ...classified, part } : classified;
+}
 
-  if (isAlreadyActive(message)) {
-    return { kind: "already-active", message };
-  }
-
-  if (isUnapprovedAsset(message)) {
-    return {
-      kind: "rejected",
-      message: "สื่อที่เลือกไว้ยังไม่ผ่านการอนุมัติ กรุณากลับไปขั้นตอน Content แล้วเลือกสื่อที่อนุมัติแล้วแทน",
-    };
-  }
-
-  if (isConflict(message)) {
-    return {
-      kind: "conflict",
-      message: "ข้อมูลถูกแก้ไขจากที่อื่นระหว่างที่คุณทำงานอยู่ กรุณาโหลดหน้านี้ใหม่ก่อนบันทึกอีกครั้ง",
-    };
-  }
-
-  if (isDuplicateName(message)) {
-    return {
-      kind: "rejected",
-      message: "ชื่อนี้ถูกใช้ไปแล้ว กรุณาตั้งชื่ออื่นแล้วลองใหม่",
-    };
-  }
-
-  if (isIncompleteSyncGroupTarget(message)) {
-    return { kind: "rejected", message };
-  }
-
-  if (isQuarantinedAsset(message)) {
-    return { kind: "rejected", message };
-  }
-
-  const trashedNames = trashedAssetNames(message);
-  if (trashedNames) {
-    return { kind: "rejected", message: trashedAssetMessage(trashedNames) };
-  }
-
-  const deletedNames = deletedFileNames(message);
-  if (deletedNames) {
-    return { kind: "rejected", message: deletedFileMessage(deletedNames) };
-  }
-
-  const inactiveChannel = inactiveChannelMessage(message);
-  if (inactiveChannel) {
-    return { kind: "rejected", message: inactiveChannel };
-  }
-
-  if (isNoScreensTarget(message)) {
-    return {
-      kind: "rejected",
-      message: "ช่องทางหรือกลุ่มที่เลือกยังไม่มีจอ กรุณาเพิ่มจอก่อนเผยแพร่",
-    };
-  }
+function classifyMessage(err: unknown, message: string, fallback: string): ClassifiedError {
+  // ADR 0126: one table for what Core refuses, ahead of the generic `Invalid input:` and status branches.
+  const refusal = classifyCoreRefusal(message);
+  if (refusal) return refusal;
 
   // Everything the API rejects on shape — zod schema failures and the remaining
   // `Invalid input:` RPC guards — arrives worded for whoever wrote the schema
   // ("Too small: expected string to have >=1 characters"). The specific cases worth
-  // naming are handled above; this keeps the rest off the screen. The raw text is
+  // naming are in the table; this keeps the rest off the screen. The raw text is
   // still in the network response for anyone debugging.
   if (message.startsWith("Invalid input:")) {
     return {
       kind: "rejected",
-      message: "ข้อมูลที่กรอกยังไม่ครบหรือไม่ถูกต้อง กรุณาตรวจสอบแต่ละขั้นตอนแล้วลองใหม่",
+      message: "ข้อมูลที่กรอกยังไม่ครบหรือไม่ถูกต้อง กรุณาตรวจสอบแล้วลองใหม่",
     };
   }
 
@@ -244,21 +108,23 @@ export function classifyApiError(err: unknown, fallback: string): ClassifiedErro
     return { kind: "not-found", message: "ไม่พบเนื้อหานี้ อาจถูกลบไปแล้วหรือลิงก์ไม่ถูกต้อง" };
   }
 
-  // Without a status we can't tell a rejection from an outage, and guessing
-  // "retryable" on a rejected command invites the user to hammer a dead request.
   if (!(err instanceof ApiError)) {
+    // Without a status a transport failure is the only thing a retry can fix. Anything else
+    // (a thrown string, a TypeError from a malformed payload) is a frontend bug.
     if (isTransportFailure(err)) {
       return {
         kind: "retryable",
         message: "เชื่อมต่อเซิร์ฟเวอร์ไม่สำเร็จ กรุณาตรวจสอบการเชื่อมต่อแล้วลองใหม่อีกครั้ง",
       };
     }
-    return { kind: "retryable", message };
+    console.error(err);
+    return { kind: "rejected", message: fallback };
   }
 
+  console.error(err);
   if (err.status >= 400 && err.status < 500) {
-    return { kind: "rejected", message };
+    return { kind: "rejected", message: fallback };
   }
 
-  return { kind: "retryable", message };
+  return { kind: "retryable", message: fallback };
 }

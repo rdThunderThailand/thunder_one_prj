@@ -1,21 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { Badge, type BadgeColor } from "@/components/ui/Badge";
+import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { InfoIcon } from "@/components/ui/icons";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/lovable/popover";
-import { classifyApiError, isDuplicateName } from "@/lib/api/api-error";
-import { isSyncConflict, setChannelGroupMembers } from "../services/channel-groups-api";
-import type { ChannelListItem, ChannelStatusFilter } from "../../channels/types";
+import { classifyApiError } from "@/lib/api/api-error";
+import { setChannelGroupMembers } from "../services/channel-groups-api";
+import { mediaStatus } from "../../media-status";
+import type { ChannelListItem } from "../../channels/types";
 import type { ChannelGroup } from "../types";
-
-const STATUS_BADGE: Record<ChannelStatusFilter, { label: string; color: BadgeColor }> = {
-  online: { label: "Online", color: "green" },
-  warning: { label: "Warning", color: "yellow" },
-  offline: { label: "Offline", color: "red" },
-  no_player: { label: "No player", color: "zinc" },
-};
 
 function AddToGroupMenu({
   channel,
@@ -37,11 +31,7 @@ function AddToGroupMenu({
       onAdded(await setChannelGroupMembers(group.id, [...group.members.map((m) => m.id), channel.id]));
       setOpen(false);
     } catch (caught) {
-      const message =
-        caught instanceof Error && (isSyncConflict(caught.message) || isDuplicateName(caught.message))
-          ? "This channel is already in another synchronized Group."
-          : classifyApiError(caught, "Could not add this channel to the Group. Try again.").message;
-      setError(message);
+      setError(classifyApiError(caught, "เพิ่ม Channel เข้า Group ไม่สำเร็จ กรุณาลองใหม่").message);
     } finally {
       setBusy(false);
     }
@@ -129,7 +119,7 @@ export function UngroupedChannelsTable({
       <div className="mt-3 overflow-x-auto">
         <table className="w-full min-w-[900px] text-left text-sm">
           <thead>
-            <tr className="border-b border-border bg-muted text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+            <tr className="border-b border-border bg-muted text-ui font-semibold uppercase tracking-wide text-muted-foreground">
               <th className="w-10 px-4 py-2.5">
                 <input
                   type="checkbox"
@@ -148,7 +138,7 @@ export function UngroupedChannelsTable({
           </thead>
           <tbody>
             {channels.map((channel) => {
-              const status = STATUS_BADGE[channel.health ?? "no_player"];
+              const status = mediaStatus(channel.health ?? "no_player");
               return (
                 <tr
                   key={channel.id}

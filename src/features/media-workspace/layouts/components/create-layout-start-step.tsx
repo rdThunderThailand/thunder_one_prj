@@ -90,7 +90,7 @@ function ChoiceCard({
               <span className="block truncate text-sm font-semibold text-primary">
                 {selectedTemplate.name}
               </span>
-              <span className="rounded-full bg-accent px-2 py-0.5 text-[11px] font-medium text-primary">
+              <span className="rounded-full bg-accent px-2 py-0.5 text-ui font-medium text-primary">
                 {selectedTemplate.behaviour === "copied" ? "Copied" : "Shared"}
               </span>
             </span>

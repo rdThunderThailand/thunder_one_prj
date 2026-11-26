@@ -1,0 +1,26 @@
+"use client";
+
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/lovable/alert-dialog";
+
+export function UnsavedLeaveConfirm({
+  onStay,
+  onLeave,
+}: {
+  onStay: () => void;
+  onLeave: () => void;
+}) {
+  return (
+    <AlertDialog open onOpenChange={(open) => { if (!open) onStay(); }}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>ออกโดยไม่บันทึก?</AlertDialogTitle>
+          <AlertDialogDescription>การแก้ไขที่ยังไม่บันทึกจะหายไป</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={onStay}>อยู่ต่อ</AlertDialogCancel>
+          <AlertDialogAction className="bg-error hover:bg-error" onClick={onLeave}>ออกโดยไม่บันทึก</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}

@@ -44,7 +44,11 @@ next-env.d.ts
 
 # pre-migration row dumps from production — keep local, never in history
 .backups
-2026-08-18-112038-command-messageverify-ticket-workcommand-mess.txt
+
+# personal agent state and skill scratch output (docs/agents/docs-sop.md)
+.claude/settings.local.json
+.claude/RESUME.md
+.superpowers/
 
 # Claude Desktop (Electron) renderer bundles dumped into CWD — not project files
 /index.js
@@ -52,4 +56,4 @@ next-env.d.ts
 /mainWindow.js
 
 # Program redesign mockups: only the downscaled JPEGs are committed
-docs/program/figma-mockup/*.png
+docs/media-workspace/program/figma-mockup/*.png
