@@ -41,7 +41,7 @@ function RowHeader({
       </span>
       <div className="min-w-0">
         <span className="block truncate text-ui font-semibold text-foreground">{name}</span>
-        <p className="truncate text-2xs text-muted-foreground">{detail}</p>
+        <p className="line-clamp-2 text-2xs text-muted-foreground">{detail}</p>
       </div>
     </>
   );
