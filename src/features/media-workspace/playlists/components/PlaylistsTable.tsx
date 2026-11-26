@@ -102,8 +102,8 @@ export function PlaylistsTable({
                       alt={playlist.name}
                       className="h-11 w-16"
                     />
-                    <div className="min-w-0">
-                      <p className="truncate text-ui font-semibold text-foreground">
+                    <div className="min-w-0 max-w-48">
+                      <p className="truncate text-ui font-semibold text-foreground" title={playlist.name}>
                         {playlist.name}
                       </p>
                       <p className="mt-0.5 truncate text-2xs text-muted-foreground">
@@ -136,7 +136,7 @@ export function PlaylistsTable({
                   {playlist.item_count.toLocaleString()}
                 </td>
                 <td className="px-3 py-2.5">
-                  {playlist.created_by?.display_name && <p className="text-2xs font-semibold">{playlist.created_by.display_name}</p>}
+                  {playlist.created_by?.display_name && <p className="max-w-32 truncate text-2xs font-semibold" title={playlist.created_by.display_name}>{playlist.created_by.display_name}</p>}
                   <p className="text-2xs text-muted-foreground">{formatUpdatedAt(playlist.updated_at ?? playlist.created_at)}</p>
                 </td>
                 <td className="px-3 py-2.5">
