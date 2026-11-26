@@ -28,19 +28,25 @@ import type { AssetFilesSnapshot } from "../../hooks/use-asset-files-edit";
 import type { AssetFileKind } from "../../domain/asset-files-edit";
 import type { ChangedAssetFiles } from "../../services/asset-files-change";
 import type { AssetDetail } from "../../services/asset-profile-contract";
+import type { ProfileFirstData } from "../../services/asset-profile-first-data";
+import { seededRead } from "../../services/seeded-read";
 
 type FileEditorSession = { id: string; kind: AssetFileKind; removeId?: string; trigger: HTMLButtonElement; snapshot: AssetFilesSnapshot };
 type MoveSession = { context: string; assetId: string; trigger: HTMLButtonElement | null };
 type MoveSnapshot = { context: string; revision: number; asset: AssetDetail };
 
-export function AssetProfileView({ context, assetId }: { context: string; assetId: string }) {
+export function AssetProfileView({ context, assetId, firstData }: { context: string; assetId: string; firstData?: ProfileFirstData }) {
+  // Refreshing the route sends new first data; an open profile keeps what it started with.
+  const [first] = useState(firstData);
   const [revision, setRevision] = useState(0);
   const [known, setKnown] = useState<AssetFilesSnapshot | null>(null);
   const [editor, setEditor] = useState<FileEditorSession | null>(null);
   const [moveSnapshot, setMoveSnapshot] = useState<MoveSnapshot | null>(null);
   const view = useRef<HTMLDivElement>(null);
-  const detail = useProfileRead(`${context}:${assetId}:detail:${revision}`, (signal) => getAssetDetail(context, assetId, signal));
-  const files = useProfileRead(`${context}:${assetId}:files:${revision}`, (signal) => getAssetFiles(context, assetId, signal));
+  const detail = useProfileRead(`${context}:${assetId}:detail:${revision}`,
+    (signal) => seededRead(first?.detail, `${context}:${assetId}`, () => getAssetDetail(context, assetId, signal)));
+  const files = useProfileRead(`${context}:${assetId}:files:${revision}`,
+    (signal) => seededRead(first?.files, `${context}:${assetId}`, () => getAssetFiles(context, assetId, signal)));
   const readsReady = Boolean(detail.result?.ok && files.result?.ok && !detail.pending && !files.pending);
   const viewFiles = { ...files, result: files.result?.ok || !known ? files.result : { ok: true as const, data: known.files },
     pending: files.pending || detail.pending || Boolean(known && !readsReady) };
@@ -62,19 +68,28 @@ export function AssetProfileView({ context, assetId }: { context: string; assetI
     return initial && ["overview", "assignments", "location", "files", "warranty", "history"].includes(initial) ? initial
       : fromAssignments ? "assignments" : "overview";
   });
+  // Opened tabs stay, so coming back does not read them again. A saved change reads only the open tab again.
+  const [opened, setOpened] = useState({ revision, tabs: [tab] });
+  if (opened.revision !== revision) setOpened({ revision, tabs: [tab] });
+  else if (!opened.tabs.includes(tab)) setOpened({ revision, tabs: [...opened.tabs, tab] });
+  const keep = (value: string) => opened.tabs.includes(value) || undefined;
   const expiresAt = viewFiles.result?.ok ? viewFiles.result.data.expiresAt : null;
   const { reload: reloadFiles } = files;
+  // Every read brings new links, so a photo that cannot load gets one more read, then waits for the next due one.
+  const retried = useRef<number | null>(null);
   useEffect(() => {
     if (!expiresAt) return;
     const time = Date.parse(expiresAt);
     if (!Number.isFinite(time)) return;
-    const timer = window.setTimeout(reloadFiles, Math.max(time - Date.now() - 60_000, 5_000));
+    const timer = window.setTimeout(() => {
+      retried.current = null;
+      reloadFiles();
+    }, Math.max(time - Date.now() - 60_000, 5_000));
     return () => window.clearTimeout(timer);
   }, [expiresAt, reloadFiles]);
-  const refreshedFor = useRef<string | null>(null);
   function refreshLinks() {
-    if (!expiresAt || refreshedFor.current === expiresAt) return;
-    refreshedFor.current = expiresAt;
+    if (!expiresAt || retried.current === revision) return;
+    retried.current = revision;
     reloadFiles();
   }
   const moveFallback = moveSnapshot?.context === context && moveSnapshot.asset.id === assetId && moveSnapshot.revision === revision
@@ -105,7 +120,11 @@ export function AssetProfileView({ context, assetId }: { context: string; assetI
   }
   function closeEditor(refresh: boolean) {
     setEditor(null);
-    if (refresh) { setKnown(null); setRevision((value) => value + 1); }
+    if (refresh) readAgain();
+  }
+  function readAgain() {
+    setKnown(null);
+    setRevision((value) => value + 1);
   }
   function refreshLocation(next: AssetDetail) {
     setMoveSnapshot({ context, revision: revision + 1, asset: next });
@@ -144,24 +163,24 @@ export function AssetProfileView({ context, assetId }: { context: string; assetI
                 </span>
               ))}
             </TabsList>
-            <TabsContent value="overview" className="mt-3">
+            <TabsContent value="overview" forceMount={keep("overview")} className="mt-3 data-[state=inactive]:hidden">
               <ProfileOverview asset={asset} files={viewFiles} onPhotoFailed={refreshLinks} onPhotoEdit={(trigger) => openEditor("photo", trigger)} />
             </TabsContent>
-            <TabsContent value="assignments" className="mt-3 space-y-3">
+            <TabsContent value="assignments" forceMount={keep("assignments")} className="mt-3 space-y-3 data-[state=inactive]:hidden">
               <ProfileCurrentAssignment asset={asset} tinted />
               <ProfileAssignmentEvents key={`${context}:${assetId}:${revision}`} context={context} asset={asset} />
             </TabsContent>
-            <TabsContent value="location" className="mt-3">
+            <TabsContent value="location" forceMount={keep("location")} className="mt-3 data-[state=inactive]:hidden">
               <ProfileLocationView key={`${context}:${assetId}:${revision}`} context={context} asset={asset}
                 onEditLocation={(trigger) => setMove({ context, assetId, trigger })} />
             </TabsContent>
-            <TabsContent value="files" className="mt-3">
+            <TabsContent value="files" forceMount={keep("files")} className="mt-3 data-[state=inactive]:hidden">
               <ProfileFiles files={viewFiles} />
             </TabsContent>
-            <TabsContent value="warranty" className="mt-3">
-              <ProfileLifecycle context={context} asset={asset} />
+            <TabsContent value="warranty" forceMount={keep("warranty")} className="mt-3 data-[state=inactive]:hidden">
+              <ProfileLifecycle context={context} asset={asset} files={viewFiles} onChanged={readAgain} />
             </TabsContent>
-            <TabsContent value="history" className="mt-3">
+            <TabsContent value="history" forceMount={keep("history")} className="mt-3 data-[state=inactive]:hidden">
               <ProfileAssignmentHistory key={`${context}:${assetId}:${revision}`} context={context} asset={asset}
                 initialTab={search.get("history")} onViewFiles={() => setTab("files")} />
             </TabsContent>

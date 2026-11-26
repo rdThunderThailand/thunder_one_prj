@@ -19,6 +19,7 @@ import { inAssignments, profileHref } from "../../domain/assignment-assign";
 import { useProfileRead } from "../../hooks/use-asset-profile";
 import { getAssetStatusHistory, getAssetWarranties } from "../../services/asset-profile-api";
 import type { AssetDetail, AssetStatusChange } from "../../services/asset-profile-contract";
+import type { ProfileFilesRead } from "./ProfileOverview";
 import { formatDate, formatDay, SectionMessage, StatusValue, todayInBangkok } from "./ProfileParts";
 import { SetCurrentWarranty, WarrantyCardActions } from "../lifecycle-warranty/ProfileWarrantyActions";
 import { ProfileWarrantyFiles } from "../lifecycle-warranty/ProfileWarrantyFiles";
@@ -62,6 +63,7 @@ function Rows({ rows }: { rows: [string, ReactNode][] }) {
   );
 }
 
+type LifecycleProps = { context: string; asset: AssetDetail; files: ProfileFilesRead; onChanged: () => void };
 type History = { rows: AssetStatusChange[] | null; complete: boolean; pending: boolean; failed: boolean; reload: () => void };
 
 function stepDetail(index: number, state: LifecycleStepState, asset: AssetDetail, history: History) {
@@ -153,7 +155,7 @@ function KeyDates({ asset, history }: { asset: AssetDetail; history: History }) 
   );
 }
 
-function WarrantyInformation({ context, asset }: { context: string; asset: AssetDetail }) {
+function WarrantyInformation({ context, asset, files, onChanged }: LifecycleProps) {
   const [open, setOpen] = useState(false);
   const warranties = useProfileRead(`${context}:${asset.id}:warranties`, (signal) => getAssetWarranties(context, asset.id, signal), open);
   const current = asset.currentWarranty;
@@ -178,7 +180,7 @@ function WarrantyInformation({ context, asset }: { context: string; asset: Asset
           )],
           ["Reference No.", current.referenceNo || "—"],
           ["Coverage", current.coverageNote || "—"],
-          ["Attachments", <ProfileWarrantyFiles key="files" context={context} assetId={asset.id} warrantyId={current.id} />],
+          ["Attachments", <ProfileWarrantyFiles key="files" files={files.result} warrantyId={current.id} />],
         ]} />
       ) : <SectionMessage>No warranty recorded.</SectionMessage>}
       <details className="group/disclosure border-t border-border pt-2" onToggle={(event) => { if (event.currentTarget.open) setOpen(true); }}>
@@ -200,7 +202,7 @@ function WarrantyInformation({ context, asset }: { context: string; asset: Asset
                 ["Warranty Type", warranty.type || "—"],
                 ["Reference No.", warranty.referenceNo || "—"],
               ]} />
-              <SetCurrentWarranty context={context} asset={asset} warrantyId={warranty.id} />
+              <SetCurrentWarranty context={context} asset={asset} warrantyId={warranty.id} onChanged={onChanged} />
             </div>
           )) : <SectionMessage>No earlier warranties.</SectionMessage>}
         </div>
@@ -234,7 +236,7 @@ function Disposal({ asset, history }: { asset: AssetDetail; history: History }) 
   );
 }
 
-export function ProfileLifecycle({ context, asset }: { context: string; asset: AssetDetail }) {
+export function ProfileLifecycle({ context, asset, files, onChanged }: LifecycleProps) {
   // Newest 100 status changes date the steps, Status Since and the disposal (BE 01); no new endpoint.
   const read = useProfileRead(`${context}:${asset.id}:lifecycle-status:${asset.updatedAt}`,
     (signal) => getAssetStatusHistory(context, asset.id, 1, null, signal, 100));
@@ -253,7 +255,7 @@ export function ProfileLifecycle({ context, asset }: { context: string; asset: A
           <KeyDates asset={asset} history={history} />
         </div>
         <div className="min-w-0 space-y-3">
-          <WarrantyInformation context={context} asset={asset} />
+          <WarrantyInformation context={context} asset={asset} files={files} onChanged={onChanged} />
           <Disposal asset={asset} history={history} />
         </div>
       </div>

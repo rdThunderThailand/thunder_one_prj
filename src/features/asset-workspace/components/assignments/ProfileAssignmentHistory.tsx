@@ -78,6 +78,10 @@ export function ProfileAssignmentHistory({ context, asset, initialTab, onViewFil
 }) {
   // `?history=status` (Change Status result link) opens that sub-tab.
   const [tab, setTab] = useState(profileHistoryTabs.some(({ id, disabled }) => id === initialTab && !disabled) ? initialTab as string : "all");
+  // Opened sub-tabs stay, so coming back does not read them again.
+  const [opened, setOpened] = useState([tab]);
+  if (!opened.includes(tab)) setOpened([...opened, tab]);
+  const keep = (id: string) => opened.includes(id);
   const nav = (
     <TabsList aria-label="Asset history sections" className="flex h-auto min-h-10 w-full flex-wrap justify-start gap-0 rounded-control border border-border bg-card p-1">
       {profileHistoryTabs.map(({ id, label, icon: Icon, disabled }) => {
@@ -95,13 +99,13 @@ export function ProfileAssignmentHistory({ context, asset, initialTab, onViewFil
   return (
     <Tabs value={tab} onValueChange={setTab} className="min-w-0 space-y-3">
       {nav}
-      <ProfileAssignmentEvents context={context} asset={asset} enabled={tab === "assignment"} layout={(assignment, assignmentPanel) => (
-        <ProfileLocationHistory context={context} assetId={asset.id} enabled={tab === "location"} layout={(location, locationPanel) => (
-          <ProfileStatusHistory context={context} assetId={asset.id} enabled={tab === "status"} layout={(status, statusPanel) => (
-            <ProfileFileHistory context={context} assetId={asset.id} enabled={tab === "file"} onViewFiles={onViewFiles} layout={(file, filePanel) => (
-            <ProfileAuditLog context={context} assetId={asset.id} enabled={tab === "audit"} layout={(audit, auditPanel) => (
-            <ProfileHistoryLayout panel={{ location: locationPanel, status: statusPanel, file: filePanel, audit: auditPanel }[tab] ?? assignmentPanel}>
-              <TabsContent value="all" className="m-0">
+      <ProfileAssignmentEvents context={context} asset={asset} enabled={keep("assignment")} layout={(assignment, assignmentPanel) => (
+        <ProfileLocationHistory context={context} assetId={asset.id} enabled={keep("location")} layout={(location, locationPanel) => (
+          <ProfileStatusHistory context={context} assetId={asset.id} enabled={keep("status")} layout={(status, statusPanel) => (
+            <ProfileFileHistory context={context} assetId={asset.id} enabled={keep("file")} onViewFiles={onViewFiles} layout={(file, filePanel) => (
+            <ProfileAuditLog context={context} assetId={asset.id} enabled={keep("audit")} layout={(audit, auditPanel) => (
+            <ProfileHistoryLayout panel={{ assignment: assignmentPanel, location: locationPanel, status: statusPanel, file: filePanel, audit: auditPanel }[tab]}>
+              <TabsContent value="all" forceMount={keep("all") || undefined} className="m-0 data-[state=inactive]:hidden">
                 <ProfileAllHistory context={context} assetId={asset.id} />
               </TabsContent>
               <TabsContent value="assignment" className="m-0 min-w-0">
@@ -113,8 +117,8 @@ export function ProfileAssignmentHistory({ context, asset, initialTab, onViewFil
               <TabsContent value="status" className="m-0 min-w-0">
                 {status}
               </TabsContent>
-              <TabsContent value="maintenance" className="m-0 min-w-0">
-                <ProfileMaintenanceHistory context={context} assetId={asset.id} enabled={tab === "maintenance"} />
+              <TabsContent value="maintenance" forceMount={keep("maintenance") || undefined} className="m-0 min-w-0 data-[state=inactive]:hidden">
+                <ProfileMaintenanceHistory context={context} assetId={asset.id} enabled={keep("maintenance")} />
               </TabsContent>
               <TabsContent value="file" className="m-0 min-w-0">
                 {file}
