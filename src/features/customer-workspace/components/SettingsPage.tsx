@@ -73,7 +73,7 @@ export function SettingsPage() {
               <t.icon className="h-4 w-4 shrink-0" />
               <span className="flex-1">{t.label}</span>
               {t.comingSoon && (
-                <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-t1-gray-400">เร็ว ๆ นี้</span>
+                <span className="rounded-full bg-muted px-1.5 py-0.5 text-2xs font-semibold text-t1-gray-400">เร็ว ๆ นี้</span>
               )}
             </button>
           ))}

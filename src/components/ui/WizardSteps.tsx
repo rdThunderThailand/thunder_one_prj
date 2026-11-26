@@ -28,7 +28,7 @@ export function WizardSteps({ steps, currentIndex }: WizardStepsProps) {
                 {state === "done" ? <CheckIcon className="h-3.5 w-3.5" /> : index + 1}
               </span>
               <span
-                className={`hidden max-w-[80px] text-center text-[11px] leading-tight sm:block ${
+                className={`hidden max-w-[80px] text-center text-ui leading-tight sm:block ${
                   state === "upcoming" ? "text-t1-gray-400" : "text-foreground"
                 }`}
               >

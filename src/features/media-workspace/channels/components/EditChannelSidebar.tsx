@@ -1,20 +1,14 @@
 import { useState } from "react";
 import Link from "next/link";
-import { Badge, type BadgeColor } from "@/components/ui/Badge";
+import { Badge } from "@/components/ui/Badge";
 import { Button, buttonClasses } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { CalendarIcon, InfoIcon, MonitorIcon, PlayIcon } from "@/components/ui/icons";
 import { ChannelGroupsPickerModal } from "./ChannelGroupsPickerModal";
 import { ChannelStructureTree } from "./ChannelStructureTree";
 import { ChannelLifecycleActions } from "./ChannelLifecycleActions";
-import type { ChannelDetail, ChannelStatusFilter } from "../types";
-
-const STATUS_BADGE: Record<ChannelStatusFilter, { label: string; color: BadgeColor }> = {
-  online: { label: "Online", color: "green" },
-  warning: { label: "Warning", color: "yellow" },
-  offline: { label: "Offline", color: "red" },
-  no_player: { label: "No player", color: "zinc" },
-};
+import { mediaStatus } from "../../media-status";
+import type { ChannelDetail } from "../types";
 
 function formatDateTime(iso: string): string {
   const date = new Date(iso);
@@ -32,7 +26,7 @@ export function EditChannelSidebar({
   onChanged: (updated: ChannelDetail) => void;
   onDeleted: () => void;
 }) {
-  const status = STATUS_BADGE[channel.health ?? "no_player"];
+  const status = mediaStatus(channel.health ?? "no_player");
   const groups = channel.groups ?? [];
   const [managingGroups, setManagingGroups] = useState(false);
 
@@ -68,7 +62,7 @@ export function EditChannelSidebar({
 
       <Card className="p-5">
         <div className="flex items-center justify-between">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Groups ({groups.length})</p>
+          <p className="text-ui font-semibold uppercase tracking-wide text-muted-foreground">Groups ({groups.length})</p>
           <button
             type="button"
             onClick={() => setManagingGroups(true)}
@@ -122,7 +116,7 @@ export function EditChannelSidebar({
       <ChannelLifecycleActions
         channelId={channel.id}
         channelName={channel.name}
-        status={channel.status}
+        lifecycle={channel.lifecycle}
         playerName={channel.player?.name ?? null}
         blockingPrograms={channel.blocking_programs}
         revision={channel.revision}

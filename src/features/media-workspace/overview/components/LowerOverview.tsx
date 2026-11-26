@@ -121,7 +121,7 @@ export function LowerOverview({ channels, publications, loadFailed }: LowerOverv
     <div className="grid grid-cols-1 items-stretch gap-4 xl:grid-cols-3 xl:grid-rows-[minmax(0,1fr)_auto]">
       <Card className="flex min-h-[509px] flex-col border-border p-5 shadow-panel transition-[box-shadow,border-color] duration-200 hover:border-foreground/20 hover:shadow-float xl:row-span-2">
         <div className="mb-5 flex items-center justify-between">
-          <h2 className="text-[11px] font-extrabold uppercase tracking-[0.08em] text-foreground">Today&apos;s Schedule</h2>
+          <h2 className="text-ui font-extrabold uppercase tracking-[0.08em] text-foreground">Today&apos;s Schedule</h2>
           <Link href="/media-workspace/calendar" className="text-xs font-medium text-primary hover:underline">
             View full calendar →
           </Link>
@@ -140,7 +140,7 @@ export function LowerOverview({ channels, publications, loadFailed }: LowerOverv
                 <time className="font-semibold text-muted-foreground">{scheduleTime(row)}</time>
                 <span className="min-w-0">
                   <span className="block truncate font-medium text-foreground">{row.name}</span>
-                  <span className="mt-1 block text-[10px] text-muted-foreground">Program</span>
+                  <span className="mt-1 block text-2xs text-muted-foreground">Program</span>
                 </span>
                 <span className="text-muted-foreground">{targetSummary(row.target_summary)}</span>
               </li>
@@ -151,7 +151,7 @@ export function LowerOverview({ channels, publications, loadFailed }: LowerOverv
 
       <Card className="flex min-h-0 flex-col border-border p-5 shadow-panel transition-[box-shadow,border-color] duration-200 hover:border-foreground/20 hover:shadow-float xl:col-start-2 xl:row-start-1">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-[11px] font-extrabold uppercase tracking-[0.08em] text-foreground">Channel Health</h2>
+            <h2 className="text-ui font-extrabold uppercase tracking-[0.08em] text-foreground">Channel Health</h2>
             <Link href="/media-workspace/channels" className="text-xs font-medium text-primary hover:underline">
               View all channels →
             </Link>
@@ -198,7 +198,7 @@ export function LowerOverview({ channels, publications, loadFailed }: LowerOverv
 
       <Card className="border-border p-5 shadow-panel transition-[box-shadow,border-color] duration-200 hover:border-foreground/20 hover:shadow-float xl:col-start-2 xl:row-start-2">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-[11px] font-extrabold uppercase tracking-[0.08em] text-foreground">Channels by Type</h2>
+            <h2 className="text-ui font-extrabold uppercase tracking-[0.08em] text-foreground">Channels by Type</h2>
             <Link href="/media-workspace/channels" className="text-xs font-medium text-primary hover:underline">
               View all channels →
             </Link>
@@ -222,7 +222,7 @@ export function LowerOverview({ channels, publications, loadFailed }: LowerOverv
                     <Icon className="mx-auto h-5 w-5 text-primary" />
                     <p className="mt-2 truncate text-xs font-medium text-muted-foreground">{label}</p>
                     <p className="mt-1 text-xl font-semibold text-foreground">{count}</p>
-                    <p className="mt-1 text-[10px] text-muted-foreground">Channels</p>
+                    <p className="mt-1 text-2xs text-muted-foreground">Channels</p>
                   </div>
                 );
               })}
@@ -237,7 +237,7 @@ export function LowerOverview({ channels, publications, loadFailed }: LowerOverv
           <div className="mb-4 flex items-center justify-between">
             {/* Not an audit log — synthesized from each row's own `updated_at`
                 (docs/adr/0075 §7), so it's labeled for what it actually is. */}
-            <h2 className="text-[11px] font-extrabold uppercase tracking-[0.08em] text-foreground">Recent Updates</h2>
+            <h2 className="text-ui font-extrabold uppercase tracking-[0.08em] text-foreground">Recent Updates</h2>
           </div>
           {loadFailed ? (
             <p className="py-2 text-xs text-error">Could not load recent updates</p>

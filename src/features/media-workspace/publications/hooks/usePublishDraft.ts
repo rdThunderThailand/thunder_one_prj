@@ -8,7 +8,8 @@ import {
   basicInfoToForm,
   targetsFromSelection,
 } from "../draft-mapping";
-import { draftToSchedule, hasAiringLeft, isDraftValid, nowIn, upcomingDays } from "../schedule-preset";
+import { hasAiringLeft, lastAiring } from "../schedule-airing";
+import { draftToSchedule, isDraftValid, toStoredSchedule } from "../schedule-preset";
 import {
   activatePublication,
   checkScheduleConflicts,
@@ -21,24 +22,14 @@ import {
 } from "../services/publications-api";
 import { fetchChannels } from "../../channels/services/channels-api";
 import type { ChannelListItem } from "../../channels/types";
-import { selectedChannelDeviceIds } from "../channels-logic";
+import { targetDeviceIds } from "../program-edit";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
-import { computeEligibility } from "../publish-eligibility";
-import { classifyApiError, isConflict, scheduleEndedMessage, type PublishCause } from "@/lib/api/api-error";
-import { formatDmy, shiftYmd, utcToZonedParts } from "../schedule";
+import { computeEligibility, programGateInputFromDraft } from "../publish-eligibility";
+import { validateStep } from "../step-validation";
+import { classifyApiError, UserFacingError, scheduleEndedMessage, type ClassifiedError, type PublishCause } from "@/lib/api/api-error";
+import { formatDmy } from "../schedule";
 import type { MediaAsset, Priority, PublicationSchedule, ScheduleConflict, Tag } from "../types";
 import { DraftSaveError, draftSavePolicy, requireCompleteDraftSave, type DraftPersistResult } from "../draft-save-policy";
-
-/** The two backend rejections that mean "the persisted draft id is no longer usable":
- * the row was deleted, or it left `draft` status (cancelled/activated elsewhere).
- * Matched on the message because the proxy only forwards `{ error: string }`. */
-function isStaleDraftError(err: unknown): boolean {
-  const msg = err instanceof Error ? err.message : "";
-  return (
-    msg.includes("publication not found for this tenant") ||
-    msg.includes("only draft publications can be edited")
-  );
-}
 
 export function usePublishDraft() {
   const router = useRouter();
@@ -58,6 +49,8 @@ export function usePublishDraft() {
   const error = errorState?.message ?? null;
   const errorCause = errorState?.cause ?? null;
   const setError = useCallback((message: string | null) => setErrorState(message ? { message, cause: null } : null), []);
+  // Every failed save keeps its cause, so the fix shows beside it (ADR 0122 rule 17 amends ADR 0114 §5).
+  const showFailure = useCallback((failure: ClassifiedError) => setErrorState({ message: failure.message, cause: failure.cause ?? null }), []);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [savingNext, setSavingNext] = useState(false);
   const [publishedId, setPublishedId] = useState<string | null>(null);
@@ -68,8 +61,11 @@ export function usePublishDraft() {
   // (media_schedule_conflicts). This is the draft revision optimistic-lock
   // conflict (docs/adr/0003), a different domain entirely.
   const [revisionConflict, setRevisionConflict] = useState<string | null>(null);
+  // ADR 0086 §10: the id a save found dead. Keyed by id, so a save as new or a discard ends it.
+  const [staleDraftId, setStaleDraftId] = useState<string | null>(null);
 
   const publicationId = usePublicationDraftStore((s) => s.publicationId);
+  const isStaleDraft = staleDraftId !== null && staleDraftId === publicationId;
   const idempotencyKey = usePublicationDraftStore((s) => s.idempotencyKey);
   const step = usePublicationDraftStore((s) => s.step);
   const furthestStep = usePublicationDraftStore((s) => s.furthestStep);
@@ -82,8 +78,11 @@ export function usePublishDraft() {
   const playlistId = usePublicationDraftStore((s) => s.playlistId);
   const compositionId = usePublicationDraftStore((s) => s.compositionId);
 
+  const draft = { publicationId, idempotencyKey, step, furthestStep, basicInfo, assetItems, playlistId, compositionId, channelIds, groupIds, groupNamesById, schedule };
   const eligibility = computeEligibility({
-    draft: { publicationId, idempotencyKey, step, furthestStep, basicInfo, assetItems, playlistId, compositionId, channelIds, groupIds, groupNamesById, schedule },
+    program: programGateInputFromDraft(draft, channels),
+    // Step 2 (Prepare Content) owns the name/type gate after the ver02 re-cut (ADR 0072 §2).
+    basicInfoOk: validateStep(2, draft).valid,
     assets,
     conflicts,
     conflictsError,
@@ -107,7 +106,7 @@ export function usePublishDraft() {
         })
         .catch((err) => {
           setAssets([]);
-          setAssetsError(err instanceof Error ? err.message : "Failed to load assets.");
+          setAssetsError(classifyApiError(err, "Failed to load assets.").message);
           return [];
         })
         .finally(() => setAssetsLoading(false)),
@@ -153,7 +152,7 @@ export function usePublishDraft() {
   useEffect(() => {
     let cancelled = false;
 
-    if (channelIds.length === 0 || scheduleKey === "") {
+    if ((channelIds.length === 0 && groupIds.length === 0) || scheduleKey === "") {
       // Deferred by a tick on purpose: this repo's lint (React Compiler rules)
       // rejects a synchronous setState inside an effect body.
       const resetTimer = setTimeout(() => {
@@ -174,7 +173,8 @@ export function usePublishDraft() {
       const payload = JSON.parse(scheduleKey) as PublicationSchedule;
       checkScheduleConflicts({
         publication_id: publicationId,
-        device_ids: selectedChannelDeviceIds(channels, channelIds),
+        // Same Group expansion as the edit page: a Group-only Draft still reaches Players (ADR 0080).
+        device_ids: targetDeviceIds(channels, targetsFromSelection(channelIds, groupIds, groupNamesById, channels)),
         starts_at: payload.starts_at,
         ends_at: payload.ends_at,
         recurrence: payload.recurrence,
@@ -192,7 +192,7 @@ export function usePublishDraft() {
           if (!cancelled) {
             setConflicts([]);
             setCheckingConflicts(false);
-            setConflictsError(err instanceof Error ? err.message : "Failed to check schedule conflicts.");
+            setConflictsError(classifyApiError(err, "Failed to check schedule conflicts.").message);
           }
         });
     }, 400);
@@ -206,6 +206,8 @@ export function usePublishDraft() {
     channels,
     channelIds,
     channelIdsStr,
+    groupIds,
+    groupNamesById,
     scheduleKey,
     basicInfo.priorityId,
   ]);
@@ -216,16 +218,16 @@ export function usePublishDraft() {
    * which step the user is on: activation is refused without either. On a plain
    * draft save, targets go once Program has been reached — the backend treats a
    * received `targets` as authoritative, so sending an empty array earlier would
-   * wipe targets that were already saved.
+   * wipe targets that were already saved. `asNew` lets a stale id be saved as a new draft.
    */
-  const persistDraft = async (forPublish: boolean): Promise<DraftPersistResult> => {
+  const persistDraft = async (forPublish: boolean, options: { asNew?: boolean } = {}): Promise<DraftPersistResult> => {
     const state = usePublicationDraftStore.getState();
     const policy = draftSavePolicy(state, forPublish);
     // A composition draft may be saved before step 2 picks a Composition — the backend allows it
     // (media_publication_upsert, ADR 0049 §12, revised 2026-08-26) exactly like an unpicked
     // Playlist. Publishing still requires it; that guard stays.
     if (forPublish && state.basicInfo.publicationType === "composition" && !state.compositionId) {
-      throw new Error("กรุณาเลือก Layout ก่อนบันทึก");
+      throw new UserFacingError("กรุณาเลือก Layout ก่อนบันทึก");
     }
     // ver02 (ADR 0072 §2) runs Choose Content (step 1) before Prepare Content (step 2), where
     // the name is entered. `media_publication_upsert` refuses an empty name, so a draft with no
@@ -247,9 +249,14 @@ export function usePublishDraft() {
       res = await saveBasicInfo(basicForm, state.publicationId, targets, state.revision, state.idempotencyKey);
     } catch (err) {
       // The draft id lives in localStorage forever, but the row it points at can be
-      // deleted (or leave `draft` via cancel/activate) from the /publications page —
-      // which used to brick the wizard until the user hit Cancel. Re-create instead.
-      if (state.publicationId && isStaleDraftError(err)) {
+      // deleted (or leave `draft` via cancel/activate) elsewhere. ADR 0086 §10: a new
+      // row only when the operator chose Save as new after reading this message.
+      const failure = classifyApiError(err, "บันทึก draft ไม่สำเร็จ กรุณาลองใหม่");
+      if (state.publicationId && failure.reason === "stale-draft") {
+        if (!options.asNew) {
+          setStaleDraftId(state.publicationId);
+          throw new DraftSaveError("draft เดิมถูกลบ ยกเลิก หรือเผยแพร่ไปแล้ว จึงบันทึกลงไปไม่ได้");
+        }
         // Re-minting first: reusing the old key would resolve the retry back to
         // the same dead row instead of creating a fresh draft (docs/adr/0007 media).
         state.resetIdempotencyKey();
@@ -257,9 +264,7 @@ export function usePublishDraft() {
       } else {
         // Surfaced as a dedicated banner (CreatePublicationPage), not the generic
         // error text — "reload" / "overwrite" are actions, not just a message.
-        if (err instanceof Error && isConflict(err.message)) {
-          setRevisionConflict(classifyApiError(err, err.message).message);
-        }
+        if (failure.kind === "conflict") setRevisionConflict(failure.message);
         throw err;
       }
     }
@@ -312,19 +317,20 @@ export function usePublishDraft() {
     }
     setSaving(true);
     setError(null);
+    // ADR 0086 §10: once a save found the id stale, the same button reads "Save as new draft".
+    const asNew = isStaleDraft;
     try {
-      const result = await persistDraft(false);
+      const result = await persistDraft(false, { asNew });
       if (result.kind === "saved") router.replace(`/media-workspace/program/create?id=${encodeURIComponent(result.publicationId)}`);
       const complete = requireCompleteDraftSave(result);
       usePublicationDraftStore.getState().markSaved(complete.draft);
-      usePublicationDraftStore.getState().setExplicitlySaved(true);
-      toast.success("บันทึกร่างแล้ว");
+      toast.success(asNew ? "บันทึกเป็น draft ใหม่แล้ว" : "บันทึกร่างแล้ว");
       return complete.publicationId;
     } catch (err) {
       const classified = classifyApiError(err, "Failed to save draft.");
       // The revision-conflict banner already shows this — avoid saying it twice.
       if (classified.kind !== "conflict") {
-        setError(classified.message);
+        showFailure(classified);
         toast.error(classified.message);
       }
       return null;
@@ -335,27 +341,13 @@ export function usePublishDraft() {
 
   const publishNow = async (): Promise<void> => {
     const state = usePublicationDraftStore.getState();
-    // Weekly and monthly ranges may stay open past their last daily window.
-    try {
-      const { schedule } = state;
-      const { ends_at, timezone } = draftToSchedule(schedule);
-      const now = nowIn(timezone);
-      if (!hasAiringLeft(schedule, now.date, now.time) || (ends_at && Date.parse(ends_at) <= Date.now())) {
-        let end = ends_at ? utcToZonedParts(ends_at, timezone) : null;
-        if ((schedule.mode === "weekly" || schedule.mode === "monthly") && schedule.endDate) {
-          // Even the 31st recurs within 62 days. The range end itself may have no airing.
-          const lastDay = upcomingDays(schedule, shiftYmd(schedule.endDate, -62), 63).at(-1);
-          const endsAtMidnight = schedule.allDay || schedule.dailyEnd === "23:59";
-          end = lastDay
-            ? { date: endsAtMidnight ? shiftYmd(lastDay, 1) : lastDay, time: endsAtMidnight ? "00:00" : schedule.dailyEnd }
-            : null;
-        }
-        const label = end ? `${formatDmy(end.date)} ${end.time}` : undefined;
-        setErrorState({ message: scheduleEndedMessage(label), cause: "schedule-ended" });
-        return;
-      }
-    } catch {
-      // ponytail: an incomplete schedule cannot be resolved here; step validation and Core still decide.
+    // ponytail: an incomplete schedule is null here; step validation and Core still decide.
+    const stored = toStoredSchedule(state.schedule);
+    if (stored && !hasAiringLeft(stored)) {
+      const end = lastAiring(stored);
+      const label = end ? `${formatDmy(end.date)} ${end.time}` : undefined;
+      setErrorState({ message: scheduleEndedMessage(label), cause: "schedule-ended" });
+      return;
     }
     setSaving(true);
     setError(null);
@@ -367,7 +359,7 @@ export function usePublishDraft() {
       state.cancelDraft();
       router.push(`/media-workspace/program/${newId}`);
     } catch (err) {
-      const classified = classifyApiError(err, "Failed to publish publication.");
+      const classified = classifyApiError(err, "เผยแพร่ Program ไม่สำเร็จ กรุณาลองใหม่");
       // A retry after a timed-out publish lands here: the backend refused because
       // the first attempt already activated it, so this is a success reaching us late.
       if (classified.kind === "already-active" && state.publicationId) {
@@ -395,6 +387,7 @@ export function usePublishDraft() {
     error,
     errorCause,
     setError,
+    showFailure,
     publishedId,
     conflicts,
     checkingConflicts,
@@ -406,6 +399,7 @@ export function usePublishDraft() {
     canPublish,
     eligibilityChecks,
     persistDraft,
+    isStaleDraft,
     saveStatus,
     setSaveStatus,
     savingNext,

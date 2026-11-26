@@ -160,7 +160,7 @@ export function NotificationBell({ variant }: { variant: "default" | "media" }) 
         {variant === "media" ? <Bell className="h-4 w-4" /> : <BellIcon className="h-5 w-5" />}
         {unread.length > 0 && (
           <span
-            className={`absolute flex h-4 min-w-4 items-center justify-center rounded-full bg-error px-1 text-[10px] font-medium text-error-foreground ${
+            className={`absolute flex h-4 min-w-4 items-center justify-center rounded-full bg-error px-1 text-2xs font-medium text-error-foreground ${
               "-right-0.5 -top-0.5"
             }`}
           >

@@ -38,7 +38,7 @@ export function TemplateDetailsPanel({ selected }: { selected: PickerEntry | nul
               {selected.useCases.map((useCase) => (
                 <span
                   key={useCase}
-                  className="rounded-full bg-accent px-2 py-1 text-[11px] text-primary"
+                  className="rounded-full bg-accent px-2 py-1 text-ui text-primary"
                 >
                   {useCase}
                 </span>

@@ -96,7 +96,7 @@ export function MediaDetailPage({ assetId }: { assetId: string }) {
   return (
     <div>
       <PageHeader title="Media Detail" subtitle="Inspect and manage a single media asset." titleInTopbar />
-      <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+      <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-ui text-muted-foreground">
         <Link href="/media-workspace/assets" className="hover:text-foreground">Media Library</Link>
         <ChevronRight className="h-3 w-3" />
         <Link href="/media-workspace/assets" className="hover:text-foreground">All Media</Link>
@@ -106,7 +106,7 @@ export function MediaDetailPage({ assetId }: { assetId: string }) {
       <div className="mt-2 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-extrabold">Media Detail</h1>
-          <Link href="/media-workspace/assets" className="mt-1 inline-flex items-center gap-1.5 text-[11px] font-semibold text-primary">
+          <Link href="/media-workspace/assets" className="mt-1 inline-flex items-center gap-1.5 text-ui font-semibold text-primary">
             <ArrowLeft className="h-3.5 w-3.5" />
             Back to Media Library
           </Link>
@@ -168,7 +168,7 @@ export function MediaDetailPage({ assetId }: { assetId: string }) {
               </span>
               <div className="min-w-0 flex-1">
                 <InlineRename key={label} asset={asset} onRenamed={(title) => setAsset({ ...asset, title, updated_at: new Date().toISOString() })} />
-                <p className="mt-1 text-[11px] text-muted-foreground">{kindLabel} · {mime} · {size}</p>
+                <p className="mt-1 text-ui text-muted-foreground">{kindLabel} · {mime} · {size}</p>
               </div>
             </div>
             {/* Playback Readiness (CONTEXT.md): the same sentence the Upload Queue shows. `status`
@@ -186,7 +186,7 @@ export function MediaDetailPage({ assetId }: { assetId: string }) {
             {asset.tags?.length ? (
               <div className="mt-3 flex flex-wrap gap-1.5">
                 {asset.tags.map((tag) => (
-                  <Tag key={tag.id} className="bg-muted text-[10px] font-semibold text-foreground">
+                  <Tag key={tag.id} className="bg-muted text-2xs font-semibold text-foreground">
                     {tag.name}
                   </Tag>
                 ))}
@@ -194,7 +194,7 @@ export function MediaDetailPage({ assetId }: { assetId: string }) {
             ) : null}
             <div className="mt-4 divide-y divide-border border-t border-border">
               {facts.map(([Ico, factLabel, value]) => (
-                <div key={factLabel} className="flex items-center justify-between gap-4 py-2.5 text-[11px]">
+                <div key={factLabel} className="flex items-center justify-between gap-4 py-2.5 text-ui">
                   <span className="flex items-center gap-2 text-muted-foreground">
                     <Ico className="h-3.5 w-3.5" />
                     {factLabel}
@@ -212,7 +212,7 @@ export function MediaDetailPage({ assetId }: { assetId: string }) {
 
       <section className="mt-3 rounded-xl border border-border bg-card p-4 shadow-panel">
         <h2 className="text-sm font-bold">Metadata</h2>
-        <p className="mt-1 text-[11px] text-muted-foreground">Detailed information about this media file.</p>
+        <p className="mt-1 text-ui text-muted-foreground">Detailed information about this media file.</p>
         <div className="mt-3 grid gap-3 lg:grid-cols-3">
           <SectionCard
             title="File Information"

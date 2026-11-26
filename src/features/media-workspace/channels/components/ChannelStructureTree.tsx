@@ -1,19 +1,15 @@
-import { Badge, type BadgeColor } from "@/components/ui/Badge";
+import { Badge } from "@/components/ui/Badge";
 import { BoxIcon, MonitorIcon } from "@/components/ui/icons";
 import { structureNodes } from "../display-structure";
+import { mediaStatus } from "../../media-status";
 import type { ChannelListItem } from "../types";
 
-const HEALTH_COLOR: Record<"online" | "warning" | "offline", BadgeColor> = {
-  online: "green",
-  warning: "yellow",
-  offline: "red",
-};
-
 function HealthBadge({ health }: { health: "online" | "warning" | "offline" | null }) {
-  if (health === null) return <Badge color="zinc">No player</Badge>;
+  const status = mediaStatus(health ?? "no_player");
+  if (health === null) return <Badge color={status.color}>{status.label}</Badge>;
   return (
-    <Badge color={HEALTH_COLOR[health]} variant="pill">
-      {health[0]!.toUpperCase() + health.slice(1)}
+    <Badge color={status.color} variant="pill">
+      {status.label}
     </Badge>
   );
 }
@@ -38,7 +34,7 @@ export function ChannelStructureTree({
         <BoxIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
         <div className="text-left">
           <p className="text-xs font-semibold text-foreground">{tree.player.name}</p>
-          <p className="text-[11px] text-muted-foreground">{tree.player.code}</p>
+          <p className="text-ui text-muted-foreground">{tree.player.code}</p>
         </div>
         <HealthBadge health={tree.player.health} />
       </div>
@@ -50,8 +46,8 @@ export function ChannelStructureTree({
           <div key={screen.key} className="flex flex-col items-center gap-1 rounded-lg border border-border bg-card px-3 py-2 shadow-sm">
             <MonitorIcon className="h-4 w-4 text-muted-foreground" />
             <p className="text-xs font-semibold text-foreground">{screen.label}</p>
-            <p className="text-[11px] text-muted-foreground">{screen.resolution}</p>
-            {screen.output && <p className="text-[11px] text-muted-foreground">{screen.output}</p>}
+            <p className="text-ui text-muted-foreground">{screen.resolution}</p>
+            {screen.output && <p className="text-ui text-muted-foreground">{screen.output}</p>}
           </div>
         ))}
       </div>

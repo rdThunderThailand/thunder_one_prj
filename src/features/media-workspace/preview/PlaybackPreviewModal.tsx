@@ -52,7 +52,7 @@ export function PlaybackPreviewModal({
       title="Preview Layout"
       description="Live layout playback simulation"
       badge={
-        <span className="flex items-center gap-1 text-[10px] text-success">
+        <span className="flex items-center gap-1 text-2xs text-success">
           <i aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-success" /> Live Simulation
         </span>
       }

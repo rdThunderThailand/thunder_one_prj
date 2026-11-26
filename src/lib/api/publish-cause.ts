@@ -13,6 +13,7 @@ export type PublishCause =
   | "nothing-playable"
   | "targets"
   | "channels-inactive"
+  | "channels-deleted"
   | "no-screens"
   | "files";
 
@@ -53,10 +54,6 @@ function syncGroupMessage(message: string): string | null {
   if (direct) {
     return `จอ ${direct[1].replace("channel:", "ช่องทาง:").replace("group:", "กลุ่ม:").trim()} อยู่ในกลุ่มซิงค์ จึงเลือกจอเดี่ยวไม่ได้ กรุณาเลือกทั้งกลุ่มหรือเอาจอนี้ออก`;
   }
-  const directChannel = /direct-target publication on (.+?) — synchronized playback is enabled/.exec(message);
-  if (directChannel) {
-    return `ช่องทาง ${directChannel[1].trim()} เปิดการซิงค์อยู่ จึงเลือกจอเดี่ยวไม่ได้ กรุณาเลือกเป็นช่องทางแทน หรือปิดการซิงค์`;
-  }
   return null;
 }
 
@@ -84,6 +81,12 @@ export function inactiveChannelMessage(message: string): string | null {
   return null;
 }
 
+/** ADR 0122 rule 16: `media_publication_activate` names Channels that were deleted. Null when it is not that. */
+export function deletedChannelMessage(message: string): string | null {
+  const deleted = /these channels were deleted — remove them from this Program: ([^\n]+)/.exec(message);
+  return deleted ? `ช่องทาง ${deleted[1].trim()} ถูกลบแล้ว กรุณานำออกจาก Program นี้ก่อนเผยแพร่` : null;
+}
+
 /**
  * `media_publication_activate` refuses a Layout that is not Active, one with unbound Zones, and a
  * snapshot that resolves to nothing playable. The unbound-Zone names are the operator's own, so
@@ -95,7 +98,7 @@ export function layoutNotReadyMessage(message: string): string | null {
   }
   const unbound = /zone\(s\) (.+) are unbound/.exec(message);
   if (unbound) {
-    return `Layout ยังไม่ได้ผูก Content ให้ Zone: ${unbound[1].trim()} กรุณาผูก Content แล้ว Activate Layout ก่อนเผยแพร่`;
+    return `Layout ยังไม่ได้ผูก Content ให้ Zone: ${unbound[1].trim()} กรุณาผูก Content ให้ครบทุก Zone`;
   }
   if (message.includes("produced zero resolvable snapshot items")) return NOTHING_PLAYABLE;
   return null;
@@ -178,6 +181,8 @@ export function classifyPublishCause(message: string): PublishCauseResult | null
     return { cause: "targets", message: "ไม่พบช่องทางหรือกลุ่มที่เลือก อาจถูกลบไปแล้ว กรุณาเลือกปลายทางใหม่" };
   }
 
+  const deletedChannels = deletedChannelMessage(message);
+  if (deletedChannels) return { cause: "channels-deleted", message: deletedChannels };
   if (message.includes("channels are not active — activate them before publishing")) {
     return { cause: "channels-inactive", message: inactiveChannelMessage(message) as string };
   }

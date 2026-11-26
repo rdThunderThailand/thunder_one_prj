@@ -42,7 +42,7 @@ export function MediaThumb({ url, thumbnailUrl, kind, mimeType, alt, className, 
 
   if (!url || imgFailed) {
     return (
-      <div className={`${base} flex items-center justify-center text-[10px] font-medium uppercase text-t1-gray-400`}>
+      <div className={`${base} flex items-center justify-center text-2xs font-medium uppercase text-t1-gray-400`}>
         {kind ?? "file"}
       </div>
     );

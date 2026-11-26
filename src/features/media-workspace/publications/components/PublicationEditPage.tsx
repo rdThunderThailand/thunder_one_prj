@@ -21,15 +21,20 @@ import {
   deletePublication,
   duplicatePublication,
 } from "../services/publications-api";
-import { useLeaveGuard } from "../hooks/useLeaveGuard";
+import { useLeaveGuard } from "../../editor-lifecycle/useLeaveGuard";
 import { useLayoutPublishBlock } from "../hooks/useLayoutPublishBlock";
 import { publishCauseFix, publishFixCard } from "../publish-cause-fix";
 import { LayoutNotActiveNotice } from "./LayoutNotActiveNotice";
+import { ProblemTargetsNotice } from "./ProblemTargetsNotice";
+import { problemTargets } from "../problem-targets";
 import { PublishErrorFix } from "./PublishErrorFix";
 import { useProgramEdit } from "../hooks/useProgramEdit";
 import { publicationDrift } from "../publication-drift";
 import { safeReturnTo } from "../return-to";
 import { programEditSubtitle } from "../program-edit";
+import { computeEligibility, strictWireSchedule } from "../publish-eligibility";
+import { nowIn } from "../schedule-preset";
+import { DEFAULT_TIMEZONE } from "../schedule";
 import { CONFIRM_COPY } from "./edit/confirm-copy";
 import { ProgramBreadcrumb } from "./edit/ProgramBreadcrumb";
 import { ProgramDetailsCard } from "./edit/ProgramDetailsCard";
@@ -72,7 +77,17 @@ export function PublicationEditPage({ id }: { id: string }) {
   const isEnded = displayStatus === "ended";
   // ADR 0090: on air, only the schedule's end may move.
   const isOnAir = displayStatus === "live" || displayStatus === "publishing" || displayStatus === "failed";
-  const canPublish = state.name.trim().length > 0 && !busy;
+  const canSave = state.name.trim().length > 0 && !busy;
+  // A Draft's saved schedule starts at creation, so Draft Publish takes the strict rules; a published
+  // Program keeps its past start and passes its schedule as is (ADR 0002 amendment).
+  const tz = state.schedule?.timezone || DEFAULT_TIMEZONE;
+  const now = nowIn(tz);
+  const gate = computeEligibility({
+    program: { ...state, schedule: isDraft ? strictWireSchedule(state.schedule, now.date, now.time) : state.schedule },
+    basicInfoOk: state.name.trim().length > 0,
+    assets: null,
+    loadingRefs: false,
+  });
   // Only a first publish activates the Layout; a published Program's edits do not.
   const publishBlock = isDraft ? layoutGate.reason : null;
   // A refusal with a named cause shows once, at page level, next to its fix button.
@@ -84,7 +99,7 @@ export function PublicationEditPage({ id }: { id: string }) {
     if (!failure?.cause) return;
     document.getElementById(`edit-card-${publishFixCard(failure.cause, step)}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
   };
-  const pageError = failure?.isStale
+  const pageError = failure?.kind === "conflict"
     ? "This Program was changed elsewhere. Reload to see the latest version."
     : failure && (!failure.part || failure.cause)
       ? failure.message
@@ -150,7 +165,7 @@ export function PublicationEditPage({ id }: { id: string }) {
             <Button
               variant="outline"
               size="sm"
-              disabled={!canPublish || !isDirty}
+              disabled={!canSave || !isDirty}
               onClick={() => edit.saveDraft(false)}
             >
               Save
@@ -159,8 +174,8 @@ export function PublicationEditPage({ id }: { id: string }) {
           {isDraft && (
             <Button
               size="sm"
-              disabled={!canPublish || publishBlock !== null}
-              title={publishBlock ?? undefined}
+              disabled={!canSave || !gate.canPublish || publishBlock !== null}
+              title={gate.blockReason ?? publishBlock ?? undefined}
               onClick={() => setPublishOpen(true)}
             >
               Publish
@@ -169,7 +184,8 @@ export function PublicationEditPage({ id }: { id: string }) {
           {!isDraft && !isEnded && (
             <Button
               size="sm"
-              disabled={!canPublish || !isDirty}
+              disabled={!canSave || !gate.canPublish || !isDirty}
+              title={gate.blockReason ?? undefined}
               onClick={() => setPublishOpen(true)}
             >
               Publish changes
@@ -204,7 +220,13 @@ export function PublicationEditPage({ id }: { id: string }) {
           gate={layoutGate}
         />
       )}
-      {failure?.isStale && (
+      {isDraft && (
+        <ProblemTargetsNotice
+          targets={problemTargets(state.targets)}
+          onRemove={(channelId) => edit.patch({ targets: state.targets.filter((target) => target.channel_id !== channelId) })}
+        />
+      )}
+      {failure?.kind === "conflict" && (
         <p className="text-sm text-muted-foreground">
           This Program changed elsewhere.{" "}
           <button

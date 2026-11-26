@@ -37,7 +37,7 @@ export function ChannelGroupsPage() {
   }, []);
 
   useEffect(() => {
-    load().catch((caught) => setError(classifyApiError(caught, "Could not load Channel Groups. Try again.")));
+    load().catch((caught) => setError(classifyApiError(caught, "โหลด Channel Group ไม่สำเร็จ กรุณาลองใหม่")));
   }, [load]);
 
   const selected = groups?.find((g) => g.id === selectedId) ?? null;

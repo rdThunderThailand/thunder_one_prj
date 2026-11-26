@@ -2,7 +2,7 @@ import { Card } from "@/components/ui/Card";
 import { SearchIcon } from "@/components/ui/icons";
 
 // Fields with genuinely no backing data anywhere in Core's schema (see
-// mock-data.ts's header comment) — stay decorative, honestly, not silently
+// types.ts header comment) — stay decorative, honestly, not silently
 // dropped. "สถานะ" isn't listed here since ContractorTabs already covers it
 // with real data.
 const INERT_FILTERS = ["บริษัท / ผู้ว่าจ้าง", "ผู้ประสานงานภายใน"];

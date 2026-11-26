@@ -1,13 +1,13 @@
 import type {
   BlockingProgram,
   ChannelCategory,
+  ChannelDeleteMode,
   ChannelDetail,
   ChannelDevice,
   ChannelDisplayArrangement,
   ChannelDisplayConfig,
   ChannelDisplayConfigScreen,
   ChannelGroupSummary,
-  ChannelLifecycle,
   ChannelListItem,
   ChannelLocationOption,
   ChannelReferenceData,
@@ -24,7 +24,6 @@ export interface ChannelRequestDescriptor {
 
 export interface ChannelListQuery {
   category?: ChannelCategory;
-  lifecycle?: ChannelLifecycle;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -193,7 +192,6 @@ function parseChannelListItem(value: unknown): ChannelListItem {
     !isString(value.id) ||
     !isString(value.name) ||
     !isNullableString(value.description) ||
-    !isOneOf(value.lifecycle, ["draft", "active", "inactive"]) ||
     !isOneOf(value.status, ["draft", "active", "inactive"]) ||
     !isOneOf(value.category, ["dooh", "in_store", "online", "social"]) ||
     !(value.channel_type === null || isRecord(value.channel_type)) ||
@@ -228,8 +226,8 @@ function parseChannelListItem(value: unknown): ChannelListItem {
     id: value.id,
     name: value.name,
     description: value.description,
-    lifecycle: value.lifecycle,
-    status: value.status,
+    // Core's `lifecycle` key is the ADR 0037 derived value, which One does not read (ADR 0129).
+    lifecycle: value.status,
     category: value.category,
     channel_type: channelType,
     location,
@@ -255,7 +253,6 @@ async function requestChannelApi<T>(request: ChannelRequestDescriptor): Promise<
 export function buildChannelListPath(query: ChannelListQuery = {}): string {
   const searchParams = new URLSearchParams();
   if (query.category) searchParams.set("category", query.category);
-  if (query.lifecycle) searchParams.set("lifecycle", query.lifecycle);
   const suffix = searchParams.toString();
   return suffix ? `/media/channels?${suffix}` : "/media/channels";
 }
@@ -345,10 +342,25 @@ export function parseChannelDetail(data: unknown): ChannelDetail {
     throw new TypeError("Channel detail data is malformed");
   }
   const blocking = unwrapped.blocking_programs ?? [];
-  if (!Array.isArray(blocking)) {
+  const drafts = unwrapped.draft_programs ?? [];
+  const hasHistory = unwrapped.has_history ?? false;
+  if (!Array.isArray(blocking) || !Array.isArray(drafts) || typeof hasHistory !== "boolean") {
     throw new TypeError("Channel detail data is malformed");
   }
-  return { ...channel, created_at: unwrapped.created_at, blocking_programs: blocking.map(parseBlockingProgram) };
+  return {
+    ...channel,
+    created_at: unwrapped.created_at,
+    blocking_programs: blocking.map(parseBlockingProgram),
+    draft_programs: drafts.map(parseBlockingProgram),
+    has_history: hasHistory,
+  };
+}
+
+/** `mode` is optional until Core's tombstone PR; anything else reads as "unknown mode". */
+export function parseDeleteResult(data: unknown): { mode?: ChannelDeleteMode } {
+  const unwrapped = unwrapData(data);
+  const mode = isRecord(unwrapped) ? unwrapped.mode : undefined;
+  return mode === "removed" || mode === "tombstoned" ? { mode } : {};
 }
 
 export function parseChannelReferenceData(data: unknown): ChannelReferenceData {
@@ -385,8 +397,8 @@ export async function fetchChannelReferenceData(): Promise<ChannelReferenceData>
   );
 }
 
-export async function deleteChannel(id: string, expectedRevision: number): Promise<void> {
-  await requestChannelApi<unknown>(buildDeleteChannelRequest(id, expectedRevision));
+export async function deleteChannel(id: string, expectedRevision: number): Promise<{ mode?: ChannelDeleteMode }> {
+  return parseDeleteResult(await requestChannelApi<unknown>(buildDeleteChannelRequest(id, expectedRevision)));
 }
 
 export async function deactivateChannel(id: string, expectedRevision: number): Promise<ChannelDetail> {
@@ -419,10 +431,4 @@ export async function setChannelGroups(id: string, groupIds: string[]): Promise<
   return parseChannelDetail(
     await requestChannelApi<unknown>(buildSetChannelGroupsRequest(id, groupIds)),
   );
-}
-
-/** Same partial-unique-index text as `media_channel_groups_set_members` on the other side of
- *  this many-to-many (ADR 0074 §5) — shown as-is rather than the generic "Invalid input:" text. */
-export function isChannelGroupSyncConflict(message: string): boolean {
-  return message.includes("already in another synchronized group") || message.includes("only one synchronized group");
 }

@@ -71,7 +71,7 @@ export function PreviewControls({
             >
               {playing ? <PauseGlyph /> : <PlayIcon className="h-4 w-4" />}
             </Button>
-            <span className={`min-w-0 max-w-[min(8rem,35%)] shrink truncate text-[11px] tabular-nums @max-[9.5rem]/preview-controls:max-w-[calc(100%-2.5rem)] ${mutedText}`} title={timeLabel} aria-label={timeLabel}>
+            <span className={`min-w-0 max-w-[min(8rem,35%)] shrink truncate text-ui tabular-nums @max-[9.5rem]/preview-controls:max-w-[calc(100%-2.5rem)] ${mutedText}`} title={timeLabel} aria-label={timeLabel}>
               {timeLabel}
             </span>
             <input
@@ -129,8 +129,8 @@ export function PreviewControls({
         </div>
         {isFooter && (
           <div className="mt-2 text-right">
-            <p className="text-[11px] font-semibold">Preview Mode</p>
-            <p className="text-[10px] text-primary-foreground/55">This is a simulation of how your layout will appear on screens.</p>
+            <p className="text-ui font-semibold">Preview Mode</p>
+            <p className="text-2xs text-primary-foreground/55">This is a simulation of how your layout will appear on screens.</p>
           </div>
         )}
       </div>

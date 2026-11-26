@@ -117,7 +117,7 @@ export function AddContactChannelModal({ onClose }: { onClose: () => void }) {
           />
           <span>
             แสดงข้อมูลนี้ในโปรไฟล์ของฉัน
-            <span className="block text-[11px] text-t1-gray-400">เมื่อเปิดไว้ ผู้อื่นจะเห็นข้อมูลนี้เมื่อดูโปรไฟล์ของคุณ</span>
+            <span className="block text-ui text-t1-gray-400">เมื่อเปิดไว้ ผู้อื่นจะเห็นข้อมูลนี้เมื่อดูโปรไฟล์ของคุณ</span>
           </span>
         </label>
       </form>

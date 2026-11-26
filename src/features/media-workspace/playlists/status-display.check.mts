@@ -1,56 +1,24 @@
 /** Run: node src/features/media-workspace/playlists/status-display.check.mts */
 import assert from "node:assert/strict";
-import { describeDeleteError, describePermanentDeleteRefusal, playlistDisplayStatus, statusBadge } from "./status-display.ts";
+import { describePermanentDeleteRefusal, playlistDisplayStatus, playlistInUseLabel, statusBadge } from "./status-display.ts";
 
 assert.deepEqual(statusBadge("active"), { color: "green", label: "Active" });
-assert.deepEqual(statusBadge("draft"), { color: "yellow", label: "Draft" });
+assert.deepEqual(statusBadge("draft"), { color: "zinc", label: "Draft" });
 assert.deepEqual(statusBadge("inactive"), { color: "zinc", label: "Inactive" });
 
-// A draft stays a draft however many Programs play it — the stored status is
-// still the only thing that decides draft / not-draft.
-assert.equal(playlistDisplayStatus({ status: "draft", in_use_count: 3 }), "draft");
-// No draft or active Program plays it: inactive, whatever the (untrustworthy) stored value says.
-assert.equal(playlistDisplayStatus({ status: "active", in_use_count: 0 }), "inactive");
-// In use (directly or through a Layout, ADR 0120): active, even on a row someone archived by hand.
-assert.equal(playlistDisplayStatus({ status: "inactive", in_use_count: 3 }), "active");
-// `publication_count` (direct, any status) no longer drives the badge: a playlist reached only
-// through a Layout has 0 direct references and is still active.
-// (Callers pass whole playlist objects, so the extra key is fine there; mirror that here.)
-const viaLayout = { status: "active" as const, publication_count: 0, in_use_count: 1 };
-assert.equal(playlistDisplayStatus(viaLayout), "active");
-// No in_use_count at all — a frontend deployed ahead of Thunder_Core keeps the stored
-// value rather than declaring every playlist inactive.
-const noCount = { status: "active" as const, publication_count: 0 };
-assert.equal(playlistDisplayStatus(noCount), "active");
+// ADR 0125: Draft or Active only; use (`in_use_count`) never changes the badge.
+assert.equal(playlistDisplayStatus({ status: "draft" }), "draft");
 assert.equal(playlistDisplayStatus({ status: "active" }), "active");
-assert.equal(playlistDisplayStatus({ status: "inactive" }), "inactive");
+// A stored `inactive` row (no frontend caller writes it) displays as Active.
+assert.equal(playlistDisplayStatus({ status: "inactive" }), "active");
+// Callers pass whole playlist objects, so extra keys are fine; mirror that here.
+assert.equal(playlistDisplayStatus({ status: "active", in_use_count: 0 } as { status: "active" }), "active");
+assert.equal(playlistDisplayStatus({ status: "draft", in_use_count: 3 } as { status: "draft" }), "draft");
 
-// #40 wording: the publication names survive, the prefix does not.
-assert.equal(
-  describeDeleteError("Invalid input: playlist is used by an active or draft publication: Summer Sale, Lobby Loop"),
-  "ย้ายลงถังไม่ได้ — playlist นี้ถูกใช้อยู่ใน publication ที่ active หรือ draft: Summer Sale, Lobby Loop กรุณายกเลิก publication เหล่านั้นก่อน"
-);
-// Legacy count wording still handled until every environment is on the #40 backend.
-assert.equal(
-  describeDeleteError("Invalid input: playlist is used by 3 publication(s)"),
-  "ลบไม่ได้ — playlist นี้ถูกใช้อยู่ใน 3 publication กรุณาลบหรือยกเลิก publication เหล่านั้นก่อน"
-);
-assert.match(
-  describeDeleteError("Invalid input: this playlist belongs to a publication and cannot be deleted on its own"),
-  /ลบที่ publication แทน$/
-);
-// Anything unrecognised degrades to a generic retry message rather than leaking the body.
-assert.equal(describeDeleteError("permission denied for table playlists"), "ลบ playlist ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
-
-// media_video_delete (ADR 0045 §10), reached via the kind='single' cascade.
-assert.equal(
-  describeDeleteError("Already in use: video is still referenced by a playlist"),
-  "ลบไม่ได้ — วิดีโอนี้ยังถูกใช้อยู่ใน playlist กรุณานำออกจาก playlist ก่อน"
-);
-assert.equal(
-  describeDeleteError("Already in use: video has been published and is part of a broadcast history snapshot"),
-  "ลบไม่ได้ — วิดีโอนี้เคย publish ไปแล้วจึงลบถาวรไม่ได้ ใช้ Archive แทน"
-);
+// The in-use tag shows only for a positive count; 0 and a missing count show none.
+assert.equal(playlistInUseLabel({ in_use_count: 3 }), "ใช้ใน 3 Program");
+assert.equal(playlistInUseLabel({ in_use_count: 0 }), null);
+assert.equal(playlistInUseLabel({}), null);
 
 // ADR 0121: permanent delete names what holds the playlist.
 assert.equal(

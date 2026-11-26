@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/Button";
 import { TextField } from "@/components/ui/TextField";
 import { Modal } from "@/components/ui/Modal";
 import { InfoIcon, MonitorIcon, PlusIcon, ShareNodesIcon, UsersIcon } from "@/components/ui/icons";
-import { classifyApiError, isDuplicateName } from "@/lib/api/api-error";
-import { createChannelGroup, isSyncConflict, setChannelGroupMembers, updateChannelGroup } from "../services/channel-groups-api";
+import { classifyApiError } from "@/lib/api/api-error";
+import { createChannelGroup, setChannelGroupMembers, updateChannelGroup } from "../services/channel-groups-api";
 import type { ChannelListItem } from "../../channels/types";
 import { CreateGroupChannelsModal } from "./CreateGroupChannelsModal";
 import type { ChannelGroup, PlaybackMode } from "../types";
@@ -48,7 +48,7 @@ export function CreateEditGroupModal({
 
   const save = async () => {
     if (name.trim() === "") {
-      setNameError("Group name is required");
+      setNameError("กรุณากรอกชื่อ Group");
       return;
     }
     setNameError(undefined);
@@ -64,12 +64,11 @@ export function CreateEditGroupModal({
           : saved;
       onSaved(withMembers);
     } catch (caught) {
-      if (caught instanceof Error && isDuplicateName(caught.message)) {
-        setNameError("A Channel Group with this name already exists.");
-      } else if (caught instanceof Error && isSyncConflict(caught.message)) {
-        setError("A channel can only belong to one synchronized Group at a time. Remove it from the other Group first.");
+      const failure = classifyApiError(caught, "บันทึก Channel Group ไม่สำเร็จ กรุณาลองใหม่");
+      if (failure.reason === "duplicate-name") {
+        setNameError(failure.message);
       } else {
-        setError(classifyApiError(caught, "Could not save this Channel Group. Try again.").message);
+        setError(failure.message);
       }
     } finally {
       setSaving(false);
@@ -138,7 +137,7 @@ export function CreateEditGroupModal({
                 >
                   <Icon className={`h-4 w-4 ${selected ? "text-primary" : "text-muted-foreground"}`} />
                   <span className="text-sm font-semibold text-foreground">{label}</span>
-                  <span className="text-[11px] text-muted-foreground">{hint}</span>
+                  <span className="text-ui text-muted-foreground">{hint}</span>
                 </button>
               );
             })}

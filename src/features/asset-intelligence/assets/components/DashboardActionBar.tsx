@@ -11,7 +11,7 @@ export function DashboardActionBar() {
             {index === 0 && <PlusIcon className="h-3.5 w-3.5" />}
             {item.label}
             {item.badge !== undefined && (
-              <span className="rounded-full bg-error px-1.5 py-0.5 text-[10px] font-semibold text-error-foreground">
+              <span className="rounded-full bg-error px-1.5 py-0.5 text-2xs font-semibold text-error-foreground">
                 {item.badge}
               </span>
             )}

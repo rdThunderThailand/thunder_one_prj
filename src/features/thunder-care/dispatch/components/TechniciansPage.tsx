@@ -155,7 +155,7 @@ export function TechniciansPage() {
                       <td className="px-2 py-2">
                         <div className="flex flex-wrap gap-1">
                           {tech.skills.map((s) => (
-                            <span key={s} className="rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
+                            <span key={s} className="rounded-full bg-muted px-2 py-0.5 text-ui text-muted-foreground">
                               {s}
                             </span>
                           ))}
@@ -202,7 +202,7 @@ export function TechniciansPage() {
                     <p className="text-t1-gray-400">ทักษะหลัก</p>
                     <div className="mt-1 flex flex-wrap gap-1">
                       {selected.skills.map((s) => (
-                        <span key={s} className="rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
+                        <span key={s} className="rounded-full bg-muted px-2 py-0.5 text-ui text-muted-foreground">
                           {s}
                         </span>
                       ))}

@@ -12,7 +12,7 @@ import { usePreviewUrls } from "@/hooks/usePreviewUrls";
 import { decodeMetadata } from "../metadata";
 import { formatDuration } from "../duration";
 import { playlistContentType, type Sort, type SortKey } from "../list-filtering";
-import { playlistDisplayStatus, statusBadge } from "../status-display";
+import { playlistDisplayStatus, playlistInUseLabel, statusBadge } from "../status-display";
 import type { PlaylistListItem } from "../types";
 
 function formatUpdatedAt(iso?: string): string {
@@ -68,9 +68,9 @@ export function PlaylistsTable({
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-left text-[10px]">
+      <table className="w-full text-left text-2xs">
         <thead>
-          <tr className="border-b border-border text-[9px] font-bold uppercase tracking-[0.06em] text-muted-foreground">
+          <tr className="border-b border-border text-2xs font-bold uppercase tracking-[0.06em] text-muted-foreground">
             <th className="w-8 px-3 py-2"><Checkbox aria-label="Select all playlists on this page" checked={isAllSelected} onCheckedChange={(value) => onSelectionChange(value === true ? new Set(rows.map((row) => row.id)) : new Set())} /></th>
             <SortHeader label="Playlist" sortKey="name" sort={sort} onSortChange={onSortChange} className="px-3 py-2" />
             <SortHeader label="Type" sortKey="type" sort={sort} onSortChange={onSortChange} className="px-3 py-2" />
@@ -85,6 +85,7 @@ export function PlaylistsTable({
           {rows.map((playlist) => {
             const cover = coverAssetId(playlist);
             const badge = statusBadge(playlistDisplayStatus(playlist));
+            const inUse = playlistInUseLabel(playlist);
             const metadata = decodeMetadata(playlist.metadata);
 
             return (
@@ -101,17 +102,17 @@ export function PlaylistsTable({
                       alt={playlist.name}
                       className="h-11 w-16"
                     />
-                    <div className="min-w-0">
-                      <p className="truncate text-[11px] font-semibold text-foreground">
+                    <div className="min-w-0 max-w-48">
+                      <p className="truncate text-ui font-semibold text-foreground" title={playlist.name}>
                         {playlist.name}
                       </p>
-                      <p className="mt-0.5 truncate text-[9px] text-muted-foreground">
+                      <p className="mt-0.5 truncate text-2xs text-muted-foreground">
                         {metadata.info.description || "No description"}
                       </p>
                       {playlist.tags && playlist.tags.length > 0 && (
                         <div className="mt-1 flex flex-wrap gap-1">
                           {playlist.tags.map((tag) => (
-                            <Tag key={tag.id} className="rounded-full px-2 py-0 text-[8px]">
+                            <Tag key={tag.id} className="rounded-full px-2 py-0 text-3xs">
                               {tag.name}
                             </Tag>
                           ))}
@@ -120,26 +121,27 @@ export function PlaylistsTable({
                     </div>
                   </div>
                 </td>
-                <td className="px-3 py-2.5 text-[10px]">
-                  <Tag className="rounded-full px-2 py-0 text-[9px] font-medium">{(() => {
+                <td className="px-3 py-2.5 text-2xs">
+                  <Tag className="rounded-full px-2 py-0 text-2xs font-medium">{(() => {
                     const type = playlistContentType(playlist);
                     return type ? TYPE_LABELS[type] : "—";
                   })()}</Tag>
                 </td>
-                <td className="px-3 py-2.5 text-[10px]">
+                <td className="px-3 py-2.5 text-2xs">
                   {playlist.total_duration_seconds == null
                     ? "—"
                     : formatDuration(playlist.total_duration_seconds)}
                 </td>
-                <td className="px-3 py-2.5 text-[10px]">
+                <td className="px-3 py-2.5 text-2xs">
                   {playlist.item_count.toLocaleString()}
                 </td>
                 <td className="px-3 py-2.5">
-                  {playlist.created_by?.display_name && <p className="text-[10px] font-semibold">{playlist.created_by.display_name}</p>}
-                  <p className="text-[9px] text-muted-foreground">{formatUpdatedAt(playlist.updated_at ?? playlist.created_at)}</p>
+                  {playlist.created_by?.display_name && <p className="max-w-32 truncate text-2xs font-semibold" title={playlist.created_by.display_name}>{playlist.created_by.display_name}</p>}
+                  <p className="text-2xs text-muted-foreground">{formatUpdatedAt(playlist.updated_at ?? playlist.created_at)}</p>
                 </td>
                 <td className="px-3 py-2.5">
-                  <Badge variant={statusVariant(badge.color)} className="rounded-full px-2 py-0 text-[9px]">{badge.label}</Badge>
+                  <Badge variant={statusVariant(badge.color)} className="rounded-full px-2 py-0 text-2xs">{badge.label}</Badge>
+                  {inUse && <Tag className="ml-1.5 rounded-full px-2 py-0 text-2xs">{inUse}</Tag>}
                 </td>
                 <td className="px-3 py-2.5 text-right">
                   <RowActions
@@ -259,7 +261,7 @@ function RowActions({
                     Permanent delete
                   </DropdownMenuItem>
                 ) : (
-                  <p className="px-2 py-1.5 text-[10px] text-muted-foreground">
+                  <p className="px-2 py-1.5 text-2xs text-muted-foreground">
                     Permanent delete unavailable — this playlist has been published.
                   </p>
                 )}
@@ -270,7 +272,7 @@ function RowActions({
                   Details
                 </DropdownMenuItem>
                 {/* The one stored status transition (ADR 0060 §3, §6) — draft rows only, and it
-                    moves the badge to Inactive, not Active, until a publication references it. */}
+                    moves the badge to Active (ADR 0125). */}
                 {isDraft && (
                   <DropdownMenuItem disabled={disabled} onSelect={() => onAction("mark-ready")}>
                     Mark as ready

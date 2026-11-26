@@ -36,6 +36,7 @@ export function publishCauseFix(cause: PublishCause, ctx: PublishFixContext): Pu
     case "schedule-invalid":
       return { kind: "step", step: 3, label: "แก้กำหนดเวลา" };
     case "targets":
+    case "channels-deleted":
       return { kind: "step", step: 3, label: "แก้ปลายทาง" };
     case "no-content":
       return { kind: "step", step: 1, label: "เลือกเนื้อหา" };
@@ -56,5 +57,5 @@ export function publishCauseFix(cause: PublishCause, ctx: PublishFixContext): Pu
 /** The Edit page has cards, not steps: the card a step jump lands on. */
 export function publishFixCard(cause: PublishCause, step: 1 | 2 | 3): "content" | "targets" | "schedule" {
   if (step !== 3) return "content";
-  return cause === "targets" ? "targets" : "schedule";
+  return cause === "targets" || cause === "channels-deleted" ? "targets" : "schedule";
 }

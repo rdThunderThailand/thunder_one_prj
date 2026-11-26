@@ -1,20 +1,14 @@
 "use client";
 
-import { Badge, type BadgeColor } from "@/components/ui/Badge";
+import { Badge } from "@/components/ui/Badge";
 import { BoxIcon, MonitorIcon } from "@/components/ui/icons";
 import { channelStatus, channelTypeKey, channelTypeLabel } from "../channel-logic";
 import { nowPlayingName, nowPlayingRemaining, nowPlayingThumbnail } from "../now-playing";
 import type { Sort, SortKey } from "../list-filtering";
 import type { NowNextOccurrence } from "../../publications/now-next";
-import type { ChannelListItem, ChannelStatusFilter } from "../types";
+import { mediaStatus } from "../../media-status";
+import type { ChannelListItem } from "../types";
 import { ChannelRowActionsMenu } from "./ChannelRowActionsMenu";
-
-const STATUS_BADGE: Record<ChannelStatusFilter, { label: string; color: BadgeColor }> = {
-  online: { label: "Online", color: "green" },
-  warning: { label: "Warning", color: "yellow" },
-  offline: { label: "Offline", color: "red" },
-  no_player: { label: "No player", color: "zinc" },
-};
 
 // No TV/Kiosk pictograms exist in the shared icon set; Monitor stands in for every screen-like
 // Output Kind (Screen / TV / Multi-screen) and Box for Kiosk, matching the closest shape on hand.
@@ -68,7 +62,7 @@ function ChannelRow({
   onChanged: (updated: ChannelListItem) => void;
   onDeleted: (id: string) => void;
 }) {
-  const status = STATUS_BADGE[channelStatus(channel)];
+  const status = mediaStatus(channelStatus(channel));
   const TypeIcon = TYPE_ICON[channelTypeKey(channel)];
   const thumbnail = nowPlayingThumbnail(occurrence);
   const groups = channel.groups ?? [];
@@ -172,7 +166,7 @@ export function ChannelTable({
     <div className="min-h-0 flex-1 overflow-auto">
       <table className="w-full min-w-[1080px] text-left text-sm">
         <thead>
-          <tr className="border-b border-border bg-muted text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+          <tr className="border-b border-border bg-muted text-ui font-semibold uppercase tracking-wide text-muted-foreground">
             <SortHeader label="Channel" sortKey="name" sort={sort} onSortChange={onSortChange} className="w-64 px-4 py-2.5" />
             <th className="px-3 py-2.5">Type</th>
             <SortHeader label="Status" sortKey="status" sort={sort} onSortChange={onSortChange} className="px-3 py-2.5" />

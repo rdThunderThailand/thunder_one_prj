@@ -186,15 +186,15 @@ export function AddBulkStep1Upload({
           <div className="grid grid-cols-3 divide-x divide-border text-center">
             <div>
               <p className="text-lg font-semibold text-foreground">{totalCount}</p>
-              <p className="text-[11px] text-t1-gray-400">ทั้งหมด</p>
+              <p className="text-ui text-t1-gray-400">ทั้งหมด</p>
             </div>
             <div>
               <p className="text-lg font-semibold text-foreground">0</p>
-              <p className="text-[11px] text-t1-gray-400">เพิ่มใหม่</p>
+              <p className="text-ui text-t1-gray-400">เพิ่มใหม่</p>
             </div>
             <div>
               <p className="text-lg font-semibold text-foreground">0</p>
-              <p className="text-[11px] text-t1-gray-400">อัปเดต</p>
+              <p className="text-ui text-t1-gray-400">อัปเดต</p>
             </div>
           </div>
         </div>

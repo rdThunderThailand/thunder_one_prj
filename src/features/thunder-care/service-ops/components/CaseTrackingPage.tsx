@@ -127,7 +127,7 @@ function TrackingTable({
                   <Avatar name={row.assignee.name} size={22} />
                   <div className="min-w-0">
                     <p className="truncate text-xs font-medium text-foreground">{row.assignee.name}</p>
-                    <p className="truncate text-[11px] text-t1-gray-400">{row.assignee.role}</p>
+                    <p className="truncate text-ui text-t1-gray-400">{row.assignee.role}</p>
                   </div>
                 </div>
               </td>

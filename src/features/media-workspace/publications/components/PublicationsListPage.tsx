@@ -159,7 +159,7 @@ export function PublicationsListPage() {
       setActionError(null);
       await work();
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : fallback);
+      setActionError(classifyApiError(err, fallback).message);
     } finally {
       setBusyId(null);
     }
@@ -271,7 +271,7 @@ export function PublicationsListPage() {
         title="All Programs"
         meta={data ? `${data.total.toLocaleString()} programs` : "…"}
       >
-        {actionError && <p className="mb-3 text-[10px] text-error">{actionError}</p>}
+        {actionError && <p className="mb-3 text-2xs text-error">{actionError}</p>}
         {renderBody()}
       </LibraryShell>
 

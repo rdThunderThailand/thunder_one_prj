@@ -40,8 +40,8 @@ function RowHeader({
         <Icon className="h-4 w-4" />
       </span>
       <div className="min-w-0">
-        <span className="block truncate text-[11px] font-semibold text-foreground">{name}</span>
-        <p className="truncate text-[9px] text-muted-foreground">{detail}</p>
+        <span className="block truncate text-ui font-semibold text-foreground">{name}</span>
+        <p className="line-clamp-2 text-2xs text-muted-foreground">{detail}</p>
       </div>
     </>
   );
@@ -104,13 +104,13 @@ function Block({ segment, date, now, selected, onSelect }: { segment: CalendarSe
           className="h-8 w-8"
         />
         <div className="min-w-0">
-          <div className="flex items-center gap-1 text-[11px] font-semibold">
+          <div className="flex items-center gap-1 text-ui font-semibold">
             <span className="truncate">{name}</span>
             {isNowBlock(segment, now) && (
-              <span className="shrink-0 rounded bg-primary px-1 text-[9px] font-semibold text-primary-foreground">Now</span>
+              <span className="shrink-0 rounded bg-primary px-1 text-2xs font-semibold text-primary-foreground">Now</span>
             )}
           </div>
-          <div className="truncate text-[9px] opacity-75">
+          <div className="truncate text-2xs opacity-75">
             {range}
             {hidden > 0 && ` · +${hidden} overridden`}
           </div>
@@ -150,7 +150,7 @@ export function CalendarGrid({
     >
       <div style={{ width: 200 + LANE_PX }}>
         <div className="flex border-b border-border">
-          <div className="sticky left-0 z-20 w-[200px] shrink-0 border-r border-border bg-card px-3 py-3 text-[9px] font-bold text-muted-foreground">
+          <div className="sticky left-0 z-20 w-[200px] shrink-0 border-r border-border bg-card px-3 py-3 text-2xs font-bold text-muted-foreground">
             GMT+7
           </div>
           <div
@@ -160,7 +160,7 @@ export function CalendarGrid({
             {HOURS.map((hour) => (
               <span
                 key={hour}
-                className="absolute top-3 pl-1.5 text-[9px] font-medium text-muted-foreground"
+                className="absolute top-3 pl-1.5 text-2xs font-medium text-muted-foreground"
                 style={{ left: `${(hour / 24) * 100}%` }}
               >
                 {String(hour).padStart(2, "0")}:00
@@ -168,7 +168,7 @@ export function CalendarGrid({
             ))}
             {nowLeft !== null && (
               <span
-                className="absolute top-0 z-10 -translate-x-1/2 rounded-b bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-primary-foreground"
+                className="absolute top-0 z-10 -translate-x-1/2 rounded-b bg-primary px-1.5 py-0.5 text-2xs font-semibold text-primary-foreground"
                 style={{ left: `${nowLeft}%` }}
               >
                 Now

@@ -52,7 +52,7 @@ function MediaWorkspaceTopbar({ userName, roleLabel, avatarUrl, helpSupport, loc
         <MobileNavigationTrigger />
         <div className="min-w-0 flex-1 xl:flex-initial">
           {title && <h1 className="truncate text-xl font-extrabold tracking-tight text-foreground">{title}</h1>}
-          {meta?.subtitle && <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{meta.subtitle}</p>}
+          {meta?.subtitle && <p className="mt-0.5 truncate text-ui text-muted-foreground">{meta.subtitle}</p>}
         </div>
 
         <GlobalSearch variant="media" />

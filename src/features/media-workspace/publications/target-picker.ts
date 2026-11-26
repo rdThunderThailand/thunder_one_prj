@@ -1,11 +1,12 @@
 import type { ChannelListItem } from "../channels/types/index.ts";
+import { canBeProgramTarget } from "../channels/lifecycle-actions.ts";
 import type { PublicationTarget } from "./types";
 
 export type TargetSelection = { channelIds: string[]; groupIds: string[] };
 
 /** A Program targets active Channels only — only they hold a device reservation (ADR 0099). */
 export function targetableChannels(channels: readonly ChannelListItem[]): ChannelListItem[] {
-  return channels.filter((channel) => channel.status === "active");
+  return channels.filter(canBeProgramTarget);
 }
 
 export function selectionFromTargets(targets: readonly PublicationTarget[]): TargetSelection {
@@ -46,7 +47,17 @@ export function targetsFromSelection(
 
   return [
     ...current.filter((t) => t.target_type === "device"),
-    ...selection.channelIds.map((id) => ({ target_type: "channel" as const, channel_id: id, name: nameOf("channel", id, channels) })),
+    ...selection.channelIds.map((id) => {
+      // A Tombstone is not in the list; keep what Core said about it so the notice still names it.
+      const saved = current.find((t) => t.target_type === "channel" && t.channel_id === id);
+      return {
+        target_type: "channel" as const,
+        channel_id: id,
+        name: nameOf("channel", id, channels),
+        ...(saved?.status !== undefined && { status: saved.status }),
+        ...(saved?.deleted !== undefined && { deleted: saved.deleted }),
+      };
+    }),
     ...selection.groupIds.map((id) => ({ target_type: "group" as const, group_id: id, name: nameOf("group", id, groups) })),
   ];
 }

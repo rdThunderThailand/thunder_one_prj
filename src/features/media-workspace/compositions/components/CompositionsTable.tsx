@@ -128,9 +128,9 @@ export function CompositionsTable({ rows, folders, sort, inTrash, busyId, previe
   const isAllSelected = rows.length > 0 && rows.every((row) => selectedIds.has(row.id));
   return (
     <div className="overflow-x-auto">
-      <table className="w-full min-w-220 text-left text-[10px]">
+      <table className="w-full min-w-220 text-left text-2xs">
         <thead>
-          <tr className="border-b border-border text-[9px] font-bold uppercase tracking-[0.06em] text-muted-foreground">
+          <tr className="border-b border-border text-2xs font-bold uppercase tracking-[0.06em] text-muted-foreground">
             <th className="w-8 px-3 py-2">
               <Checkbox aria-label="Select all layouts on this page" checked={isAllSelected} onCheckedChange={(value) => onSelectionChange(value === true ? new Set(rows.map((row) => row.id)) : new Set())} />
             </th>
@@ -164,8 +164,8 @@ export function CompositionsTable({ rows, folders, sort, inTrash, busyId, previe
                   <div className="flex items-center gap-3">
                     <CompositionLibraryPreview zones={item.previewZones} previews={previews} />
                     <span className="min-w-0">
-                      <span className="block truncate text-[11px] font-semibold">{item.name}</span>
-                      <span className="mt-0.5 block truncate text-[9px] text-muted-foreground">/{item.folderId ? folders.get(item.folderId) ?? "Folder" : "Uncategorized"} · {item.bound_count}/{item.zone_count} content ready</span>
+                      <span className="block truncate text-ui font-semibold">{item.name}</span>
+                      <span className="mt-0.5 block truncate text-2xs text-muted-foreground">/{item.folderId ? folders.get(item.folderId) ?? "Folder" : "Uncategorized"} · {item.bound_count}/{item.zone_count} content ready</span>
                     </span>
                   </div>
                 </td>
@@ -173,9 +173,9 @@ export function CompositionsTable({ rows, folders, sort, inTrash, busyId, previe
                 <td className="px-3 py-2.5">{item.referenceResolution ?? "—"}</td>
                 <td className="px-3 py-2.5">
                   <span className="block truncate font-semibold">{item.createdBy?.displayName ?? "Unknown user"}</span>
-                  <span className="block truncate text-[9px] text-muted-foreground">{formatDate(item.updated_at ?? item.created_at)}</span>
+                  <span className="block truncate text-2xs text-muted-foreground">{formatDate(item.updated_at ?? item.created_at)}</span>
                 </td>
-                <td className="px-3 py-2.5"><Badge variant={badgeVariant(badge.color)} className="rounded-full px-2 py-0 text-[9px]">{badge.label}</Badge></td>
+                <td className="px-3 py-2.5"><Badge variant={badgeVariant(badge.color)} className="rounded-full px-2 py-0 text-2xs">{badge.label}</Badge></td>
                 <td className="px-3 py-2.5">{item.usageCount ? `${item.usageCount} Program${item.usageCount === 1 ? "" : "s"}` : "—"}</td>
                 <td className="px-3 py-2.5 text-right">
                   <RowActions item={item} inTrash={inTrash} disabled={busyId === item.id} previewing={previewBusyId === item.id} onPreview={onPreview} onAction={onAction} />
@@ -210,10 +210,10 @@ export function CompositionsGrid({ rows, inTrash, busyId, previewBusyId, onPrevi
       </div>
       <div className="space-y-2 p-3">
         <div className="min-w-0">
-          <Link href={`/media-workspace/layouts/${item.id}`} className="block truncate text-[10px] font-semibold text-foreground hover:text-primary">{item.name}</Link>
-          <p className="mt-1 text-[8px] text-muted-foreground">{item.zone_count} Zones · {item.referenceResolution ?? "—"}</p>
+          <Link href={`/media-workspace/layouts/${item.id}`} className="block truncate text-2xs font-semibold text-foreground hover:text-primary">{item.name}</Link>
+          <p className="mt-1 text-3xs text-muted-foreground">{item.zone_count} Zones · {item.referenceResolution ?? "—"}</p>
         </div>
-        <div className="flex items-center justify-between"><Badge variant={badgeVariant(badge.color)} className="rounded-full px-2 py-0 text-[9px]">{badge.label}</Badge><span className="text-[8px] text-muted-foreground">Updated {formatDate(item.updated_at ?? item.created_at)}</span></div>
+        <div className="flex items-center justify-between"><Badge variant={badgeVariant(badge.color)} className="rounded-full px-2 py-0 text-2xs">{badge.label}</Badge><span className="text-3xs text-muted-foreground">Updated {formatDate(item.updated_at ?? item.created_at)}</span></div>
       </div>
     </article>;
   })}</div>;

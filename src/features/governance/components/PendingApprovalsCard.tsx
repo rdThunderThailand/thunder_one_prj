@@ -40,7 +40,7 @@ export function PendingApprovalsCard() {
               <p className="text-xs text-t1-gray-400">Requested by {item.requester}</p>
             </div>
             <div className="flex shrink-0 flex-col items-end gap-1">
-              <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${typeTone[item.type]}`}>
+              <span className={`rounded-full px-2 py-0.5 text-2xs font-medium ${typeTone[item.type]}`}>
                 {item.type}
               </span>
               <span className="text-xs text-t1-gray-400">{item.timeAgo}</span>

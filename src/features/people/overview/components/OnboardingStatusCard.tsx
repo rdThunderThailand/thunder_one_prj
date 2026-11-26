@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Avatar } from "@/components/ui/Avatar";
 import { Card } from "@/components/ui/Card";
 import { ProgressBar } from "@/components/ui/ProgressBar";
@@ -26,15 +27,15 @@ export function OnboardingStatusCard({ summary, rows }: OnboardingStatusCardProp
     <Card className="flex h-full flex-col p-4">
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-sm font-semibold text-foreground">สถานะ Onboarding</h2>
-        <button type="button" className="text-xs font-medium text-primary hover:text-accent-foreground">
+        <Link href="/people/new-hires" className="text-xs font-medium text-primary hover:text-accent-foreground">
           ดูทั้งหมด
-        </button>
+        </Link>
       </div>
 
       <dl className="mb-3 grid grid-cols-4 gap-2 border-b border-border pb-3">
         {summaryItems.map(({ key, label }) => (
           <div key={key}>
-            <dt className="text-[11px] text-t1-gray-400">{label}</dt>
+            <dt className="text-ui text-t1-gray-400">{label}</dt>
             <dd className="text-lg font-semibold text-foreground">{summary[key]}</dd>
           </div>
         ))}

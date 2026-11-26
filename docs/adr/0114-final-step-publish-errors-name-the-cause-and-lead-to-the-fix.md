@@ -2,6 +2,7 @@
 
 Status: accepted (2026-11-17, owner decisions in a grilling session on the v1.0 P0 list; scrutiny
 round 1 applied). Applies ADR 0049 §10 to the Program wizard and Edit page; no Core or schema change.
+§5 amended 2026-11-24 by ADR 0122 rule 17 (wizard fix jumps and causes).
 
 ## Context
 
@@ -69,6 +70,14 @@ QA picked an Inactive Layout in the Program wizard, went through every step, pre
    `publication not found` (the wizard re-creates the Draft). Server and transport failures (5xx,
    network) keep the existing retry message and carry no `cause`. The Edit page uses the same `cause`s;
    its step jumps become the matching card.
+
+   **Amended 2026-11-24 by [ADR 0122](0122-deleting-an-unused-channel-tombstones-it-and-frees-its-player.md)
+   rule 17, in the wizard only.**
+   - A fix's step jump no longer saves first. It went through the stepper's save-first jump (#226),
+     whose save returned the same refusal for a refused save, so the button led nowhere.
+   - Every failed save carries its `cause`, not only the final step's: Next, the stepper jump and Save
+     draft. The fix button therefore shows beside each.
+   - The Edit page is unchanged.
 
 ## Not chosen
 

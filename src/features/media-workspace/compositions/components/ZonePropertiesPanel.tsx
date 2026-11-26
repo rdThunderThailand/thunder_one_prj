@@ -14,7 +14,7 @@ import { defaultBinding, type ZoneBindingDraft, type ZonePlayback } from "../zon
 import { ZoneContentList } from "./ZoneContentList";
 
 const tabClasses = (active: boolean) =>
-  `flex-1 rounded-lg px-3 py-1.5 text-[9px] font-medium ${active ? "bg-card text-primary shadow-sm" : "text-muted-foreground"}`;
+  `flex-1 rounded-lg px-3 py-1.5 text-2xs font-medium ${active ? "bg-card text-primary shadow-sm" : "text-muted-foreground"}`;
 
 const selectClasses =
   "mt-1 h-9 w-full rounded-lg border border-border bg-card px-2 text-xs text-foreground";
@@ -52,7 +52,7 @@ export function ZonePropertiesPanel({
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4">
       <label className="flex flex-col gap-1.5">
-        <span className="text-[9px] font-medium uppercase tracking-wide text-muted-foreground">Zone name</span>
+        <span className="text-2xs font-medium uppercase tracking-wide text-muted-foreground">Zone name</span>
         <input
           key={zone.id ?? zone.position}
           defaultValue={zone.name}

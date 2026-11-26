@@ -201,7 +201,7 @@ export function PlaylistsListPage() {
         toolbar={
           <>
             <PlaylistsFilters onClearAll={!inTrash && qs !== "" ? handleClearAll : undefined} value={filters} isGrid={isGrid} sort={sort} onViewChange={handleViewChange} onSortChange={handleSortChange} onChange={(next) => { setFilters(next); setPage(1); }} />
-            {refreshing && playlists !== null && <span className="ml-auto text-[10px] text-muted-foreground">กำลังรีเฟรช…</span>}
+            {refreshing && playlists !== null && <span className="ml-auto text-2xs text-muted-foreground">กำลังรีเฟรช…</span>}
           </>
         }
         selection={selectedIds.size > 0 && (
@@ -248,10 +248,10 @@ export function PlaylistsListPage() {
           <LibraryPagination page={currentPage} totalPages={totalPages} total={sorted.length} pageSize={perPage} onPage={setPage} itemLabel="playlists" perPageOptions={PER_PAGE_OPTIONS} onPageSize={(next) => { setPerPage(next); setPage(1); }} />
         )}
       >
-        {actionError && <p className="mb-3 text-[10px] text-error">{actionError}</p>}
+        {actionError && <p className="mb-3 text-2xs text-error">{actionError}</p>}
         {error && playlists !== null && (
           <div className="mb-3 rounded-lg border border-error/30 bg-error-muted p-3">
-            <p className="text-[10px] text-error">{error.message}</p>
+            <p className="text-2xs text-error">{error.message}</p>
           </div>
         )}
         {loading && !error ? (

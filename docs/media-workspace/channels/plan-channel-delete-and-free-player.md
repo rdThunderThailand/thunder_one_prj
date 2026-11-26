@@ -284,6 +284,6 @@ Group refusal. Then the release order: Core B to main, then One A+C (`docs/agent
 
 ## Not in this plan
 
-- ADR 0122 phase 2 (Tombstone, rules 11–17) — its own plan once guards 14–16 are designed.
+- ADR 0122 phase 2 (Tombstone, rules 11–20) — [plan-channel-tombstone.md](plan-channel-tombstone.md).
 - Swapping a Player under a live Program (deferred issue).
 - Moving the other 36 `toast.error` calls (ADR 0123 rule 5).

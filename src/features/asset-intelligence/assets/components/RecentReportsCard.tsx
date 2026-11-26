@@ -20,7 +20,7 @@ export function RecentReportsCard() {
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5">
                 <p className="truncate text-sm font-medium text-foreground">{report.title}</p>
-                <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold ${fileTypeTone[report.fileType]}`}>
+                <span className={`shrink-0 rounded px-1.5 py-0.5 text-2xs font-semibold ${fileTypeTone[report.fileType]}`}>
                   {report.fileType}
                 </span>
               </div>

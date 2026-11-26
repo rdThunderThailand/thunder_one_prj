@@ -6,7 +6,7 @@ import { LAYOUT_STATUSES, RESOLUTION_PRESETS, type LayoutStatus } from "../types
 
 const inputClasses =
   "h-9 w-full rounded-lg border border-border bg-card px-3 text-xs text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30";
-const labelClasses = "text-[9px] font-medium uppercase tracking-wide text-muted-foreground";
+const labelClasses = "text-2xs font-medium uppercase tracking-wide text-muted-foreground";
 
 type Settings = {
   name: string;
@@ -55,7 +55,7 @@ export function LayoutSettingsPanel({
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <p className="text-[11px] font-bold text-foreground">Layout Properties</p>
+        <p className="text-ui font-bold text-foreground">Layout Properties</p>
         <p className="text-xs text-muted-foreground">No zone selected</p>
       </div>
       <div className="flex flex-col gap-1.5">

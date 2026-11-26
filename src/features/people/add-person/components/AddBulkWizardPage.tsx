@@ -557,7 +557,7 @@ export function AddBulkWizardPage({ roles, tenantId, units, positionOptions }: A
                 <Button variant="primary" onClick={handleConfirm} disabled={submitting}>
                   {submitting ? `กำลังสร้าง... (${submitProgress}/${rows.length})` : "ยืนยันและส่งคำเชิญ"}
                 </Button>
-                <span className="text-[11px] text-t1-gray-400">จะส่งอีเมลเชิญทันทีหลังยืนยัน</span>
+                <span className="text-ui text-t1-gray-400">จะส่งอีเมลเชิญทันทีหลังยืนยัน</span>
               </div>
             </>
           )}

@@ -61,7 +61,7 @@ export function Step2Setup({
               <span className="text-sm font-semibold text-foreground">
                 {mode === "single" ? "Single-screen" : "Multi-screen"}
               </span>
-              <span className="text-[11px] text-muted-foreground">
+              <span className="text-ui text-muted-foreground">
                 {mode === "single" ? "One screen with one output" : "Multiple screens combined"}
               </span>
             </button>
@@ -105,7 +105,7 @@ export function Step2Setup({
             </select>
           </label>
           <div className="rounded-lg bg-muted px-3.5 py-2.5">
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Total Resolution</p>
+            <p className="text-ui font-semibold uppercase tracking-wide text-muted-foreground">Total Resolution</p>
             <p className="mt-0.5 text-sm font-semibold text-foreground">{resolutionLabel(canvas)}</p>
           </div>
         </div>
@@ -127,7 +127,7 @@ export function Step2Setup({
                 className="flex min-w-0 flex-col items-center justify-center bg-muted px-1 text-center"
               >
                 <p className="text-xs font-semibold text-muted-foreground">Display {screen.index + 1}</p>
-                <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{screen.resolution}</p>
+                <p className="mt-0.5 truncate text-ui text-muted-foreground">{screen.resolution}</p>
               </div>
             ))}
           </div>
@@ -153,7 +153,7 @@ export function Step2Setup({
 
         {selectedPlayer && (
           <div className="mt-4 rounded-lg border border-border p-3">
-            <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Player Details</p>
+            <p className="text-2xs font-bold uppercase tracking-wide text-muted-foreground">Player Details</p>
             <dl className="mt-2 grid grid-cols-2 gap-y-1.5 text-sm">
               <dt className="text-muted-foreground">Device ID</dt>
               <dd className="text-right font-mono text-foreground">{selectedPlayer.code}</dd>

@@ -29,7 +29,7 @@ export function FeaturedArticlesCard() {
             </span>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium text-foreground">{article.title}</p>
-              <span className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium ${article.tagTone}`}>
+              <span className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-ui font-medium ${article.tagTone}`}>
                 {article.tag}
               </span>
               <div className="mt-1.5 flex items-center gap-2 text-xs text-t1-gray-400">

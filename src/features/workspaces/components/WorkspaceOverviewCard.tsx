@@ -31,7 +31,7 @@ export function WorkspaceOverviewCard({ workspaces }: { workspaces: WorkspaceEnt
           />
           <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
             <span className="text-xl font-semibold text-foreground">{total}</span>
-            <span className="text-[10px] text-t1-gray-400">Total</span>
+            <span className="text-2xs text-t1-gray-400">Total</span>
           </div>
         </div>
         <ul className="flex-1 space-y-1.5 text-sm">

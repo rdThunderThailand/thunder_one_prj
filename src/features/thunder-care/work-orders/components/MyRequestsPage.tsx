@@ -20,7 +20,7 @@ function StepProgress({ steps, currentStepIndex, cancelled }: { steps: string[];
           <div key={step} className="flex items-center gap-1">
             <span
               title={step}
-              className={`flex h-4 w-4 items-center justify-center rounded-full text-[9px] ${
+              className={`flex h-4 w-4 items-center justify-center rounded-full text-2xs ${
                 isCancelledStep
                   ? "bg-error text-error-foreground"
                   : done

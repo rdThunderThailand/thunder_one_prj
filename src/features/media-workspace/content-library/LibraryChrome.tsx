@@ -37,9 +37,9 @@ export function LibrarySummary({ cards, label }: { cards: SummaryCard[]; label: 
             <card.icon className="h-4 w-4" strokeWidth={1.8} />
           </span>
           <div>
-            <p className="text-[10px] font-semibold text-muted-foreground">{card.label}</p>
+            <p className="text-2xs font-semibold text-muted-foreground">{card.label}</p>
             <strong className="mt-1 block text-lg leading-none">{typeof card.value === "number" ? card.value.toLocaleString() : card.value}</strong>
-            {card.detail && <span className="mt-1.5 block text-[9px] text-muted-foreground">{card.detail}</span>}
+            {card.detail && <span className="mt-1.5 block text-2xs text-muted-foreground">{card.detail}</span>}
           </div>
         </Tag>
         );
@@ -95,7 +95,7 @@ export function LibraryEmpty({ title, hint, action, tone = "muted" }: { title: s
       <div>
         <span className={cn("mx-auto grid h-10 w-10 place-items-center rounded-full", tone === "danger" ? "bg-error-muted text-error" : "bg-muted text-muted-foreground")}><FileImage className="h-5 w-5" /></span>
         <h3 className="mt-3 text-sm font-bold">{title}</h3>
-        {hint && <p className="mt-1 text-[10px] text-muted-foreground">{hint}</p>}
+        {hint && <p className="mt-1 text-2xs text-muted-foreground">{hint}</p>}
         {action && <div className="mt-3">{action}</div>}
       </div>
     </div>
@@ -118,23 +118,23 @@ export function LibraryPagination({ page, totalPages, total, pageSize, onPage, i
   const start = Math.max(1, Math.min(page - 2, totalPages - 4));
   const pages = Array.from({ length: Math.min(5, totalPages) }, (_, i) => start + i);
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-3 text-[9px] text-muted-foreground">
+    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-3 text-2xs text-muted-foreground">
       <span>Showing {from} to {to} of {total.toLocaleString()} {itemLabel}</span>
       <div className="flex items-center gap-1">
         <Button variant="ghost" size="icon" className="h-7 w-7" disabled={page <= 1} onClick={() => onPage(page - 1)} aria-label="Previous page"><ChevronLeft className="h-3.5 w-3.5" /></Button>
         {pages.map((n) => (
-          <Button key={n} variant={n === page ? "default" : "ghost"} size="icon" className="h-7 w-7 text-[9px]" onClick={() => onPage(n)} aria-current={n === page ? "page" : undefined}>{n}</Button>
+          <Button key={n} variant={n === page ? "default" : "ghost"} size="icon" className="h-7 w-7 text-2xs" onClick={() => onPage(n)} aria-current={n === page ? "page" : undefined}>{n}</Button>
         ))}
         {pages[pages.length - 1] < totalPages && (
           <>
             <span className="px-1">…</span>
-            <Button variant="ghost" size="icon" className="h-7 w-7 text-[9px]" onClick={() => onPage(totalPages)}>{totalPages}</Button>
+            <Button variant="ghost" size="icon" className="h-7 w-7 text-2xs" onClick={() => onPage(totalPages)}>{totalPages}</Button>
           </>
         )}
         <Button variant="ghost" size="icon" className="h-7 w-7" disabled={page >= totalPages} onClick={() => onPage(page + 1)} aria-label="Next page"><ChevronRight className="h-3.5 w-3.5" /></Button>
         {perPageOptions && onPageSize && (
           <Select value={String(pageSize)} onValueChange={(value) => onPageSize(Number(value))}>
-            <SelectTrigger className="ml-2 h-8 w-23 text-[9px]" aria-label="Items per page"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="ml-2 h-8 w-23 text-2xs" aria-label="Items per page"><SelectValue /></SelectTrigger>
             <SelectContent>{perPageOptions.map((n) => <SelectItem key={n} value={String(n)}>{n} / page</SelectItem>)}</SelectContent>
           </Select>
         )}

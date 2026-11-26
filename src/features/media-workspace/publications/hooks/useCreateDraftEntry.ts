@@ -2,35 +2,19 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { fetchComposition } from "../../compositions/services/compositions-api";
 import { fetchPlaylist } from "@/features/media-workspace/playlists";
-import { classifyApiError } from "@/lib/api/api-error";
+import { classifyApiError, UserFacingError } from "@/lib/api/api-error";
 import { hasUnfinishedDraft, shouldShowResumePrompt } from "../resume-prompt";
-import { resolveSeed, type PublicationSeed } from "../seed-resolver";
+import { resolveSeed, type PublicationSeed, type ReadySeed } from "../seed-resolver";
 import { DraftSaveError, draftSavePolicy, type DraftPersistResult } from "../draft-save-policy";
-import { DEFAULT_IMAGE_DURATION_SECONDS, isImageAsset } from "../draft-mapping";
+import { isImageAsset } from "../draft-mapping";
 import { isDraftDirty, usePublicationDraftStore } from "../store/usePublicationDraftStore";
-import type { MediaAsset, PublicationType } from "../types";
+import type { MediaAsset } from "../types";
 
 const CREATE_URL = "/media-workspace/program/create";
 type Entry = { seed: PublicationSeed | null; isEditMode: boolean; unfinished: boolean; hasServerDraft: boolean; dropsSchedule: boolean };
-type ReadySeed = { name: string; publicationType: PublicationType };
-
-function applySeed(seed: PublicationSeed, ready: ReadySeed) {
-  const store = usePublicationDraftStore.getState();
-  store.cancelDraft();
-  store.setBasicInfo({ ...usePublicationDraftStore.getState().basicInfo, publicationType: ready.publicationType });
-  if (seed.kind === "composition") store.setCompositionId(seed.id);
-  if (seed.kind === "playlist") store.setPlaylistId(seed.id);
-  if (seed.kind === "asset") {
-    store.setAssetItems([{
-      media_asset_id: seed.id,
-      duration_seconds: ready.publicationType === "image" ? DEFAULT_IMAGE_DURATION_SECONDS : null,
-      transition: "cut",
-    }]);
-  }
-  store.setStep(2);
-}
 
 export function useCreateDraftEntry(input: {
   hasHydrated: boolean;
@@ -43,7 +27,8 @@ export function useCreateDraftEntry(input: {
   channelsError: string | null;
   revisionConflict: string | null;
   setRevisionConflict: (message: string | null) => void;
-  persistDraft: (forPublish: boolean) => Promise<DraftPersistResult>;
+  persistDraft: (forPublish: boolean, options?: { asNew?: boolean }) => Promise<DraftPersistResult>;
+  isStaleDraft: boolean;
 }) {
   const router = useRouter();
   const captured = useRef(false);
@@ -101,7 +86,7 @@ export function useCreateDraftEntry(input: {
         return { name: detail.name, publicationType: "playlist" };
       }
       const asset = assets?.find((item) => item.id === seed.id);
-      if (assetsError || !asset) throw new Error("ไม่พบ media ที่เลือก");
+      if (assetsError || !asset) throw new UserFacingError("ไม่พบ media ที่เลือก");
       return { name: asset.title ?? asset.file?.original_filename ?? asset.id, publicationType: isImageAsset(asset) ? "image" : "video" };
     };
     void loadSeed().then((ready) => {
@@ -109,7 +94,7 @@ export function useCreateDraftEntry(input: {
       setReadySeed(ready);
       if (resolveSeed({ seedPresent: true, isEditMode: false, draftHasUnfinishedWork: entry.unfinished, choice: null }) === "apply") {
         resolved.current = true;
-        applySeed(seed, ready);
+        usePublicationDraftStore.getState().applySeed(seed, ready);
         setDismissed(true);
         router.replace(CREATE_URL);
       }
@@ -131,6 +116,23 @@ export function useCreateDraftEntry(input: {
     if (entry?.seed) router.replace(CREATE_URL);
   };
 
+  // Saving the old draft and discarding its edits leave the prompt the same way.
+  const leaveOldDraft = () => {
+    resolved.current = true;
+    if (entry?.seed && readySeed) usePublicationDraftStore.getState().applySeed(entry.seed, readySeed);
+    else usePublicationDraftStore.getState().cancelDraft();
+    setDismissed(true);
+    if (entry?.seed) router.replace(CREATE_URL);
+  };
+
+  // ADR 0086 §9: drops only the local edits; nothing is sent to or deleted from the server.
+  const discardChanges = () => {
+    if (saving.current || !entry || (entry.seed && !readySeed)) return;
+    input.setRevisionConflict(null);
+    leaveOldDraft();
+    toast.success("ทิ้งการแก้ไขที่ยังไม่บันทึกแล้ว");
+  };
+
   const handleUseContent = async () => {
     if (saving.current || !entry || (entry.seed && !readySeed)) return;
     saving.current = true;
@@ -138,24 +140,25 @@ export function useCreateDraftEntry(input: {
     setPromptError(null);
     try {
       const state = usePublicationDraftStore.getState();
-      if (state.publicationId) {
+      const savesOldDraft = Boolean(state.publicationId);
+      // ADR 0086 §10: a new row only after the first save showed why and relabelled the button.
+      const asNew = input.isStaleDraft;
+      if (savesOldDraft) {
         if (input.loadingChannels) throw new DraftSaveError("กำลังโหลด Channels กรุณารอสักครู่");
         if (input.channelsError) throw new DraftSaveError(input.channelsError);
         if (!state.basicInfo.name.trim()) throw new DraftSaveError("กรุณากรอกชื่อ Program ก่อนบันทึกร่าง");
         // ADR 0086 §3: save like a stepper jump, without validateStep. An invalid schedule is
         // dropped rather than blocking: choosing the new content overrides it.
-        const saved = await input.persistDraft(false);
+        const saved = await input.persistDraft(false, { asNew });
         if (saved.kind === "skipped") throw new DraftSaveError("กรุณากรอกชื่อ Program ก่อนบันทึกร่าง");
         state.markSaved(saved.draft);
         if (isDraftDirty(usePublicationDraftStore.getState())) {
           throw new DraftSaveError("มีการแก้ไขระหว่างบันทึก กรุณาลองอีกครั้งหรือทำต่อจาก draft เดิม");
         }
       }
-      resolved.current = true;
-      if (entry.seed && readySeed) applySeed(entry.seed, readySeed);
-      else usePublicationDraftStore.getState().cancelDraft();
-      setDismissed(true);
-      if (entry.seed) router.replace(CREATE_URL);
+      leaveOldDraft();
+      // ADR 0123 rules 1 and 5: the save this prompt made reports itself.
+      if (savesOldDraft) toast.success(asNew ? "บันทึกเป็น draft ใหม่แล้ว" : "บันทึก draft เดิมแล้ว");
     } catch (error) {
       const classified = classifyApiError(error, "บันทึก draft เดิมไม่สำเร็จ กรุณาลองอีกครั้ง");
       setPromptError(error instanceof DraftSaveError || classified.kind === "conflict"
@@ -168,22 +171,30 @@ export function useCreateDraftEntry(input: {
     }
   };
 
-  const genericLabel = entry?.seed?.kind === "composition" ? "Use the published Layout"
-    : entry?.seed?.kind === "playlist" ? "Use the published Playlist" : "Use the published media";
+  const seedName = readySeed?.name || (entry?.seed?.kind === "composition" ? "the published Layout"
+    : entry?.seed?.kind === "playlist" ? "the published Playlist" : "the published media");
+  const nextAction = entry?.seed ? `use ${seedName}` : "start new";
+  const hasServerDraft = entry?.hasServerDraft ?? false;
   return {
     isInitializing: !entry || Boolean(!entry.unfinished && entry.seed && !entry.isEditMode && !dismissed),
     seedError,
     prompt: {
       open: shouldShowResumePrompt({ hadUnfinishedWorkAtHydration: entry?.unfinished ?? false, isEditMode: entry?.isEditMode ?? true, dismissed }),
-      label: entry?.seed ? readySeed?.name ? `Use ${readySeed.name}` : genericLabel : "Start a new Program",
-      hasServerDraft: entry?.hasServerDraft ?? false,
+      // ADR 0086 §9: beside Discard, the primary button must say that it saves.
+      label: hasServerDraft ? `${input.isStaleDraft ? "Save as new" : "Save"} and ${nextAction}`
+        : entry?.seed ? `Use ${seedName}` : "Start a new Program",
+      hasServerDraft,
       dropsSchedule: entry?.dropsSchedule ?? false,
       busy,
       waiting: Boolean(entry?.seed && !readySeed) || Boolean(entry?.hasServerDraft && input.loadingChannels),
       conflict: conflict || Boolean(input.revisionConflict),
       error: promptError || (entry?.hasServerDraft ? input.channelsError : null),
+      discardLabel: `Discard and ${nextAction}`,
+      discardNextStep: entry?.seed ? `จากนั้นจะใช้ ${seedName}` : "จากนั้นจะเริ่ม Program ใหม่",
+      canDiscard: !busy && !(entry?.seed && !readySeed),
       onUse: () => { void handleUseContent(); },
       onContinue: continueDraft,
+      onDiscard: discardChanges,
     },
   };
 }

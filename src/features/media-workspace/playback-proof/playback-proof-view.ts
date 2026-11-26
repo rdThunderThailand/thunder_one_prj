@@ -1,3 +1,4 @@
+import { deletedChannelLabel } from "../channels/channel-logic.ts";
 import type { FailureReason, PlaybackProofEntry } from "./playback-proof-api.ts";
 
 export const FAILURE_LABELS: Record<FailureReason, string> = {
@@ -58,7 +59,11 @@ export type RelatedLink = { label: string; name: string; href: string | null; no
 export function relatedLinks(entry: PlaybackProofEntry): RelatedLink[] {
   const links: RelatedLink[] = [
     entry.channel
-      ? { label: "Channel", name: entry.channel.name, href: `/media-workspace/channels?channel=${entry.channel.id}` }
+      ? {
+          label: "Channel",
+          name: deletedChannelLabel(entry.channel.name, entry.channel.deleted),
+          href: entry.channel.deleted ? null : `/media-workspace/channels?channel=${entry.channel.id}`,
+        }
       : { label: "Channel", name: entry.device.name ?? "Media Device", href: null, note: "Not in a Channel when it played" },
   ];
   if (entry.program) {

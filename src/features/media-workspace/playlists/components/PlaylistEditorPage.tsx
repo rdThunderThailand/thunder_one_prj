@@ -25,8 +25,7 @@ import { PlaylistItemsPane } from "./PlaylistItemsPane";
 import { PlaylistTimelinePane } from "./PlaylistTimelinePane";
 import { PlaylistPlaybackSettings } from "./PlaylistPlaybackSettings";
 import { PlaylistPropertiesPane } from "./PlaylistPropertiesPane";
-import { RevisionConflictCard } from "./RevisionConflictCard";
-import { UnsavedLeaveConfirm } from "./UnsavedLeaveConfirm";
+import { RevisionConflictCard } from "../../editor-lifecycle/components/RevisionConflictCard";
 import { usePlaylistEditorRow } from "./usePlaylistEditorRow";
 import { PublishChangesDialog } from "@/features/media-workspace/publish-changes/PublishChangesDialog";
 import { publishChanges } from "@/features/media-workspace/publish-changes/publish-changes-api";
@@ -45,7 +44,6 @@ export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null 
   const [info, setInfo] = useState<PlaylistInfo>({ playlistType: "standard" });
   const [assets, setAssets] = useState<MediaAsset[]>([]);
   const [assetsLoading, setAssetsLoading] = useState(true);
-  const [confirmLeave, setConfirmLeave] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [nowPlayingItemId, setNowPlayingItemId] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -74,13 +72,6 @@ export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null 
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [history, shortcutPlatform]);
-
-  useEffect(() => {
-    if (!row.isDirty) return;
-    const warn = (event: BeforeUnloadEvent) => event.preventDefault();
-    window.addEventListener("beforeunload", warn);
-    return () => window.removeEventListener("beforeunload", warn);
-  }, [row.isDirty]);
 
   useEffect(() => {
     let alive = true;
@@ -134,13 +125,7 @@ export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null 
     [present.name, present.items, present.playback],
   );
 
-  const goBack = () => {
-    if (row.isDirty) {
-      setConfirmLeave(true);
-      return;
-    }
-    router.push(LIST_PATH);
-  };
+  const goBack = () => row.requestLeave(LIST_PATH);
 
   if (row.loading) return <p className="p-6 text-sm text-muted-foreground">กำลังโหลด...</p>;
   if (row.loadError) {
@@ -156,7 +141,7 @@ export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null 
 
   // ADR 0078 §6: unsaved edits are saved first, and a failed save stops the flow before any re-publish.
   const publishPlaylistChanges = async () => {
-    if (row.isDirty && !(await row.save())) throw new Error("save failed");
+    if (!(await row.ensureSaved())) throw new Error("save failed");
     return publishChanges("playlists", row.serverId!);
   };
   const publish = (id = row.serverId) => router.push(`/media-workspace/program/create?playlistId=${id}`);
@@ -172,7 +157,7 @@ export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null 
     : row.isDirty
       ? "บันทึกการแก้ไขล่าสุดก่อนเผยแพร่"
       : null;
-  const savedLabel = savedStateLabel(row.isDirty, row.lastSavedAt, !!row.serverId);
+  const savedLabel = savedStateLabel(row.saveStatus, row.lastSavedAt);
   const effectiveSelectedItemId = selectedItemId ?? present.items[0]?.key ?? null;
   const selectedItem = present.items.find((i) => i.key === effectiveSelectedItemId) ?? null;
   // `itemIndex` is the authored index, so a repeated asset lights up only the row on air.
@@ -184,7 +169,9 @@ export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null 
       <PlaylistEditorHeader
         name={present.name}
         status={row.status}
+        inUseCount={row.inUseCount}
         savedLabel={savedLabel}
+        isUnsaved={row.saveStatus !== "saved"}
         lastUpdatedAt={row.lastSavedAt}
         hasItems={present.items.length > 0}
         saving={row.saving}
@@ -214,9 +201,7 @@ export function PlaylistEditorPage({ playlistId }: { playlistId?: string | null 
         />
       )}
 
-      {confirmLeave && (
-        <UnsavedLeaveConfirm onStay={() => setConfirmLeave(false)} onLeave={() => router.push(LIST_PATH)} />
-      )}
+      {row.leaveDialog}
       {row.saveError && (
         <div className="rounded-lg border border-error/30 bg-error-muted p-4">
           <p className="text-sm text-error">{row.saveError}</p>

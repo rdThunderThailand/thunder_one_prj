@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { toast } from "sonner";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button, buttonClasses } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -16,17 +17,20 @@ import { useLayoutAspectRatio } from "../hooks/useLayoutAspectRatio";
 import { useLayoutPublishBlock } from "../hooks/useLayoutPublishBlock";
 import { publishCauseFix } from "../publish-cause-fix";
 import { LayoutNotActiveNotice } from "./LayoutNotActiveNotice";
+import { WizardProblemTargetsNotice } from "./ProblemTargetsNotice";
+import { useRefreshProblemTargets } from "../hooks/useWizardProblemTargets";
 import { PublishErrorFix } from "./PublishErrorFix";
 import { fetchPublication } from "../services/publications-api";
 import { fetchPlaylist } from "@/features/media-workspace/playlists";
 import { detailToDraft } from "../detail-mapping";
-import { isConflict, classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
+import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
 import type { PlaylistDetail } from "../types";
 import { attemptNext, isResumePending, resumeStep } from "../next-transition";
 import { publicationSeedFromParams } from "../seed-resolver";
 import { requireCompleteDraftSave } from "../draft-save-policy";
 import { useCreateDraftEntry } from "../hooks/useCreateDraftEntry";
 import { DraftResumePrompt } from "./DraftResumePrompt";
+import { CreateCancelButton } from "./CreateCancelButton";
 import { Button as LovableButton } from "@/components/ui/Button";
 import { type WizardStepId } from "../step-validation";
 import { ContentStep } from "./ContentStep";
@@ -42,11 +46,26 @@ function landOnResumeStep() {
   usePublicationDraftStore.setState({ step, furthestStep: step });
 }
 
+// Shared by the `?id=` resume effect and the revision-conflict banner's "โหลดใหม่" action — both fully
+// overwrite local state from the server, on the premise that any local edits are not worth keeping.
+async function loadDraft(id: string): Promise<void> {
+  const detail = await fetchPublication(id);
+  let playlist: PlaylistDetail | null = null;
+  if (detail.playlist?.id) {
+    try {
+      playlist = await fetchPlaylist(detail.playlist.id);
+    } catch {
+      // Ignore playlist error per spec
+    }
+  }
+  usePublicationDraftStore.getState().openDraft(detailToDraft(detail, playlist));
+}
+
 // The five ver02 Create steps (ADR 0072 §2):
 //   1 Choose Content · 2 Prepare Content · 3 Program · 4 Review · 5 Publish
 const MAX_BUILT_STEP = 5;
 
-export function CreatePublicationPage() {
+export function CreatePublicationPage({ draftOwner }: { draftOwner: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const idParam = searchParams.get("id");
@@ -59,7 +78,7 @@ export function CreatePublicationPage() {
     [searchParams],
   );
 
-  const hasHydrated = useHasHydratedDraft();
+  const hasHydrated = useHasHydratedDraft(draftOwner);
   const isDirty = useIsDraftDirty();
   const step = usePublicationDraftStore((s) => s.step);
   const furthestStep = usePublicationDraftStore((s) => s.furthestStep);
@@ -68,19 +87,13 @@ export function CreatePublicationPage() {
   const goNextAction = usePublicationDraftStore((s) => s.goNext);
   const goBack = usePublicationDraftStore((s) => s.goBack);
 
-  const setPublicationId = usePublicationDraftStore((s) => s.setPublicationId);
   const setStep = usePublicationDraftStore((s) => s.setStep);
-  const setBasicInfo = usePublicationDraftStore((s) => s.setBasicInfo);
-  const setAssetItems = usePublicationDraftStore((s) => s.setAssetItems);
-  const setChannelIds = usePublicationDraftStore((s) => s.setChannelIds);
-  const setGroupIds = usePublicationDraftStore((s) => s.setGroupIds);
-  const setGroupNamesById = usePublicationDraftStore((s) => s.setGroupNamesById);
-  const setSchedule = usePublicationDraftStore((s) => s.setSchedule);
   const compositionId = usePublicationDraftStore((s) => s.compositionId);
   const playlistId = usePublicationDraftStore((s) => s.playlistId);
   const publicationType = usePublicationDraftStore((s) => s.basicInfo.publicationType);
   // ADR 0114: a Layout that is not Active is caught wherever the operator came from, not only in the picker.
   const layoutGate = useLayoutPublishBlock(compositionId, step);
+  useRefreshProblemTargets({ hasHydrated, idParam });
   const { aspectRatio: layoutAspectRatio, failed: fitCheckFailed } = useLayoutAspectRatio(compositionId);
 
   const [resumedId, setResumedId] = useState<string | null>(null);
@@ -88,6 +101,8 @@ export function CreatePublicationPage() {
   const [resumeFailure, setResumeFailure] = useState<ClassifiedError | null>(null);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [showFieldErrors, setShowFieldErrors] = useState(false);
+  // ADR 0123 rule 2: a refused stepper jump shows its error beside the stepper, not in the footer below the step.
+  const [isStepperError, setIsStepperError] = useState(false);
   const loadedIdRef = useRef<string | null>(null);
 
   // Derived, not state: `resumedId` only settles once the fetch has finished, so
@@ -95,39 +110,6 @@ export function CreatePublicationPage() {
   // them. Starting from a boolean that flips inside the effect would show one
   // frame of the wrong publication.
   const resumePending = isResumePending(idParam, resumedId, publicationId);
-
-  // Shared by the `?id=` resume effect below and the revision-conflict banner's
-  // "โหลดใหม่" action — both fully overwrite local state from the server, on
-  // the premise that any local edits are the ones in question, not worth keeping.
-  const loadPublicationIntoDraft = useCallback(
-    async (id: string) => {
-      const detail = await fetchPublication(id);
-      let playlist: PlaylistDetail | null = null;
-      if (detail.playlist?.id) {
-        try {
-          playlist = await fetchPlaylist(detail.playlist.id);
-        } catch {
-          // Ignore playlist error per spec
-        }
-      }
-
-      const draft = detailToDraft(detail, playlist);
-
-      setBasicInfo(draft.basicInfo);
-      usePublicationDraftStore.getState().setPlaylistId(draft.playlistId);
-      setAssetItems(draft.assetItems);
-      setChannelIds(draft.channelIds);
-      setGroupIds(draft.groupIds);
-      setGroupNamesById(draft.groupNamesById);
-      setSchedule(draft.schedule);
-      usePublicationDraftStore.getState().setCompositionId(draft.compositionId);
-      setPublicationId(detail.id);
-      usePublicationDraftStore.getState().setRevision(detail.revision ?? null);
-      usePublicationDraftStore.getState().markSaved();
-      usePublicationDraftStore.getState().setExplicitlySaved(true);
-    },
-    [setBasicInfo, setAssetItems, setChannelIds, setGroupIds, setGroupNamesById, setSchedule, setPublicationId]
-  );
 
   useEffect(() => {
     if (!hasHydrated) return;
@@ -143,7 +125,7 @@ export function CreatePublicationPage() {
     const load = async () => {
       setResumeFailure(null);
       try {
-        await loadPublicationIntoDraft(idParam);
+        await loadDraft(idParam);
         if (!alive) return;
         landOnResumeStep();
       } catch (err) {
@@ -161,7 +143,7 @@ export function CreatePublicationPage() {
     return () => {
       alive = false;
     };
-  }, [hasHydrated, idParam, loadPublicationIntoDraft]);
+  }, [hasHydrated, idParam]);
 
   const [retrying, setRetrying] = useState(false);
 
@@ -170,7 +152,7 @@ export function CreatePublicationPage() {
     setRetrying(true);
     setResumeFailure(null);
     try {
-      await loadPublicationIntoDraft(idParam);
+      await loadDraft(idParam);
       landOnResumeStep();
     } catch (err) {
       setResumeFailure(classifyApiError(err, "โหลด draft ไม่สำเร็จ"));
@@ -192,6 +174,7 @@ export function CreatePublicationPage() {
     error,
     errorCause,
     setError,
+    showFailure,
     publishedId,
     conflicts,
     checkingConflicts,
@@ -202,6 +185,7 @@ export function CreatePublicationPage() {
     canPublish,
     eligibilityChecks,
     persistDraft,
+    isStaleDraft,
     saveDraft,
     saveStatus,
     setSaveStatus,
@@ -211,16 +195,19 @@ export function CreatePublicationPage() {
 
   const entry = useCreateDraftEntry({
     hasHydrated, idParam, seed, assets, assetsLoading, assetsError,
-    loadingChannels: loadingRefs, channelsError, revisionConflict, setRevisionConflict, persistDraft,
+    loadingChannels: loadingRefs, channelsError, revisionConflict, setRevisionConflict, persistDraft, isStaleDraft,
   });
 
   const persistForNavigation = async () => {
+    const isFirstSave = !usePublicationDraftStore.getState().publicationId;
     const result = await persistDraft(false);
     if (result.kind === "skipped") {
       if (step !== 1 || publicationId) requireCompleteDraftSave(result);
       return false;
     }
     router.replace(`/media-workspace/program/create?id=${encodeURIComponent(result.publicationId)}`);
+    // #426: Next / a stepper jump creates the Draft without Save draft (ADR 0086), so say so once, when the row first appears.
+    if (isFirstSave) toast.success("บันทึกเป็น Draft แล้ว — ดูได้ที่หน้า Programs");
     // ADR 0086 §2: a withheld invalid schedule stays dirty but must not block the way back to fix it.
     if (!result.isComplete) return false;
     usePublicationDraftStore.getState().markSaved(result.draft);
@@ -233,10 +220,10 @@ export function CreatePublicationPage() {
     if (!publicationId) return;
     setConflictBusy(true);
     try {
-      await loadPublicationIntoDraft(publicationId);
+      await loadDraft(publicationId);
       setRevisionConflict(null);
     } catch (err) {
-      setResumeError(err instanceof Error ? err.message : "โหลด draft ไม่สำเร็จ");
+      setResumeError(classifyApiError(err, "โหลด draft ไม่สำเร็จ").message);
     } finally {
       setConflictBusy(false);
     }
@@ -254,7 +241,7 @@ export function CreatePublicationPage() {
       usePublicationDraftStore.getState().setRevision(detail.revision ?? null);
       setRevisionConflict(null);
     } catch (err) {
-      setResumeError(err instanceof Error ? err.message : "โหลดข้อมูลล่าสุดไม่สำเร็จ");
+      setResumeError(classifyApiError(err, "โหลดข้อมูลล่าสุดไม่สำเร็จ").message);
     } finally {
       setConflictBusy(false);
     }
@@ -262,6 +249,7 @@ export function CreatePublicationPage() {
 
   const handleNext = async () => {
     if (savingNext) return;
+    setIsStepperError(false);
     let didSave = false;
     const outcome = await attemptNext(
       step as WizardStepId,
@@ -290,24 +278,38 @@ export function CreatePublicationPage() {
       goNextAction(MAX_BUILT_STEP);
     } else {
       setSaveStatus("error");
+      const failure = classifyApiError(outcome.error, "Failed to save draft.");
       // The revision-conflict banner already shows this — avoid saying it twice.
-      if (!isConflict(outcome.message)) setError(outcome.message);
+      if (failure.kind !== "conflict") showFailure(failure);
     }
   };
 
   // #226: a stepper jump on a server draft saves first, like Next — otherwise a content change
   // made before the jump lives only in this browser.
   const handleStepSelect = async (target: number) => {
-    if (publicationId && isDirty) {
+    setIsStepperError(true);
+    // ADR 0086 §10: a stale id has no row to save to; the jump lets step 1 reach Save as new draft.
+    if (publicationId && isDirty && !isStaleDraft) {
+      // ADR 0124 §1: Cancel stays disabled until this save lands.
+      setSavingNext(true);
       try {
         await persistForNavigation();
       } catch (err) {
-        const message = err instanceof Error ? err.message : "บันทึก draft ไม่สำเร็จ";
+        const failure = classifyApiError(err, "บันทึก draft ไม่สำเร็จ");
         // The revision-conflict banner already shows a conflict.
-        if (!isConflict(message)) setError(message);
+        if (failure.kind !== "conflict") showFailure(failure);
         return;
+      } finally {
+        setSavingNext(false);
       }
     }
+    setError(null);
+    setStep(target);
+  };
+
+  // ADR 0122 rule 17: saving first would return the refusal the fix is for, so the fix only jumps.
+  // The edit stays in the local draft until the next save.
+  const jumpToFix = (target: number) => {
     setError(null); // a jump to the fix leaves the old refusal behind
     setStep(target);
   };
@@ -331,9 +333,9 @@ export function CreatePublicationPage() {
       <p className="text-xs font-medium text-error">{displayError}</p>
       <PublishErrorFix
         fix={error && errorCause ? publishCauseFix(errorCause, { type: publicationType, playlistId, compositionId }) : null}
-        onStep={(target) => void handleStepSelect(target)}
+        onStep={jumpToFix}
       />
-      {saveStatus === "error" && (
+      {saveStatus === "error" && !isStaleDraft && (
         <Button
           variant="outline"
           className="px-2.5 py-1 text-xs"
@@ -387,6 +389,7 @@ export function CreatePublicationPage() {
         titleInTopbar
         title="Create Publication"
         subtitle="Create and publish content across your channels."
+        actions={<CreateCancelButton disabled={saving || savingNext || conflictBusy} />}
       />
 
       <DraftResumePrompt {...entry.prompt} />
@@ -428,8 +431,10 @@ export function CreatePublicationPage() {
         <PublicationStepper currentStep={step} furthestStep={furthestStep} onStepSelect={(target) => void handleStepSelect(target)} />
       </Card>
 
+      {/* Step 1 has no footer, so its errors show here, as does a refused stepper jump on any step. */}
+      {(step === 1 || isStepperError) && errorBlock}
+
       {/* Step 1 — Choose Content */}
-      {step === 1 && errorBlock}
       {step === 1 && (
         <ContentStep
           busy={savingNext}
@@ -443,6 +448,9 @@ export function CreatePublicationPage() {
       )}
 
       {compositionId && (step === 2 || step === 5) && <LayoutNotActiveNotice compositionId={compositionId} gate={layoutGate} />}
+
+      {/* Every step: once Program is reached, any save sends these targets (ADR 0122 rule 17). */}
+      <WizardProblemTargetsNotice channels={loadingRefs || channelsError ? null : channels} />
 
       {/* Step 2 — Prepare Content */}
       {step === 2 && <PrepareContentStep assets={assets} tags={tags} showFieldErrors={showFieldErrors} />}
@@ -499,12 +507,22 @@ export function CreatePublicationPage() {
             <LovableButton
               variant="outline"
               disabled={saving || !draftName.trim()}
-              onClick={() => void saveDraft()}
+              onClick={() => {
+                setIsStepperError(false);
+                void saveDraft();
+              }}
             >
-              {saving ? "Saving…" : "Save draft"}
+              {saving ? "Saving…" : isStaleDraft ? "Save as new draft" : "Save draft"}
             </LovableButton>
             {isLastStep ? (
-              <Button variant="primary" onClick={publishNow} disabled={saving || !canPublish || !!layoutGate.reason}>
+              <Button
+                variant="primary"
+                onClick={() => {
+                  setIsStepperError(false);
+                  void publishNow();
+                }}
+                disabled={saving || !canPublish || !!layoutGate.reason}
+              >
                 <PaperPlaneIcon className="h-4 w-4" /> {saving ? "Publishing…" : "Publish Now"}
               </Button>
             ) : (
@@ -513,7 +531,7 @@ export function CreatePublicationPage() {
               </Button>
             )}
           </div>
-          {errorBlock}
+          {!isStepperError && errorBlock}
           {publishedId && (
             <p className="text-xs font-medium text-success">
               Published successfully! (ID: {publishedId})

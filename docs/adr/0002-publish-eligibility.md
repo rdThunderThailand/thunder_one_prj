@@ -69,3 +69,23 @@ without a dedicated checklist bullet is the smaller diff; the existing 5-item ar
 
 Any future flow that needs "is this publication publishable" must call `computeEligibility`,
 not read `assetItems.length > 0` inline again — that's exactly the drift this ADR removes.
+
+## Amendment — 2026-11-22 (Edit page)
+
+**Input.** `computeEligibility` now takes the wire shape `ProgramGateInput` (name, content, targets, schedule) plus a
+`basicInfoOk` flag from the caller, so the Program Edit page can call it. The wizard adapts its `DraftFields` through
+`programGateInputFromDraft`; the Edit page passes its `ProgramEditState` as is.
+
+**`blockReason`.** The result gains `blockReason`: the first failing gating check in the order basic info, content,
+targets, schedule, worded for a tooltip. It is null when `canPublish` is true and when the only blockers are
+`loadingRefs` or an `"unknown"` content check.
+
+**Schedule.** The gate checks presence only. Draft Publish on both pages passes a strict schedule (the wizard's rules,
+including no past start; ADR 0090), because Core gives every Draft a default schedule that starts at creation. The
+wizard does this through `isDraftValid`, the Edit page through `strictWireSchedule`. Publish changes on a published
+Program passes its saved schedule as is.
+
+**Schedule-ended.** This stays the wizard's click-time pre-check in `publishNow`. The Edit page relies on Core's
+`schedule-ended` cause (ADR 0114).
+
+**Save.** Save on the Edit page stays outside the gate, so an incomplete Draft can still be saved.

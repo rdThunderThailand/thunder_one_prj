@@ -56,7 +56,7 @@ function NavBadge({ badge }: { badge?: string }) {
   const isAlert = /^\d+$/.test(badge);
   return (
     <span
-      className={`ml-auto shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none ${
+      className={`ml-auto shrink-0 rounded-full px-1.5 py-0.5 text-2xs font-bold leading-none ${
         isAlert ? "bg-error text-error-foreground" : "bg-accent text-primary"
       }`}
     >
@@ -218,7 +218,7 @@ function ShellNav({ pathname, collapsed }: { pathname: string; collapsed: boolea
               <>
                 <span className="flex-1 truncate">{item.label}</span>
                 {item.badge !== undefined && (
-                  <span className="ml-auto shrink-0 rounded-full bg-error px-1.5 py-0.5 text-[10px] font-bold leading-none text-error-foreground">
+                  <span className="ml-auto shrink-0 rounded-full bg-error px-1.5 py-0.5 text-2xs font-bold leading-none text-error-foreground">
                     {item.badge}
                   </span>
                 )}

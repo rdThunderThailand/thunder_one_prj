@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/Input";
 import { classifyApiError } from "@/lib/api/api-error";
 import { renameMediaAsset } from "@/lib/api/media-api";
 import type { MediaAsset } from "@/types/domain";
+import { mediaStatus } from "../media-status";
 import { assetLabel } from "./media-detail-preview";
 
 export function InlineRename({ asset, onRenamed }: { asset: MediaAsset; onRenamed: (title: string) => void }) {
@@ -40,7 +41,7 @@ export function InlineRename({ asset, onRenamed }: { asset: MediaAsset; onRename
         <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" aria-label="Rename media" onClick={() => { setValue(label); setEditing(true); }}>
           <Pencil className="h-3.5 w-3.5" />
         </Button>
-        <Badge variant={asset.status === "failed" ? "danger" : "success"} className="shrink-0 capitalize">{asset.status ?? "ready"}</Badge>
+        <Badge variant="pill" color={mediaStatus(asset.status ?? "ready").color} className="shrink-0">{mediaStatus(asset.status ?? "ready").label}</Badge>
         {asset.status !== "failed" && asset.rendition?.present && <Badge variant="info" className="shrink-0">แปลงแล้ว</Badge>}
       </div>
     );
@@ -66,7 +67,7 @@ export function InlineRename({ asset, onRenamed }: { asset: MediaAsset; onRename
           <X className="h-4 w-4" />
         </Button>
       </div>
-      {error && <p role="alert" className="mt-2 text-[11px] text-error">{error}</p>}
+      {error && <p role="alert" className="mt-2 text-ui text-error">{error}</p>}
     </div>
   );
 }
