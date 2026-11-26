@@ -20,7 +20,7 @@ export function DoFirstCard({ items, now }: { items: WorkItem[]; now: Date }) {
         />
         Do First
       </h2>
-      <span className="mb-2 inline-block rounded-full bg-warning-muted px-2 py-0.5 text-[11px] font-semibold text-t1-amber-700">
+      <span className="mb-2 inline-block rounded-full bg-warning-muted px-2 py-0.5 text-ui font-semibold text-t1-amber-700">
         {KIND_META[item.kind].label}
       </span>
       <p className="text-lg font-semibold text-foreground">{item.title}</p>

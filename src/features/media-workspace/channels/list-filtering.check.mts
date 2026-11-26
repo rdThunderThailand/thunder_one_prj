@@ -7,7 +7,6 @@ const createChannel = (id: string, overrides: Partial<ChannelListItem>): Channel
   name: id,
   description: null,
   lifecycle: "active",
-  status: "active",
   category: "dooh",
   channel_type: null,
   location: null,

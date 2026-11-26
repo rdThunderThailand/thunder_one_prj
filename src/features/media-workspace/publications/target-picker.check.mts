@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
+import type { ChannelListItem } from "../channels/types/index.ts";
 import {
   facetCounts,
   reachedChannels,
   selectionFromTargets,
+  targetableChannels,
   targetsFromSelection,
   targetSummary,
   toggleId,
@@ -12,7 +14,7 @@ const channel = (id: string, location: string | null, groups: string[] = []) =>
   ({
     id,
     name: `Ch ${id}`,
-    lifecycle: "committed",
+    lifecycle: "active",
     location: location ? { id: location, name: location } : null,
     groups: groups.map((g) => ({ id: g, name: g, playback_mode: "independent" })),
   }) as never;
@@ -36,4 +38,21 @@ assert.deepEqual(next.map((t) => `${t.target_type}:${t.name}`), ["device:Legacy"
 assert.deepEqual(toggleId(["a"], "b"), ["a", "b"]);
 assert.deepEqual(toggleId(["a", "b"], "a"), ["b"]);
 assert.equal(facetCounts(["x", "y", "x"]).get("x"), 2);
+// A Tombstone is not in the list: what Core saved about it (ADR 0122 rule 17) survives Apply.
+const kept = targetsFromSelection(
+  [{ target_type: "channel", channel_id: "gone", name: "Lobby", status: "inactive", deleted: true }],
+  { channelIds: ["gone"], groupIds: [] },
+  channels,
+  [],
+);
+assert.deepEqual(kept, [{ target_type: "channel", channel_id: "gone", name: "Lobby", status: "inactive", deleted: true }]);
+assert.deepEqual(next.filter((t) => t.channel_id === "b").map((t) => "deleted" in t), [false]);
+
+// ADR 0099 / 0129: only an Active Channel is offered as a Program target.
+const lifecycles: Pick<ChannelListItem, "id" | "lifecycle">[] = [
+  { id: "on", lifecycle: "active" },
+  { id: "off", lifecycle: "inactive" },
+  { id: "new", lifecycle: "draft" },
+];
+assert.deepEqual(targetableChannels(lifecycles as ChannelListItem[]).map((c) => c.id), ["on"]);
 console.log("target-picker ok");

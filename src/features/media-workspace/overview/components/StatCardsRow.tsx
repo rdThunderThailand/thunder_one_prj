@@ -44,7 +44,7 @@ export function StatCardsRow({ channels, loadFailed }: { channels: ChannelListIt
           <Link key={key} href={href} className="group rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
             <Card className="flex h-[140px] flex-col rounded-xl border-border p-4 shadow-panel transition group-hover:-translate-y-0.5 group-hover:border-foreground/20 group-hover:shadow-float">
               <div className="flex items-start justify-between gap-2">
-                <p className="text-[11px] font-semibold text-muted-foreground">{label}</p>
+                <p className="text-ui font-semibold text-muted-foreground">{label}</p>
                 <span className={`grid h-8 w-8 place-items-center rounded-lg ${colors[color].icon}`}>
                   <Icon className="h-4 w-4" />
                 </span>
@@ -52,7 +52,7 @@ export function StatCardsRow({ channels, loadFailed }: { channels: ChannelListIt
               {loadFailed ? (
                 <>
                   <span className="mt-2 text-2xl font-bold text-muted-foreground">—</span>
-                  <p className="mt-auto truncate text-[10px] text-error">Could not load channel health</p>
+                  <p className="mt-auto truncate text-2xs text-error">Could not load channel health</p>
                 </>
               ) : summary === null ? (
                 <div className="mt-2 space-y-2">
@@ -62,7 +62,7 @@ export function StatCardsRow({ channels, loadFailed }: { channels: ChannelListIt
               ) : (
                 <>
                   <span className="mt-2 text-2xl font-bold tracking-tight text-foreground">{value}</span>
-                  <p className="mt-auto truncate text-[10px] text-muted-foreground">
+                  <p className="mt-auto truncate text-2xs text-muted-foreground">
                     {key === "total" ? `${summary.total} Channels` : `${percent}% of Channels`}
                   </p>
                   <span className="mt-2 h-1 overflow-hidden rounded-full bg-muted">

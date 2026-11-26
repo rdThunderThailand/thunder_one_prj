@@ -12,7 +12,7 @@ import { getAuthToken, getSession } from "@/features/auth/services/get-session";
 // 2026-09-15 correction), filtered to member_type === "contractor". No new
 // Core endpoint needed for the roster itself; contract-specific fields
 // (company, coordinator, contract dates) stay unbacked — see
-// contractors/mock-data.ts's header comment for exactly why.
+// contractors/types.ts header comment for exactly why.
 export default async function PeopleContractorsPage() {
   const session = await getSession();
   const token = await getAuthToken();

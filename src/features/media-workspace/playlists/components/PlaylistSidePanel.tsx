@@ -6,13 +6,14 @@ import { Badge } from "@/components/ui/Badge";
 import { Button, buttonVariants } from "@/components/ui/Button";
 import { MediaThumb } from "@/components/ui/MediaThumb";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { Tag } from "@/components/ui/Tag";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/Tabs";
 import { XIcon } from "@/components/ui/icons";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
 import { classifyApiError } from "@/lib/api/api-error";
 import { fetchPlaylist } from "../services/playlists-api";
 import { decodeMetadata, resolveCoverAssetId } from "../metadata";
-import { playlistDisplayStatus, statusBadge } from "../status-display";
+import { playlistDisplayStatus, playlistInUseLabel, statusBadge } from "../status-display";
 import type { PlaylistDetail, PlaylistListItem } from "../types";
 import { ContentTab, DetailsTab, HistoryTab, ScheduleTab } from "./PlaylistPanelTabs";
 
@@ -71,6 +72,7 @@ export function PlaylistSidePanel({
     resolveCoverAssetId(decodeMetadata(playlist.metadata).info.coverAssetId, detail?.items ?? []);
   const previews = usePreviewUrls(useMemo(() => (coverId ? [coverId] : []), [coverId]));
   const badge = statusBadge(playlistDisplayStatus(playlist));
+  const inUse = playlistInUseLabel(playlist);
 
   return (
     <aside className="flex flex-col gap-4 rounded-lg border border-border bg-card p-5 shadow-sm">
@@ -82,6 +84,7 @@ export function PlaylistSidePanel({
           <Badge variant={badge.color === "green" ? "success" : badge.color === "yellow" ? "warning" : "neutral"} className="rounded-full">
             {badge.label}
           </Badge>
+          {inUse && <Tag className="shrink-0">{inUse}</Tag>}
         </div>
         <button
           type="button"

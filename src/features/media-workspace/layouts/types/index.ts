@@ -28,6 +28,9 @@ export type LayoutListItem = {
   /** Absent only while the deployed Core has not yet applied Ticket 14's migration. */
   kind?: LayoutKind;
   usage_count?: number;
+  /** The Layouts (Compositions) using this Template, with the Zones each binds. Absent until Core
+   *  returns it from `media_layout_get` (ADR 0130 §5). */
+  compositions?: { id: string; name: string; zone_ids: string[]; in_trash: boolean }[];
   reference_resolution?: string | null;
   zone_count: number;
   zones: LayoutZone[];

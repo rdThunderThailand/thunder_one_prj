@@ -102,7 +102,7 @@ export function SchedulerPage() {
               <div key={row.assignee} className="flex items-center border-b border-border py-2.5">
                 <div className="w-40 shrink-0">
                   <p className="truncate text-sm font-medium text-foreground">{row.assignee}</p>
-                  <p className="truncate text-[11px] text-t1-gray-400">{row.team}</p>
+                  <p className="truncate text-ui text-t1-gray-400">{row.team}</p>
                 </div>
                 <div className="relative h-10 flex-1" style={{ width: SCHEDULER_HOURS.length * HOUR_WIDTH }}>
                   {row.blocks.map((block) => {
@@ -111,7 +111,7 @@ export function SchedulerPage() {
                       <div
                         key={block.woId}
                         style={{ left: style.left, width: style.width }}
-                        className={`absolute top-0 h-full overflow-hidden rounded-lg px-2 py-1 text-[11px] ${
+                        className={`absolute top-0 h-full overflow-hidden rounded-lg px-2 py-1 text-ui ${
                           block.mode === "remote"
                             ? "bg-info-muted text-t1-blue-700"
                             : "bg-success-muted text-t1-green-700"

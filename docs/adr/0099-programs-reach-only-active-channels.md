@@ -1,5 +1,9 @@
 # 0099 — Programs reach only active Channels
 
+**Amended by:** [ADR 0129](0129-a-channel-has-one-lifecycle-the-stored-one.md) — §4: the stored status
+is now the Channel's only lifecycle field (`lifecycle`), and pickers apply the rule through
+`canBeProgramTarget`.
+
 Status: accepted (2026-10-21, owner decision "C.1" after a Playback Proof investigation; scrutiny
 round 1 applied). Amends 0037 (target pickers), 0089 §4 (why a Channel can be null). Migration:
 Thunder_Core `supabase/migrations/20261021120000_publish_active_channels_only.sql`.

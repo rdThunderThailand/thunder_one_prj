@@ -80,11 +80,11 @@ export function AssetCard(props: AssetCardProps) {
         </div>
         <div className="flex flex-col gap-1 p-2">
           <p className="truncate text-xs font-medium text-foreground">{playlist.name}</p>
-          <p className="text-[11px] text-muted-foreground">
+          <p className="text-ui text-muted-foreground">
             {playlist.item_count} items
             {playlist.created_at ? ` · ${new Date(playlist.created_at).toLocaleDateString()}` : ""}
           </p>
-          <span className="inline-flex w-fit items-center rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-medium text-primary">
+          <span className="inline-flex w-fit items-center rounded-full bg-accent px-1.5 py-0.5 text-2xs font-medium text-primary">
             Playlist
           </span>
         </div>
@@ -149,7 +149,7 @@ export function AssetCard(props: AssetCardProps) {
           </span>
         )}
         {isVideo && durationLabel && (
-          <span className="absolute bottom-1.5 right-1.5 rounded bg-t1-black/60 px-1.5 py-0.5 text-[10px] font-medium text-t1-white">
+          <span className="absolute bottom-1.5 right-1.5 rounded bg-t1-black/60 px-1.5 py-0.5 text-2xs font-medium text-t1-white">
             {durationLabel}
           </span>
         )}
@@ -165,7 +165,7 @@ export function AssetCard(props: AssetCardProps) {
       </div>
       <div className="flex flex-col gap-1 p-2">
         <p className="truncate text-xs font-medium text-foreground">{filename}</p>
-        <p className="text-[11px] text-muted-foreground">
+        <p className="text-ui text-muted-foreground">
           {kindLabel} · {dimensions}
           {durationLabel ? ` · ${durationLabel}` : ""}
         </p>

@@ -62,7 +62,7 @@ export function ManagerTaskList({ items, nowIso }: { items: WorkItem[]; nowIso: 
             >
               {t.label}
               {count > 0 && (
-                <span className="rounded-full bg-error px-1.5 py-0.5 text-[10px] font-semibold text-error-foreground">{count}</span>
+                <span className="rounded-full bg-error px-1.5 py-0.5 text-2xs font-semibold text-error-foreground">{count}</span>
               )}
             </button>
           );

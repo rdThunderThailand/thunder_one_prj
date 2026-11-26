@@ -16,7 +16,15 @@ type Tab = "channels" | "groups";
 type Option = { scope: ChannelScope; label: string; count?: number; hint?: string };
 
 /** "All Channels ▾" trigger + popover (ADR 0084 §2). The scope is applied only on Apply. */
-export function ChannelScopePicker({ value, onApply }: { value: ChannelScope; onApply: (scope: ChannelScope) => void }) {
+export function ChannelScopePicker({
+  value,
+  onApply,
+  includeInactive = false,
+}: {
+  value: ChannelScope;
+  onApply: (scope: ChannelScope) => void;
+  includeInactive?: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<ChannelScope>(value);
   const [tab, setTab] = useState<Tab>(value.kind === "group" ? "groups" : "channels");
@@ -34,11 +42,16 @@ export function ChannelScopePicker({ value, onApply }: { value: ChannelScope; on
   }, [needsData, data, failed]);
 
   const activeChannels = data?.channels.filter((channel) => channel.lifecycle === "active") ?? [];
+  // Now & Next and Calendar refuse a non-Active Channel; Playback Proof accepts any status (ADR 0129 §4).
+  const listedChannels = includeInactive
+    ? (data?.channels.filter((channel) => channel.lifecycle !== "draft") ?? [])
+    : activeChannels;
   const channelOptions: Option[] = [
     { scope: ALL_CHANNELS, label: "All Channels", count: activeChannels.length },
-    ...(data?.channels.filter((channel) => channel.lifecycle !== "draft") ?? []).map((channel) => ({
+    ...listedChannels.map((channel) => ({
       scope: { kind: "channel", id: channel.id } as const,
       label: channel.name,
+      hint: channel.lifecycle === "inactive" ? "Inactive" : undefined,
     })),
   ];
   const groupOptions: Option[] = (data?.groups ?? []).map((group) => ({

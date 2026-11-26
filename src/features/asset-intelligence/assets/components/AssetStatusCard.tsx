@@ -13,7 +13,7 @@ export function AssetStatusCard() {
             <span className="text-xl font-semibold text-foreground">
               {assetStatusOverview.total.toLocaleString()}
             </span>
-            <span className="text-[10px] text-t1-gray-400">รายการ</span>
+            <span className="text-2xs text-t1-gray-400">รายการ</span>
           </div>
         </div>
         <ul className="w-full flex-1 space-y-2 text-sm">

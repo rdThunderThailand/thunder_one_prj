@@ -16,7 +16,7 @@ import { summarizeGeometryFit, toChannelItems } from "../channels-logic";
 import { compositionZoneDurations } from "../content-info";
 import { priorities, publicationTypes } from "../mock-data";
 import { formatDmy, getDayTimelinePlacement, WEEKDAYS } from "../schedule";
-import { describeSchedule, scheduleEdges } from "../schedule-describe";
+import { describeSchedule, scheduleEdges } from "../schedule-airing";
 import { draftToSchedule, isDraftValid } from "../schedule-preset";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 import { usePlaylistPreview } from "../hooks/usePlaylistPreview";
@@ -105,7 +105,7 @@ export function ReviewStep({ channels, assets, conflicts, checkingConflicts, con
               />
               <div className="flex items-center justify-between gap-2">
                 <p className="truncate text-xs font-semibold text-foreground" title={contentLabel}>{contentLabel}</p>
-                <span className="shrink-0 rounded-full bg-success-muted px-2 py-0.5 text-[10px] font-medium text-success">{type}</span>
+                <span className="shrink-0 rounded-full bg-success-muted px-2 py-0.5 text-2xs font-medium text-success">{type}</span>
               </div>
               {isComposition ? (
                 <div className="grid grid-cols-2 gap-x-3 gap-y-2.5">
@@ -140,14 +140,14 @@ export function ReviewStep({ channels, assets, conflicts, checkingConflicts, con
               </div>
               <div className="grid grid-cols-2 overflow-hidden rounded-xl border border-border bg-muted">
                 <div className="border-r border-border p-3">
-                  <p className="text-[10px] font-semibold uppercase tracking-normal text-muted-foreground">Start</p>
+                  <p className="text-2xs font-semibold uppercase tracking-normal text-muted-foreground">Start</p>
                   <p className="mt-1 text-xs font-semibold text-foreground">{startDate || "—"}</p>
-                  <p className="mt-0.5 text-[11px] text-muted-foreground">{startTime || "At activation"}</p>
+                  <p className="mt-0.5 text-ui text-muted-foreground">{startTime || "At activation"}</p>
                 </div>
                 <div className="p-3">
-                  <p className="text-[10px] font-semibold uppercase tracking-normal text-muted-foreground">End</p>
+                  <p className="text-2xs font-semibold uppercase tracking-normal text-muted-foreground">End</p>
                   <p className="mt-1 text-xs font-semibold text-foreground">{edges?.endDate ? formatDmy(edges.endDate) : "No end date"}</p>
-                  <p className="mt-0.5 text-[11px] text-muted-foreground">{endTime}</p>
+                  <p className="mt-0.5 text-ui text-muted-foreground">{endTime}</p>
                 </div>
               </div>
               <div className="grid grid-cols-1 gap-y-2.5">
@@ -185,17 +185,17 @@ export function ReviewStep({ channels, assets, conflicts, checkingConflicts, con
               />
             </div>
             <div className="flex min-h-full flex-col">
-              <h2 className="text-[11px] font-bold text-foreground">Timeline <span className="font-normal text-muted-foreground">(ตัวอย่างลำดับการเล่น)</span></h2>
+              <h2 className="text-ui font-bold text-foreground">Timeline <span className="font-normal text-muted-foreground">(ตัวอย่างลำดับการเล่น)</span></h2>
               <p className="mt-0.5 text-xs text-muted-foreground">{startDate || "Schedule date"} · {schedule.timezone}</p>
               <div className="mt-4 flex flex-1 flex-col rounded-xl border border-border bg-muted p-4">
-                <div className="flex justify-between text-[10px] font-medium text-muted-foreground">
+                <div className="flex justify-between text-2xs font-medium text-muted-foreground">
                   <span>00:00</span>
                   <span>23:59</span>
                 </div>
                 <div className="relative mt-2 h-12 overflow-hidden rounded-lg bg-muted">
                   <div
                     title={`${basicInfo.name || "Your content"} · ${reviewTimeRange}`}
-                    className="absolute inset-y-0 flex min-w-0 items-center justify-center overflow-hidden rounded-md bg-accent px-2 text-[10px] font-semibold text-primary ring-1 ring-inset ring-primary/30"
+                    className="absolute inset-y-0 flex min-w-0 items-center justify-center overflow-hidden rounded-md bg-accent px-2 text-2xs font-semibold text-primary ring-1 ring-inset ring-primary/30"
                     style={{
                       left: `${timelinePlacement.leftPercent}%`,
                       width: `${timelinePlacement.widthPercent}%`,
@@ -210,11 +210,11 @@ export function ReviewStep({ channels, assets, conflicts, checkingConflicts, con
                     Other content · {conflict.name}
                   </div>
                 ))}
-                <div className="mt-4 flex gap-4 text-[10px] text-muted-foreground">
+                <div className="mt-4 flex gap-4 text-2xs text-muted-foreground">
                   <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-accent" />Your content</span>
                   <span className="flex items-center gap-1.5 text-muted-foreground"><span className="h-2.5 w-2.5 rounded-sm bg-muted" />Other content</span>
                 </div>
-                <p className="mt-auto flex items-start gap-2 rounded-lg bg-accent px-3 py-2 text-[11px] leading-5 text-primary">
+                <p className="mt-auto flex items-start gap-2 rounded-lg bg-accent px-3 py-2 text-ui leading-5 text-primary">
                   <InfoIcon className="mt-0.5 h-4 w-4 shrink-0" />
                   ตัวอย่างนี้อ้างอิงการตั้งค่าปัจจุบัน อาจเปลี่ยนแปลงเมื่อแก้ไขการจัดตาราง
                 </p>
@@ -266,8 +266,8 @@ function SummaryCard({
           {index}
         </span>
         <div>
-          <h2 className="text-[11px] font-bold text-foreground">{title}</h2>
-          <p className="mt-0.5 text-[10px] text-muted-foreground">{subtitle}</p>
+          <h2 className="text-ui font-bold text-foreground">{title}</h2>
+          <p className="mt-0.5 text-2xs text-muted-foreground">{subtitle}</p>
         </div>
       </div>
       <div className={`mt-3 ${bodyClassName}`}>{children}</div>
@@ -281,7 +281,7 @@ function SummaryCard({
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</p>
+      <p className="text-2xs uppercase tracking-wide text-muted-foreground">{label}</p>
       <p className="mt-0.5 break-words text-xs font-medium text-foreground">{value}</p>
     </div>
   );

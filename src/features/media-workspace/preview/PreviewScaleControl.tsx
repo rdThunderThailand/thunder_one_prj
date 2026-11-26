@@ -34,7 +34,7 @@ export function PreviewScaleControl({
         type="button"
         aria-pressed={scale === "fit"}
         onClick={() => onScale("fit")}
-        className={`rounded-md border px-2 py-0.5 text-[10px] font-medium ${scale === "fit" ? "border-primary text-primary" : "border-border"}`}
+        className={`rounded-md border px-2 py-0.5 text-2xs font-medium ${scale === "fit" ? "border-primary text-primary" : "border-border"}`}
       >
         Fit
       </button>

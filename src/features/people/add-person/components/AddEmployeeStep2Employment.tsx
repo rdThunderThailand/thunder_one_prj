@@ -7,7 +7,7 @@ import { requiredMark, SummaryRow } from "../wizard-parts";
 import { EMPLOYMENT_TYPE_OPTIONS, SALARY_BAND_OPTIONS, WORK_LOCATION_OPTIONS, unitLabel } from "../wizard-shared";
 
 const referenceOnlyNote = (
-  <span className="text-[11px] font-normal text-t1-gray-400">ข้อมูลอ้างอิง ยังไม่บันทึกในระบบ</span>
+  <span className="text-ui font-normal text-t1-gray-400">ข้อมูลอ้างอิง ยังไม่บันทึกในระบบ</span>
 );
 
 interface AddEmployeeStep2EmploymentProps {
@@ -141,7 +141,7 @@ export function AddEmployeeStep2Employment({
                 placeholder="เช่น EMP-0001"
                 className={inputClasses}
               />
-              <span className="text-[11px] font-normal text-t1-gray-400">เว้นว่างได้หากยังไม่มีรหัสพนักงาน</span>
+              <span className="text-ui font-normal text-t1-gray-400">เว้นว่างได้หากยังไม่มีรหัสพนักงาน</span>
             </label>
             <label className={labelClasses}>
               รหัสตำแหน่ง (Position Code)
@@ -186,7 +186,7 @@ export function AddEmployeeStep2Employment({
                 className={fieldClasses(!!errors.startDate)}
               />
               {startDate && (
-                <span className="text-[11px] font-normal text-t1-gray-400">
+                <span className="text-ui font-normal text-t1-gray-400">
                   {formatThaiDate(startDate)} ({formatDaysUntilThai(startDate)})
                 </span>
               )}

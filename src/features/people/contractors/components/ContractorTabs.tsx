@@ -1,4 +1,4 @@
-import type { ContractorRow, ContractorTab } from "../mock-data";
+import type { ContractorRow, ContractorTab } from "../types";
 
 const TAB_DEFS: { id: ContractorTab["id"]; label: string }[] = [
   { id: "all", label: "ทั้งหมด" },
@@ -36,7 +36,7 @@ export function ContractorTabs({ active, onChange, rows }: ContractorTabsProps) 
           >
             {tab.label}
             <span
-              className={`rounded-full px-1.5 py-0.5 text-[11px] ${
+              className={`rounded-full px-1.5 py-0.5 text-ui ${
                 active === tab.id
                   ? "bg-accent text-primary"
                   : "bg-muted text-muted-foreground"

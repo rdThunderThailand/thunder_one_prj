@@ -60,7 +60,7 @@ export function DateRangeCalendar({ startDate, endDate, today, onChange }: {
             </h4>
             <div className="grid grid-cols-7 gap-0.5 text-center">
               {HEADERS.map((day) => (
-                <span key={day} className="py-1 text-[10px] text-muted-foreground">
+                <span key={day} className="py-1 text-2xs text-muted-foreground">
                   {day}
                 </span>
               ))}

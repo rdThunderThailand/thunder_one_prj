@@ -66,7 +66,7 @@ export function DeliveryStages({ stages }: { stages: DeliveryStage[] }) {
             >
               {stage.label}
             </span>
-            <span className="text-[11px] text-muted-foreground">{stage.caption}</span>
+            <span className="text-ui text-muted-foreground">{stage.caption}</span>
           </li>
         </Fragment>
       ))}

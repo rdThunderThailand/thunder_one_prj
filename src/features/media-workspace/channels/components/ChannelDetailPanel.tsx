@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Badge, type BadgeColor } from "@/components/ui/Badge";
+import { Badge } from "@/components/ui/Badge";
 import { buttonClasses } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { MediaThumb } from "@/components/ui/MediaThumb";
@@ -12,22 +12,10 @@ import { nowPlayingAllNames, nowPlayingRemaining, nowPlayingThumbnail, nowPlayin
 import { fetchChannel } from "../services/channels-api";
 import type { NowNextOccurrence } from "../../publications/now-next";
 import { fetchPublication } from "../../publications/services/publications-api";
-import type { ChannelLifecycle, ChannelListItem, ChannelStatusFilter } from "../types";
+import { mediaStatus } from "../../media-status";
+import type { ChannelListItem } from "../types";
 import { ChannelGroupsPickerModal } from "./ChannelGroupsPickerModal";
 import { ChannelStructureTree } from "./ChannelStructureTree";
-
-const STATUS_BADGE: Record<ChannelStatusFilter, { label: string; color: BadgeColor }> = {
-  online: { label: "Online", color: "green" },
-  warning: { label: "Warning", color: "yellow" },
-  offline: { label: "Offline", color: "red" },
-  no_player: { label: "No player", color: "zinc" },
-};
-
-const LIFECYCLE_BADGE: Record<ChannelLifecycle, { label: string; color: BadgeColor }> = {
-  draft: { label: "Draft", color: "zinc" },
-  active: { label: "Active", color: "green" },
-  inactive: { label: "Inactive", color: "zinc" },
-};
 
 // Same stand-ins as ChannelTable: no TV/Kiosk pictograms exist, Monitor covers every
 // screen-like Output Kind and Box covers Kiosk.
@@ -47,7 +35,7 @@ function formatDateTime(iso: string | null): string {
 function DetailItem({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <dt className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</dt>
+      <dt className="text-ui font-semibold uppercase tracking-wide text-muted-foreground">{label}</dt>
       <dd className="mt-1 text-sm font-medium text-foreground">{value}</dd>
     </div>
   );
@@ -106,8 +94,8 @@ export function ChannelDetailPanel({
 
   const viaGroups = viaGroupsResult?.key === viaGroupsKey ? viaGroupsResult.groups : null;
 
-  const status = STATUS_BADGE[channel.health ?? "no_player"];
-  const lifecycle = LIFECYCLE_BADGE[channel.lifecycle];
+  const status = mediaStatus(channel.health ?? "no_player");
+  const lifecycle = mediaStatus(channel.lifecycle);
   const TypeIcon = TYPE_ICON[channelTypeKey(channel)];
   const groups = channel.groups ?? [];
   const cover = nowPlayingThumbnail(occurrence);
@@ -166,7 +154,7 @@ export function ChannelDetailPanel({
           <button
             type="button"
             onClick={() => setManagingGroups(true)}
-            className={buttonClasses("primary", "min-w-0 flex-1 gap-1 whitespace-nowrap px-1.5 text-[10px]")}
+            className={buttonClasses("primary", "min-w-0 flex-1 gap-1 whitespace-nowrap px-1.5 text-2xs")}
           >
             <UsersIcon />
             Add to Group
@@ -176,7 +164,7 @@ export function ChannelDetailPanel({
             type="button"
             disabled
             title="Open Live View — not available yet"
-            className={buttonClasses("secondary", "min-w-0 flex-1 gap-1 whitespace-nowrap px-1.5 text-[10px]")}
+            className={buttonClasses("secondary", "min-w-0 flex-1 gap-1 whitespace-nowrap px-1.5 text-2xs")}
           >
             <PlayIcon />
             Open Live View
@@ -184,7 +172,7 @@ export function ChannelDetailPanel({
         )}
         <Link
           href={`/media-workspace/channels/${channel.id}/edit`}
-          className={buttonClasses("secondary", "min-w-0 flex-1 gap-1 whitespace-nowrap px-1.5 text-[10px]")}
+          className={buttonClasses("secondary", "min-w-0 flex-1 gap-1 whitespace-nowrap px-1.5 text-2xs")}
         >
           <EditIcon />
           Edit Channel
@@ -192,7 +180,7 @@ export function ChannelDetailPanel({
       </div>
 
       <div className="mt-5 border-t border-border pt-4">
-        <h3 className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Status</h3>
+        <h3 className="text-2xs font-bold uppercase tracking-wide text-muted-foreground">Status</h3>
         <div className="mt-2 flex items-center gap-2">
           <Badge color={status.color}>{status.label}</Badge>
         </div>
@@ -201,7 +189,7 @@ export function ChannelDetailPanel({
 
       <div className="mt-4 border-t border-border pt-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Now Playing</h3>
+          <h3 className="text-2xs font-bold uppercase tracking-wide text-muted-foreground">Now Playing</h3>
           <Link
             href={`/media-workspace/now-next?channel=${channel.id}`}
             className="text-xs font-medium text-primary hover:text-primary"
@@ -231,7 +219,7 @@ export function ChannelDetailPanel({
       </div>
 
       <div className="mt-4 border-t border-border pt-4">
-        <h3 className="mb-2 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+        <h3 className="mb-2 text-2xs font-bold uppercase tracking-wide text-muted-foreground">
           Channel Structure
         </h3>
         <ChannelStructureTree channel={channel} />
@@ -239,7 +227,7 @@ export function ChannelDetailPanel({
 
       <div className="mt-4 border-t border-border pt-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+          <h3 className="text-2xs font-bold uppercase tracking-wide text-muted-foreground">
             Groups ({groups.length})
           </h3>
           <button
@@ -273,7 +261,7 @@ export function ChannelDetailPanel({
       )}
 
       <div className="mt-4 border-t border-border pt-4">
-        <h3 className="mb-3 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+        <h3 className="mb-3 text-2xs font-bold uppercase tracking-wide text-muted-foreground">
           Channel Information
         </h3>
         <dl className="grid grid-cols-2 gap-x-4 gap-y-4">

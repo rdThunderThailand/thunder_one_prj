@@ -1,13 +1,16 @@
 // ADR 0059 amendment 2026-11-04: nothing in the upload pipeline waits on the network without a
 // bound (file reads are bounded in media-file-read.ts), so a stuck file cannot hold a slot for good.
 
+import { UserFacingError } from "@/lib/api/api-error";
+
 /** Above Core's 30 s route limit, so a slow answer still arrives and only a lost one times out. */
 export const REQUEST_TIMEOUT_MS = 45_000;
 
 export const UPLOAD_TIMEOUT_ERROR = "UploadTimeoutError";
 
+/** A UserFacingError: the timeout/stall text is written for the upload queue row. */
 export function namedError(name: string, message: string): Error {
-  const error = new Error(message);
+  const error = new UserFacingError(message);
   error.name = name;
   return error;
 }

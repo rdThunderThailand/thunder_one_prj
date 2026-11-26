@@ -7,7 +7,8 @@ How a change gets from a branch into `dev` and `main`. Why: ADR 0118. Releases a
 
 | Branch | What it is | Who writes to it |
 |---|---|---|
-| `main` | what production runs (Vercel deploys on merge) | release PRs, hotfix PRs |
+| `main` | what production runs (Vercel deploys on merge) | release PRs from `staging`, hotfix PRs |
+| `staging` | the release being checked (Vercel **Staging** deploys on merge) | staging PRs from `dev`, back-merges from `main` |
 | `dev` | default branch, next release | everything else, through PRs |
 | `<type>/<issue#>-<slug>` | one change | one person or one agent run |
 | `hotfix/vX.Y.Z-<slug>` | a fix for `main`, cut from `origin/main` | one person or one agent run |
@@ -15,7 +16,7 @@ How a change gets from a branch into `dev` and `main`. Why: ADR 0118. Releases a
 
 - `<type>` is a conventional-commit type: `feat fix refactor test docs chore build ci perf style`.
 - Leave out `<issue#>-` when there is no issue. No tool or agent name in a branch name (`codex/`, `claude/`).
-- `staging` (protected, last commit 2026-07-22) has no role in this workflow; its fate is in #432.
+- A release goes `dev → staging → main` (ENV-01, decision ข, 2026-11-24); the steps are in `docs/agents/versioning.md`.
 - Check the current branch before every commit; the checkout may have moved.
 
 ## Opening a PR
@@ -55,12 +56,13 @@ pushed.) Never rebase, force-push or delete `dev` or `main`.
 | PR | Button |
 |---|---|
 | any branch → `dev` | **Squash and merge** |
-| `main → dev` (back-merge) | **Create a merge commit** |
+| `main → staging`, `main → dev` (back-merge) | **Create a merge commit** |
 | hotfix → `main` | **Create a merge commit** |
-| `dev → main` (release) | **Create a merge commit** |
+| `dev → staging` (staging PR) | **Create a merge commit** |
+| `staging → main` (release) | **Create a merge commit** |
 
-`main` only ever takes merge commits, so there is one button to press there. The owner merges release, hotfix
-and back-merge PRs.
+`main` and `staging` only ever take merge commits, so there is one button to press there. The owner merges
+release, hotfix and back-merge PRs.
 
 ## Repo settings this file assumes
 
@@ -72,4 +74,7 @@ merging):
 - Automatically delete head branches on.
 - Rulesets: `main` — PR required, no force-push, no deletion, merge commits only. `dev` — PR required, no
   force-push, no deletion.
-- No required status check until CI exists (#431: install, `tsc`, `eslint`, `next build`).
+- Required status check `check` on both rulesets. It is the `CI` workflow (`.github/workflows/ci.yml`, #431):
+  `pnpm install --frozen-lockfile`, `tsc --noEmit`, `eslint .`, `next build` on every PR into `dev` or `main`.
+  Until the rulesets require it, a red `check` is not enforced; do not merge on red. `*.check.mts` are not
+  in CI; run the ones your change touches locally.

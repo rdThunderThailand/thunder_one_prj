@@ -25,6 +25,7 @@ import {
   trashMediaAsset,
 } from "@/lib/api/media-api";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
+import { classifyApiError } from "@/lib/api/api-error";
 import { cn } from "@/lib/utils";
 import { FeatureFolderRail } from "../content-library/FeatureFolderRail";
 import { TagsRail } from "../content-library/TagsRail";
@@ -108,7 +109,7 @@ export function MediaLibraryPage() {
       setFolders(nextFolders);
       if (collection !== "trash") setLibraryAssets(nextAssets);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Unable to load Media Library");
+      setError(classifyApiError(reason, "Unable to load Media Library").message);
     } finally {
       setLoading(false);
     }
@@ -159,7 +160,7 @@ export function MediaLibraryPage() {
       onCreateOpenChange={inAside ? setCreateFolderOpen : undefined}
       onSelect={selectCollection}
       onRefresh={() => void refresh()}
-      onError={(reason) => setError(reason instanceof Error ? reason.message : "Unable to update folder")}
+      onError={(reason) => setError(classifyApiError(reason, "Unable to update folder").message)}
       deleteFolderItems={{
         loadIds: async (targetFolderId) => (await fetchMediaAssets({ folderId: targetFolderId })).map((asset) => asset.id),
         move: moveMediaAsset,

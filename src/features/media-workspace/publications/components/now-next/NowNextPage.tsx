@@ -26,7 +26,7 @@ function Panel({ title, subtitle, action, children }: { title: string; subtitle?
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-4">
         <div>
           <h2 className="text-sm font-bold text-foreground">{title}</h2>
-          {subtitle && <p className="text-[9px] text-muted-foreground">{subtitle}</p>}
+          {subtitle && <p className="text-2xs text-muted-foreground">{subtitle}</p>}
         </div>
         {action}
       </div>
@@ -95,7 +95,7 @@ export function NowNextPage() {
         titleInTopbar
         actions={
           <>
-            <span className="flex items-center gap-2 text-[10px] text-muted-foreground">
+            <span className="flex items-center gap-2 text-2xs text-muted-foreground">
               <span className="h-2 w-2 animate-pulse rounded-full bg-success" />
               Auto-refresh · as of {data ? formatClock(data.as_of, data.display_timezone) : "—"}
             </span>
@@ -125,14 +125,14 @@ export function NowNextPage() {
           <div className="flex items-center gap-4">
             <Link
               href={`/media-workspace/calendar${calendarQuery ? `?${calendarQuery}` : ""}`}
-              className="inline-flex items-center gap-1 text-[10px] font-semibold text-primary hover:underline"
+              className="inline-flex items-center gap-1 text-2xs font-semibold text-primary hover:underline"
             >
               Open Calendar
               <ArrowRightIcon className="h-3.5 w-3.5" />
             </Link>
             <Link
               href="/media-workspace/channels"
-              className="inline-flex items-center gap-1 text-[10px] font-semibold text-primary hover:underline"
+              className="inline-flex items-center gap-1 text-2xs font-semibold text-primary hover:underline"
             >
               View all channels
               <ArrowRightIcon className="h-3.5 w-3.5" />

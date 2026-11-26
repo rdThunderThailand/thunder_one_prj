@@ -24,6 +24,8 @@ export type PlaylistProgram = {
   name: string;
   status: string;
   effective_status?: string;
+  /** ADR 0080 badge, the same value the Programs list shows (Core 20261125070000). */
+  display_status?: string;
   campaign_name?: string | null;
   created_at?: string;
   updated_at?: string;

@@ -13,6 +13,7 @@ import type { PublishPrep } from "@/features/media-workspace/publish-changes/Pub
 import { SaveSplitButton } from "@/features/media-workspace/publish-changes/SaveSplitButton";
 import { saveAction } from "../status-display";
 import type { CompositionStatus } from "../types";
+import { statusBadge } from "../status-display";
 import { useShortcutPlatform } from "@/components/layout/ShortcutPlatform";
 import { shortcutAria, shortcutLabel } from "@/lib/keyboard-shortcut";
 
@@ -125,12 +126,20 @@ export function CompositionEditorHeader({
           }
         : null;
 
+  // Leaving the field keeps what was typed, as the Playlist editor does (ADR 0127 §10). Enter / ✓ / Escape
+  // close the field themselves; their own blur is skipped.
+  const isClosingName = useRef(false);
   const commitName = () => {
+    isClosingName.current = true;
     onNameChange(inputRef.current?.value ?? name);
     setEditing(false);
   };
+  const cancelName = () => {
+    isClosingName.current = true;
+    setEditing(false);
+  };
   const updatedLabel = savedAt ? `Updated ${savedAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}` : "Not saved";
-  const statusVariant: Record<CompositionStatus, "warning" | "success" | "neutral"> = { draft: "warning", active: "success", inactive: "neutral" };
+  const badge = statusBadge(status);
 
   return (
     <div className="flex min-h-[68px] shrink-0 flex-wrap items-center justify-between gap-3 py-2">
@@ -145,10 +154,21 @@ export function CompositionEditorHeader({
           <ArrowLeftIcon />
         </button>
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <p className="text-[11px] text-muted-foreground">Layouts <span aria-hidden="true">›</span> {name.trim() || "Untitled Layout"}</p>
+          <p className="text-ui text-muted-foreground">Layouts <span aria-hidden="true">›</span> {name.trim() || "Untitled Layout"}</p>
           <div className="flex min-w-0 items-center gap-2">
           {editing ? <>
-            <input ref={inputRef} autoFocus defaultValue={name} maxLength={100} aria-label="Layout name" placeholder={isExisting ? "Edit Layout" : "New Layout"} onKeyDown={(event) => { if (event.key === "Enter") commitName(); if (event.key === "Escape") setEditing(false); }} className="min-w-0 flex-1 border-b border-primary bg-transparent text-sm font-bold text-foreground outline-none" />
+            <input
+              ref={inputRef}
+              autoFocus
+              defaultValue={name}
+              maxLength={100}
+              aria-label="Layout name"
+              placeholder={isExisting ? "Edit Layout" : "New Layout"}
+              onFocus={() => { isClosingName.current = false; }}
+              onBlur={() => { if (!isClosingName.current) commitName(); }}
+              onKeyDown={(event) => { if (event.key === "Enter") commitName(); if (event.key === "Escape") cancelName(); }}
+              className="min-w-0 flex-1 border-b border-primary bg-transparent text-sm font-bold text-foreground outline-none"
+            />
             <button type="button" onClick={commitName} aria-label="ยืนยันชื่อ Layout" className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-primary hover:bg-accent"><CheckIcon /></button>
           </> : <>
             <h1 className="min-w-0 break-words text-sm font-bold leading-tight text-foreground">{name.trim() || "Untitled Layout"}</h1>
@@ -156,7 +176,7 @@ export function CompositionEditorHeader({
           </>}
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <Badge variant={statusVariant[status]} className="rounded-full px-2 py-0 text-[10px]">{status[0].toUpperCase() + status.slice(1)}</Badge>
+            <Badge variant="pill" color={badge.color} className="px-2 py-0 text-2xs">{badge.label}</Badge>
             <span className="text-xs text-muted-foreground">{referenceResolution ?? aspectRatio} · {zoneCount} {zoneCount === 1 ? "Zone" : "Zones"} · {updatedLabel}</span>
             {affectedCount > 0 && <button type="button" onClick={onShowPrograms} className="text-xs font-medium text-primary hover:underline">Used by {affectedCount} program{affectedCount === 1 ? "" : "s"}</button>}
           </div>

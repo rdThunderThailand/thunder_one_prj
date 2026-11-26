@@ -23,7 +23,7 @@ export function EmployeeQuickActionsCard() {
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent text-primary">
               {action.icon}
             </span>
-            <span className="text-[11px] leading-tight text-muted-foreground">{action.label}</span>
+            <span className="text-ui leading-tight text-muted-foreground">{action.label}</span>
           </div>
         ))}
       </div>

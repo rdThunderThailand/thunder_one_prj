@@ -3,8 +3,8 @@
 // checkable without React — see list-filtering.check.mts.
 
 import { decodeMetadata } from "./metadata.ts";
-import { playlistDisplayStatus } from "./status-display.ts";
-import type { PlaylistListItem, PlaylistStatus, PlaylistType } from "./types";
+import { playlistDisplayStatus, type PlaylistDisplayStatus } from "./status-display.ts";
+import type { PlaylistListItem, PlaylistType } from "./types";
 
 /** What the list's Type column and filter show — distinct from `PlaylistType`
  *  (standard/dynamic, an unrelated metadata concept the create wizard still owns). */
@@ -13,7 +13,7 @@ export type ContentType = (typeof CONTENT_TYPES)[number];
 
 export type ListFilters = {
   query: string;
-  status: PlaylistStatus | "all";
+  status: PlaylistDisplayStatus | "all";
   type: ContentType | "all";
 };
 
@@ -62,10 +62,10 @@ export function paginate<T>(items: T[], page: number, perPage: number): Page<T> 
   return { rows: items.slice(start, start + perPage), page: current, totalPages };
 }
 
-export type Summary = { total: number; active: number; inactive: number; draft: number };
+export type Summary = { total: number; active: number; draft: number };
 
 export function summarize(playlists: PlaylistListItem[]): Summary {
-  const summary: Summary = { total: playlists.length, active: 0, inactive: 0, draft: 0 };
+  const summary: Summary = { total: playlists.length, active: 0, draft: 0 };
   for (const p of playlists) summary[playlistDisplayStatus(p)] += 1;
   return summary;
 }
@@ -90,7 +90,7 @@ export type SortDir = "asc" | "desc";
 export type Sort = { key: SortKey; dir: SortDir };
 export const DEFAULT_SORT: Sort = { key: "updated", dir: "desc" };
 
-const STATUS_ORDER: Record<PlaylistStatus, number> = { active: 0, inactive: 1, draft: 2 };
+const STATUS_ORDER: Record<PlaylistDisplayStatus, number> = { active: 0, draft: 1 };
 
 /** null means "empty" — sortPlaylists always pushes empty values to the bottom,
  *  regardless of direction, instead of letting them flip to the top on desc. */

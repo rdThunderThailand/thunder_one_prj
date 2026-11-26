@@ -7,13 +7,14 @@ import { MediaThumb } from "@/components/ui/MediaThumb";
 import { Modal } from "@/components/ui/Modal";
 import { Pagination } from "@/components/ui/Pagination";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { Tag } from "@/components/ui/Tag";
 import { CalendarIcon, ClockIcon, ExternalLinkIcon, GridIcon, ListIcon, SearchIcon, UsersIcon } from "@/components/ui/icons";
 import { usePreviewUrls } from "@/hooks/usePreviewUrls";
 import { fetchContentFolders, fetchPlaylist, fetchPlaylists } from "@/lib/api/media-api";
 import type { ContentFolder, PlaylistDetail, PlaylistListItem } from "@/types/domain";
 import { formatDuration } from "../../playlists/duration";
 import { decodeMetadata } from "../../playlists/metadata";
-import { playlistDisplayStatus, statusBadge } from "../../playlists/status-display";
+import { playlistDisplayStatus, playlistInUseLabel, statusBadge } from "../../playlists/status-display";
 import { defaultPlaylistPickerFilters, filterPlaylistPickerItems, type PlaylistPickerFilters } from "../playlist-picker-filter";
 import { pickerFolderCounts, pickerFolderMatcher, type PickerFolder } from "../picker-folder";
 import { PickerFolderSection } from "./PickerFolderSection";
@@ -151,14 +152,8 @@ export function PlaylistPickerModal({ selectedId, onClose, onSelect }: { selecte
               <PickerFilterChoice
                 checked={filters.status === "draft"}
                 label="Draft"
-                marker={<span className="h-2 w-2 rounded-full bg-warning" />}
-                onClick={() => update({ status: "draft" })}
-              />
-              <PickerFilterChoice
-                checked={filters.status === "inactive"}
-                label="Inactive"
                 marker={<span className="h-2 w-2 rounded-full bg-border" />}
-                onClick={() => update({ status: "inactive" })}
+                onClick={() => update({ status: "draft" })}
               />
             </div>
           </PickerFilterSection>
@@ -172,7 +167,7 @@ export function PlaylistPickerModal({ selectedId, onClose, onSelect }: { selecte
                 placeholder="Min"
                 className="min-w-0 rounded-lg border border-border px-2 py-2 text-xs"
               />
-              <span className="text-[10px] text-muted-foreground">to</span>
+              <span className="text-2xs text-muted-foreground">to</span>
               <input
                 aria-label="Maximum duration"
                 inputMode="numeric"
@@ -263,6 +258,7 @@ export function PlaylistPickerModal({ selectedId, onClose, onSelect }: { selecte
 
 function PlaylistDetailPanel({ playlist, detail, previews, expanded, onToggle }: { playlist: PlaylistListItem; detail: PlaylistDetail | null; previews: ReturnType<typeof usePreviewUrls>; expanded: boolean; onToggle: () => void }) {
   const badge = statusBadge(playlistDisplayStatus(playlist));
+  const inUse = playlistInUseLabel(playlist);
   const metadata = decodeMetadata(detail?.metadata ?? playlist.metadata);
   const fields: PickerDetailField[] = [
     { icon: <ClockIcon />, label: "Duration", value: formatDuration(playlist.total_duration_seconds ?? 0) },
@@ -277,7 +273,10 @@ function PlaylistDetailPanel({ playlist, detail, previews, expanded, onToggle }:
       <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-t1-black/75 to-transparent px-3 pb-2 pt-8 text-t1-white">
         <p className="truncate text-sm font-semibold">{playlist.name}</p>
         <div className="mt-1 flex items-center justify-between">
-          <Badge color={badge.color} variant="pill">{badge.label}</Badge>
+          <span className="flex items-center gap-1">
+            <Badge color={badge.color} variant="pill">{badge.label}</Badge>
+            {inUse && <Tag>{inUse}</Tag>}
+          </span>
           <span className="text-xs font-medium">{formatDuration(playlist.total_duration_seconds ?? 0)}</span>
         </div>
       </div>
@@ -318,13 +317,17 @@ function PlaylistCover({ playlist, previews, className }: Pick<CardProps, "playl
 
 function PlaylistGridCard({ playlist, selected, previews, onSelect }: CardProps) {
   const badge = statusBadge(playlistDisplayStatus(playlist));
+  const inUse = playlistInUseLabel(playlist);
   return (
     <button type="button" onClick={onSelect} className={`overflow-hidden rounded-xl border text-left ${selected ? "border-primary ring-2 ring-primary" : "border-border"}`}>
       <PlaylistCover playlist={playlist} previews={previews} className="aspect-video w-full rounded-none" />
       <div className="space-y-1 p-2">
         <p className="truncate text-xs font-semibold text-foreground">{playlist.name}</p>
-        <p className="text-[10px] text-muted-foreground">{playlist.item_count} items · {formatDuration(playlist.total_duration_seconds ?? 0)}</p>
-        <Badge color={badge.color} variant="pill">{badge.label}</Badge>
+        <p className="text-2xs text-muted-foreground">{playlist.item_count} items · {formatDuration(playlist.total_duration_seconds ?? 0)}</p>
+        <div className="flex flex-wrap items-center gap-1">
+          <Badge color={badge.color} variant="pill">{badge.label}</Badge>
+          {inUse && <Tag>{inUse}</Tag>}
+        </div>
       </div>
     </button>
   );
@@ -332,22 +335,23 @@ function PlaylistGridCard({ playlist, selected, previews, onSelect }: CardProps)
 
 function PlaylistRow({ playlist, selected, previews, onSelect }: CardProps) {
   const badge = statusBadge(playlistDisplayStatus(playlist));
+  const inUse = playlistInUseLabel(playlist);
   return (
     <button
       type="button"
       onClick={onSelect}
       className={`grid w-full grid-cols-[1.5rem_5rem_minmax(0,1fr)_7rem] items-center gap-3 rounded-xl border p-2 text-left transition-colors ${selected ? "border-primary bg-accent ring-1 ring-primary/30" : "border-border hover:border-border hover:bg-muted"}`}
     >
-      <span className={`grid h-5 w-5 place-items-center rounded-full border text-[10px] ${selected ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card"}`}>
+      <span className={`grid h-5 w-5 place-items-center rounded-full border text-2xs ${selected ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card"}`}>
         {selected ? "✓" : ""}
       </span>
       <PlaylistCover playlist={playlist} previews={previews} className="aspect-video h-12 w-20 rounded-lg" />
       <span className="min-w-0">
         <span className="flex items-center gap-2">
           <span className="truncate text-sm font-semibold text-foreground">{playlist.name}</span>
-          {playlist.tags?.[0] && <span className="shrink-0 rounded-full bg-accent px-2 py-0.5 text-[10px] font-medium text-primary">{playlist.tags[0].name}</span>}
+          {playlist.tags?.[0] && <span className="shrink-0 rounded-full bg-accent px-2 py-0.5 text-2xs font-medium text-primary">{playlist.tags[0].name}</span>}
         </span>
-        <span className="mt-1 flex flex-wrap gap-x-3 text-[11px] text-muted-foreground">
+        <span className="mt-1 flex flex-wrap gap-x-3 text-ui text-muted-foreground">
           <span>{formatDuration(playlist.total_duration_seconds ?? 0)}</span>
           <span>{playlist.item_count} items</span>
           <span>Updated {formatDate(playlist.updated_at ?? playlist.created_at)}</span>
@@ -355,7 +359,8 @@ function PlaylistRow({ playlist, selected, previews, onSelect }: CardProps) {
       </span>
       <span className="text-right">
         <Badge color={badge.color} variant="pill">{badge.label}</Badge>
-        <span className="mt-1 block truncate text-[10px] text-muted-foreground">{playlist.created_by?.display_name ?? "—"}</span>
+        {inUse && <Tag className="ml-1">{inUse}</Tag>}
+        <span className="mt-1 block truncate text-2xs text-muted-foreground">{playlist.created_by?.display_name ?? "—"}</span>
       </span>
     </button>
   );

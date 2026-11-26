@@ -167,6 +167,7 @@ export function PlaybackProofToolbar({
       <ChannelScopePicker
         value={scope}
         onApply={onScope}
+        includeInactive
       />
       <ProgramPicker
         value={program}

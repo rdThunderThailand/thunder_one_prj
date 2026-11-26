@@ -43,7 +43,7 @@ export function PreviewModalChrome({ open, onClose, title, badge, subtitle, desc
               <h2 className="text-sm font-bold">{title}</h2>
               {badge}
             </div>
-            <p className="mt-0.5 text-[11px] text-primary-foreground/60">{subtitle}</p>
+            <p className="mt-0.5 text-ui text-primary-foreground/60">{subtitle}</p>
           </div>
           {actions && <div className="ml-auto flex items-center gap-2">{actions}</div>}
         </header>

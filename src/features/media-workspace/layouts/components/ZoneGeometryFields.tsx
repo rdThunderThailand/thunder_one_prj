@@ -19,9 +19,9 @@ const FIELDS = [
 
 const inputClasses =
   "h-9 w-full rounded-lg border border-border bg-card px-3 text-xs text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30";
-const labelClasses = "text-[9px] font-medium uppercase tracking-wide text-muted-foreground";
+const labelClasses = "text-2xs font-medium uppercase tracking-wide text-muted-foreground";
 const unitClasses = (active: boolean) =>
-  `rounded-md px-2 py-0.5 text-[10px] font-medium ${active ? "bg-card text-primary shadow-sm" : "text-muted-foreground"}`;
+  `rounded-md px-2 py-0.5 text-2xs font-medium ${active ? "bg-card text-primary shadow-sm" : "text-muted-foreground"}`;
 
 function storedUnit(): Unit {
   try {
@@ -94,7 +94,7 @@ export function ZoneGeometryFields({
                 className={inputClasses}
               />
               {unit === "%" && resolution && (
-                <span className="text-[11px] text-muted-foreground">≈ {referencePixels(zone[key], dimension)}px</span>
+                <span className="text-ui text-muted-foreground">≈ {referencePixels(zone[key], dimension)}px</span>
               )}
             </label>
           );

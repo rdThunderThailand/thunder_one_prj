@@ -1,11 +1,12 @@
 import type { DraftFields } from "./store/usePublicationDraftStore.ts";
 import { isDraftValid } from "./schedule-preset.ts";
+import { UserFacingError } from "../../../lib/api/api-error.ts";
 
 export type DraftPersistResult =
   | { kind: "skipped"; reason: "name" | "content" }
   | { kind: "saved"; publicationId: string; draft: DraftFields; isComplete: boolean };
 
-export class DraftSaveError extends Error {}
+export class DraftSaveError extends UserFacingError {}
 
 export function draftHasContent(state: Pick<DraftFields, "assetItems" | "playlistId" | "compositionId">) {
   return state.assetItems.length > 0 || Boolean(state.playlistId) || Boolean(state.compositionId);

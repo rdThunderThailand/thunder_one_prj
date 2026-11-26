@@ -1,4 +1,5 @@
 import { Upload } from "tus-js-client";
+import { UserFacingError } from "@/lib/api/api-error";
 import { resolveUploadMimeType } from "../upload-limits";
 import { REQUEST_TIMEOUT_MS, UPLOAD_TIMEOUT_ERROR, abortError, namedError, throwIfAborted } from "./upload-bounds";
 import type { UploadTarget } from "./upload-api";
@@ -17,9 +18,12 @@ async function fetchStorageAccessToken(): Promise<string> {
     if ((error as Error)?.name === "TimeoutError") {
       throw namedError(UPLOAD_TIMEOUT_ERROR, "เซิร์ฟเวอร์ไม่ตอบกลับภายใน 45 วินาที");
     }
+    // `fetch` rejects with a bare TypeError when the request never got a response; `classifyApiError`
+    // reads the axios code `ERR_NETWORK` as a transport failure, and treats a bare TypeError as a bug.
+    if (error instanceof TypeError) throw Object.assign(error, { code: "ERR_NETWORK" });
     throw error;
   }
-  if (!response.ok) throw new Error("เซสชันหมดอายุ — กรุณาเข้าสู่ระบบใหม่ก่อนอัปโหลด");
+  if (!response.ok) throw new UserFacingError("เซสชันหมดอายุ — กรุณาเข้าสู่ระบบใหม่ก่อนอัปโหลด");
   const { access_token } = (await response.json()) as { access_token: string };
   return access_token;
 }
@@ -100,7 +104,7 @@ export async function uploadToStorage(
       onError: (error) => {
         settle();
         if (!isReservationGone(error)) return reject(error);
-        const expired = new Error("การอนุญาตอัปโหลดหมดอายุ — ระบบจะเริ่มไฟล์นี้ใหม่");
+        const expired = new UserFacingError("การอนุญาตอัปโหลดหมดอายุ — ระบบจะเริ่มไฟล์นี้ใหม่");
         expired.name = EXPIRED_UPLOAD_ERROR;
         reject(expired);
       },

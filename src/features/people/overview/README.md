@@ -44,17 +44,19 @@ onboarding, org changes, and departures at a glance. Nests under `people/` per
   - `TenureDistributionCard` — real, tenure-band bar chart, introduces `components/ui/BarChart` (no
     bar chart primitive existed yet; built to match `DonutChart`/`LineTrendChart`'s Recharts-wrapper
     pattern)
-  - `QuickActionsRow` — 6 shortcut buttons, all inert this sprint (no target pages yet)
+  - `QuickActionsRow` — 6 shortcuts. **2026-11-24**: 5 now link to their pages (เพิ่มพนักงานใหม่ →
+    `/people/add/employee`, เชิญบุคคล → `/people/add`, โอนย้าย/เปลี่ยนผู้จัดการ → `/people/changes`,
+    Offboarding → `/people/departures`). Changes/Departures still show mock data until Core's
+    Change/Offboarding API lands (Phase 1B). สร้างรายงาน stays inert: no report backend.
   - `AttentionListCard` ("งานที่ต้องให้ความสนใจ") — **removed 2026-09-16**. Every row was fabricated
     person data (names, descriptions, due dates) with no real "attention items"/cross-App task
     concept in Core to back any of it.
-- `mock-data.ts` — one static export per still-mock card. Semantic fields only (`status`, `color`,
-  `tag` keys) — components own the color/icon mapping, not the data, same discipline as
-  `asset-intelligence/departments`'s `ManagerAttentionItem`.
+- `mock-data.ts` — **removed 2026-11-24**. Every card had already moved to real data; the last two
+  users (`QuickActionsRow`'s action list, `StatTilesRow`'s color type) now define them locally.
 
 Every other `people/*` page mocked up so far is built — `people/personnel` (บุคลากร),
 `people/org-structure` (โครงสร้างองค์กร), `people/new-hires` (เข้าใหม่), `people/changes`
 (การเปลี่ยนแปลง), `people/departures` (ออกจากองค์กร), `people/policy` (นโยบาย), and
 `people/knowledge-base` (คลังความรู้) — see those features' own READMEs (the latter 4 are still
-fully mock, no Core entity exists for any of them). This page's "ดูทั้งหมด" links into each of them
-are still inert (no drill-down target chosen yet), same convention as any other unbuilt affordance.
+fully mock, no Core entity exists for any of them). The "ดูทั้งหมด" links on `OnboardingStatusCard` and
+`OrgStructureCard` go to `/people/new-hires` and `/people/org-structure` (2026-11-24).

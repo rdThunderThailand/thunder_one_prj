@@ -27,7 +27,7 @@ export function LibraryToolbar({ search, onSearch, kind, onKind, isGrid, onIsGri
     <>
       <LibrarySearch value={search} onChange={onSearch} placeholder="Search media..." />
       <Select value={kind || "all"} onValueChange={(value) => onKind(value === "all" ? "" : (value as AssetKindFilter))}>
-        <SelectTrigger className="h-9 w-30 text-[10px] shadow-none" aria-label="Media type">
+        <SelectTrigger className="h-9 w-30 text-2xs shadow-none" aria-label="Media type">
           <SelectValue placeholder="All Types" />
         </SelectTrigger>
         <SelectContent>

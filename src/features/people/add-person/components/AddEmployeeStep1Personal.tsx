@@ -208,7 +208,7 @@ export function AddEmployeeStep1Personal({
               <ImageIcon className="h-5 w-5" />
             </span>
             <span className="text-xs font-medium text-primary">อัปโหลดรูปภาพ</span>
-            <span className="text-[11px] text-t1-gray-400">รองรับไฟล์ JPG, PNG (ขนาดไม่เกิน 2MB)</span>
+            <span className="text-ui text-t1-gray-400">รองรับไฟล์ JPG, PNG (ขนาดไม่เกิน 2MB)</span>
           </div>
         </div>
         <div className="rounded-2xl border border-t1-blue-100 bg-accent/50 p-5 text-xs text-accent-foreground">

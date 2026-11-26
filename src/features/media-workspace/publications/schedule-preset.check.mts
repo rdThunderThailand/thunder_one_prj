@@ -4,14 +4,11 @@
  *     node src/features/media-workspace/publications/schedule-preset.check.mts
  */
 import assert from "node:assert/strict";
-import { shiftYmd } from "./schedule.ts";
 import {
-  airsOn,
   applyPreset,
   draftToSchedule,
   presetOf,
   scheduleToDraft,
-  upcomingDays,
   validateDraft,
   windowLabel,
 } from "./schedule-preset.ts";
@@ -63,23 +60,10 @@ const monthly: PublicationSchedule = {
 const monthlyDraft = scheduleToDraft(monthly, TODAY, TZ);
 assert.equal(presetOf(monthlyDraft), "monthly");
 assert.deepEqual(roundTrip(monthly), monthly);
-assert.deepEqual(upcomingDays(monthlyDraft, TODAY, 2), ["2026-10-01", "2026-10-15"]);
 assert.deepEqual(applyPreset(weeklyDraft, "monthly", "2026-10-07").monthDays, [1], "seeds from the start date (01 here)");
 assert.deepEqual(applyPreset({ ...weeklyDraft, startDate: "" }, "monthly", "2026-10-07").monthDays, [7]);
 assert.ok(validateDraft({ ...monthlyDraft, monthDays: [] }, TODAY).monthDays);
 assert.deepEqual(validateDraft(monthlyDraft, TODAY), {});
-
-// Monthly skips a day a month does not have (no roll-over): [19, 31] in a 30-day month airs on the 19th only.
-const m1931 = { ...monthlyDraft, monthDays: [19, 31], endDate: "" };
-const airingIn = (d: typeof m1931, from: string, to: string) => {
-  const days: string[] = [];
-  for (let ymd = from; ymd <= to; ymd = shiftYmd(ymd, 1)) if (airsOn(d, ymd)) days.push(ymd.slice(8));
-  return days;
-};
-assert.deepEqual(airingIn(m1931, "2026-11-01", "2026-11-30"), ["19"]);
-assert.deepEqual(airingIn(m1931, "2026-12-01", "2026-12-31"), ["19", "31"]);
-assert.deepEqual(airingIn({ ...m1931, monthDays: [29] }, "2027-02-01", "2027-02-28"), []);
-assert.deepEqual(airingIn({ ...m1931, monthDays: [29] }, "2028-02-01", "2028-02-29"), ["29"]);
 
 // Continuous: a multi-day one-off with times, no daily window; round-trips.
 const continuous: PublicationSchedule = {
@@ -95,7 +79,6 @@ assert.deepEqual(
   ["2026-10-03", "10:00", "2026-10-05", "18:00"],
 );
 assert.deepEqual(roundTrip(continuous), continuous);
-assert.deepEqual(upcomingDays(continuousDraft, "2026-10-01", 5), ["2026-10-03", "2026-10-04", "2026-10-05"]);
 assert.deepEqual(validateDraft(continuousDraft, TODAY), {});
 assert.ok(validateDraft({ ...continuousDraft, endDate: "2026-10-03", endTime: "09:00" }, TODAY).endDate, "end before start");
 // An open-ended one-off is Continuous with no end; picking another preset overwrites it.
@@ -108,12 +91,6 @@ assert.equal(presetOf(applyPreset(openDraft, "weekdays", TODAY)), "weekdays");
 // A same-day Continuous (14:00-18:00) is the same stored data as One-time and reads back as One-time.
 const sameDay: PublicationSchedule = { starts_at: "2026-10-03T07:00:00Z", ends_at: "2026-10-03T11:00:00Z", timezone: TZ, recurrence: {} };
 assert.equal(presetOf(scheduleToDraft(sameDay, TODAY, TZ)), "one-time");
-// An end at exactly 00:00 does not air on that day.
-assert.equal(
-  upcomingDays({ ...continuousDraft, endDate: "2026-10-05", endTime: "00:00" }, "2026-10-01", 5).includes("2026-10-05"),
-  false,
-);
-
 // Validation and preview.
 assert.ok(validateDraft({ ...weeklyDraft, days: [] }, TODAY).days);
 assert.ok(validateDraft({ ...weeklyDraft, dailyStart: "10:00", dailyEnd: "06:00" }, TODAY).time);
@@ -159,7 +136,6 @@ const continuousToday = { ...continuousDraft, startDate: "2026-09-01", startTime
 // A Live continuous Program (start locked, ADR 0090) whose end is earlier today.
 assert.ok(validateDraft(continuousToday, TODAY, "15:00", true).endDate);
 assert.deepEqual(validateDraft(continuousToday, TODAY, "08:00", true), {});
-assert.deepEqual(upcomingDays(weeklyDraft, TODAY, 3), ["2026-10-01", "2026-10-02", "2026-10-05"]);
 // #340: whole hours and minutes in the app language, never a rounded decimal.
 assert.equal(windowLabel(weeklyDraft, "en"), "06:00 – 10:00 (4 hours 0 minutes)");
 assert.equal(windowLabel(weeklyDraft, "th"), "06:00 – 10:00 (4 ชั่วโมง 0 นาที)");

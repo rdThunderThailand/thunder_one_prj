@@ -40,9 +40,9 @@ export function LayoutsTable({
 }) {
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-left text-[10px]">
+      <table className="w-full text-left text-2xs">
         <thead>
-          <tr className="border-b border-border text-[9px] font-bold uppercase tracking-[0.06em] text-muted-foreground">
+          <tr className="border-b border-border text-2xs font-bold uppercase tracking-[0.06em] text-muted-foreground">
             <SortHeader label="Template" sortKey="name" sort={sort} onSortChange={onSortChange} className="px-3 py-2" />
             <SortHeader label="Zones" sortKey="zones" sort={sort} onSortChange={onSortChange} className="px-3 py-2" />
             <SortHeader label="Resolution" sortKey="aspectRatio" sort={sort} onSortChange={onSortChange} className="px-3 py-2" />
@@ -62,16 +62,16 @@ export function LayoutsTable({
                 <td className="px-3 py-2.5">
                   <Link href={`/media-workspace/layouts/templates/${layout.id}`} className="flex items-center gap-3">
                     <LayoutWireframe zones={layout.zones} background={layout.background} aspectRatio={layout.aspect_ratio} programStyle className="h-11 w-16 rounded border border-border" />
-                    <span className="truncate text-[11px] font-semibold text-foreground">{layout.name}</span>
+                    <span className="truncate text-ui font-semibold text-foreground">{layout.name}</span>
                   </Link>
                 </td>
-                <td className="px-3 py-2.5 text-[10px]">{layout.zone_count} Zone{layout.zone_count === 1 ? "" : "s"}</td>
-                <td className="px-3 py-2.5 text-[10px]">{layout.reference_resolution ?? layout.aspect_ratio}</td>
+                <td className="px-3 py-2.5 text-2xs">{layout.zone_count} Zone{layout.zone_count === 1 ? "" : "s"}</td>
+                <td className="px-3 py-2.5 text-2xs">{layout.reference_resolution ?? layout.aspect_ratio}</td>
                 <td className="px-3 py-2.5">
-                  {layout.created_by?.display_name && <p className="text-[10px] font-semibold">{layout.created_by.display_name}</p>}
-                  <p className="text-[9px] text-muted-foreground">{formatUpdatedAt(layout.updated_at ?? layout.created_at)}</p>
+                  {layout.created_by?.display_name && <p className="text-2xs font-semibold">{layout.created_by.display_name}</p>}
+                  <p className="text-2xs text-muted-foreground">{formatUpdatedAt(layout.updated_at ?? layout.created_at)}</p>
                 </td>
-                <td className="px-3 py-2.5"><Badge variant={badgeVariant(badge.color)} className="rounded-full px-2 py-0 text-[9px]">{badge.label}</Badge></td>
+                <td className="px-3 py-2.5"><Badge variant={badgeVariant(badge.color)} className="rounded-full px-2 py-0 text-2xs">{badge.label}</Badge></td>
                 <td className="px-3 py-2.5 text-right">
                   <RowActions
                     status={layout.status}
@@ -104,18 +104,18 @@ export function LayoutsGrid({ rows, busyId, onAction }: { rows: LayoutListItem[]
             <div className="p-3">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <Link href={`/media-workspace/layouts/templates/${layout.id}`} className="block truncate text-[11px] font-bold hover:text-primary">
+                  <Link href={`/media-workspace/layouts/templates/${layout.id}`} className="block truncate text-ui font-bold hover:text-primary">
                     {layout.name}
                   </Link>
-                  <p className="mt-1 text-[8px] text-muted-foreground">
+                  <p className="mt-1 text-3xs text-muted-foreground">
                     {layout.zone_count} Zones · {layout.reference_resolution ?? layout.aspect_ratio}
                   </p>
                 </div>
-                <Badge variant={badgeVariant(badge.color)} className="rounded-full px-2 py-0 text-[9px]">
+                <Badge variant={badgeVariant(badge.color)} className="rounded-full px-2 py-0 text-2xs">
                   {badge.label}
                 </Badge>
               </div>
-              <p className="mt-2 text-[8px] text-muted-foreground">
+              <p className="mt-2 text-3xs text-muted-foreground">
                 Updated {formatUpdatedAt(layout.updated_at ?? layout.created_at)}
               </p>
             </div>

@@ -1,5 +1,5 @@
 import { Card } from "@/components/ui/Card";
-import type { ContractorRow } from "../mock-data";
+import type { ContractorRow } from "../types";
 
 interface ContractorStatTilesRowProps {
   /** Real since 2026-09-15 — computed from the fetched roster, not the old

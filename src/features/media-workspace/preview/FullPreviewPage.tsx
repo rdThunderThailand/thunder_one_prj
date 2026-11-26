@@ -3,6 +3,7 @@
 import { useEffect, useReducer, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { XIcon } from "@/components/ui/icons";
+import { UserFacingError } from "@/lib/api/api-error";
 import { fetchMediaAssets } from "@/lib/api/media-api";
 import type { MediaAsset } from "@/types/domain";
 import { fetchPublication } from "@/features/media-workspace/publications";
@@ -116,14 +117,14 @@ export function FullPreviewPage({ id, source, sessionName }: { id: string; sourc
 async function loadCompositionOrPublicationPreview(source: Exclude<PreviewSource, "playlist">, id: string): Promise<StagePreview> {
   if (source === "composition") return loadCompositionPreview(id);
   const target = publicationPreviewTarget(await fetchPublication(id));
-  if (!target) throw new Error("Publication นี้ไม่มีเนื้อหาสำหรับ preview");
+  if (!target) throw new UserFacingError("Publication นี้ไม่มีเนื้อหาสำหรับ preview");
   return target.kind === "composition"
     ? loadCompositionPreview(target.id)
     : loadPlaylistPreview(target.id);
 }
 
 async function loadPlaylistPreview(id: string): Promise<StagePreview> {
-  if (id === "new") throw new Error("Playlist นี้ยังไม่ได้บันทึก");
+  if (id === "new") throw new UserFacingError("Playlist นี้ยังไม่ได้บันทึก");
   const playlist = await fetchPlaylist(id);
   const { playback } = decodeMetadata(playlist.metadata);
   return playlistPreviewStage({

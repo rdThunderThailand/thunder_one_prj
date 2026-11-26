@@ -21,8 +21,6 @@ export function IconButton({ label, children, ...props }: ButtonProps & { label:
 
 export { SearchInput } from "../SearchInput";
 
-export { StatusBadge } from "../Badge";
-
 export function EmptyState({ description, ...props }: Omit<React.ComponentProps<typeof BaseEmptyState>, "detail"> & { description: string }) {
   return <BaseEmptyState {...props} detail={description} />;
 }

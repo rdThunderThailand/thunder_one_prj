@@ -22,7 +22,7 @@ function ProgramCard({ label, model, isNow, emptyMessage }: { label: string; mod
   if (model === null) {
     return (
       <Card className="flex h-[240px] flex-col justify-center rounded-xl border-border p-4 text-center shadow-panel transition-[box-shadow,border-color] duration-200 hover:border-foreground/20 hover:shadow-float">
-        <h2 className="text-[11px] font-extrabold uppercase tracking-[0.08em] text-foreground">{label}</h2>
+        <h2 className="text-ui font-extrabold uppercase tracking-[0.08em] text-foreground">{label}</h2>
         <p className="mt-2 text-xs text-muted-foreground">{emptyMessage}</p>
       </Card>
     );
@@ -34,7 +34,7 @@ function ProgramCard({ label, model, isNow, emptyMessage }: { label: string; mod
   return (
     <Card className="flex h-[240px] flex-col rounded-xl border-border p-4 shadow-panel transition-[box-shadow,border-color] duration-200 hover:border-foreground/20 hover:shadow-float">
       <div className="mb-3 flex items-center justify-between gap-3">
-        <h2 className="text-[11px] font-extrabold uppercase tracking-[0.08em] text-foreground">{label}</h2>
+        <h2 className="text-ui font-extrabold uppercase tracking-[0.08em] text-foreground">{label}</h2>
       </div>
       <div className="grid grid-cols-[112px_minmax(0,1fr)] gap-4">
         {model.thumbnailUrl ? (
@@ -54,29 +54,29 @@ function ProgramCard({ label, model, isNow, emptyMessage }: { label: string; mod
           <div className="flex min-w-0 items-center gap-2">
             <h3 className="truncate text-sm font-bold text-foreground">{model.name}</h3>
             {isNow && (
-              <span className={`flex items-center gap-1 rounded px-1.5 py-0.5 text-[8px] font-bold uppercase ${model.playbackState === "confirmed" ? "bg-success-muted text-success" : "bg-warning-muted text-warning"}`}>
+              <span className={`flex items-center gap-1 rounded px-1.5 py-0.5 text-3xs font-bold uppercase ${model.playbackState === "confirmed" ? "bg-success-muted text-success" : "bg-warning-muted text-warning"}`}>
                 <i className={`h-1.5 w-1.5 rounded-full ${model.playbackState === "confirmed" ? "animate-pulse bg-success" : "bg-warning"}`} />
                 {model.playbackState === "confirmed" ? "Live" : model.playbackState === "stale" ? "Stale" : "Awaiting player"}
               </span>
             )}
             {/* A merged loop airs several Publications on the same targets; the card stays
                 single-Publication and discloses the rest rather than hiding them (ADR 0065 §2). */}
-            {model.mergedWith > 0 && <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">+{model.mergedWith} more</span>}
+            {model.mergedWith > 0 && <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-2xs font-medium text-muted-foreground">+{model.mergedWith} more</span>}
           </div>
-          <p className="mt-1 text-[10px] capitalize text-muted-foreground">
+          <p className="mt-1 text-2xs capitalize text-muted-foreground">
             {model.publicationType}
             {!isNow && model.opensAt ? ` · Starts ${formatTime(model.opensAt)}` : ""}
           </p>
           <p className="mt-3 text-lg font-bold text-foreground">
             {targetCount}{" "}
-            <span className="text-[10px] font-medium text-muted-foreground">{targetLabel}</span>
+            <span className="text-2xs font-medium text-muted-foreground">{targetLabel}</span>
           </p>
           <div className="mt-4 grid grid-cols-2 border-t border-border pt-3 text-center">
-            <span className="text-[10px] text-muted-foreground">
+            <span className="text-2xs text-muted-foreground">
               <Monitor className="mx-auto h-3.5 w-3.5" />
               <strong className="mt-1 block text-foreground">{model.channelRows}</strong>
             </span>
-            <span className="text-[10px] text-muted-foreground">
+            <span className="text-2xs text-muted-foreground">
               <CheckCircle2 className="mx-auto h-3.5 w-3.5" />
               <strong className="mt-1 block text-foreground">
                 {isNow ? model.confirmedRows : model.deviceRows}
@@ -85,7 +85,7 @@ function ProgramCard({ label, model, isNow, emptyMessage }: { label: string; mod
           </div>
         </div>
       </div>
-      <Link href={`/media-workspace/program/${model.id}`} className="mt-auto flex items-center justify-end gap-1 text-[10px] font-semibold text-primary hover:underline">
+      <Link href={`/media-workspace/program/${model.id}`} className="mt-auto flex items-center justify-end gap-1 text-2xs font-semibold text-primary hover:underline">
         {isNow ? "View program details" : "View schedule"}
         <ArrowRight className="h-3 w-3" />
       </Link>

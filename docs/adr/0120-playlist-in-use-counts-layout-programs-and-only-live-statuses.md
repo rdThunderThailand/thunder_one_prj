@@ -1,5 +1,8 @@
 # 0120 — A playlist is in use when a draft or active Program plays it, directly or through a Layout
 
+**Amended by:** [ADR 0125](0125-media-status-badges-use-one-vocabulary-and-one-colour-map.md) — the badge no longer
+shows in use; see the amendment at the end.
+
 Supersedes [ADR 0028](0028-playlist-status-derived-from-publication-references.md) on which count
 drives the Active/Inactive badge. The shape from 0028 stays: Core returns a count, and
 `playlistDisplayStatus()` turns it into the badge.
@@ -97,3 +100,11 @@ the guard loosens (contradicting ADR 0025) or the badge and the guard follow dif
   ADR and is tracked separately.
 - `playlist_program_ids` is a shared dependency of Publish Changes, the playlist badge and the
   Move to Trash guard. If its meaning changes, all three change with it.
+
+## Amendment — the badge no longer shows in use (2026-11-25)
+
+[ADR 0125](0125-media-status-badges-use-one-vocabulary-and-one-colour-map.md) replaces the paragraph
+that starts with `Badge:` under Decision. A playlist now shows only **Draft** or **Active**. Being in
+use is a neutral tag, `ใช้ใน N Program`, shown only when `in_use_count > 0`. Elsewhere in this ADR, read
+"Active" as *in use* and "Inactive" as *not in use*, which now means *no tag*. Unchanged: the rule for
+what counts as in use, the `in_use_count` key, the Move to Trash guard and `playlist_program_ids`.

@@ -60,18 +60,13 @@ const {Tag}=await import(url('src/components/ui/Tag.tsx'));
 const tag=renderToStaticMarkup(h(Tag,{lang:'th'},'Screen'));
 for(const part of ['rounded-full','border-border','bg-card','text-muted-foreground','text-2xs','lang="th"']) assert.ok(tag.includes(part),part);
 assert.ok(!tag.includes('bg-success') && !tag.includes('aria-hidden="true"'),'tag is neutral with no status dot');
-const override=renderToStaticMarkup(h(Tag,{className:'px-1 py-0 text-[9px]'},'Screen'));
+const override=renderToStaticMarkup(h(Tag,{className:'px-1 py-0 text-ui'},'Screen'));
 assert.ok(override.includes('px-1') && !override.includes('px-2.5'),'tag padding override');
-assert.ok(override.includes('text-[9px]') && !override.includes('text-2xs'),'explicit caller font retained');
-const core=await import(url('src/components/ui/lovable/core.tsx'));
-assert.strictEqual(core.StatusBadge,canonical.StatusBadge,'StatusBadge alias identity');
-for(const [status,tone] of Object.entries({active:'success',scheduled:'warning',draft:'info',offline:'danger',unrecognized:'neutral'})) {
- const rendered=renderToStaticMarkup(h(canonical.StatusBadge,{status,label:'State'}));
- assert.ok(rendered.includes(canonical.badgeVariants({variant:tone})),status);
- assert.equal((rendered.match(/bg-current/g)||[]).length,1,'exactly one StatusBadge dot');
- assert.ok(rendered.includes('Status: ') && rendered.includes('State'),'accessible prefix and label');
-}
-console.log('PASS: default dot/pill, native props/events, legacy tones/null/default, Tag neutrality/overrides and StatusBadge map/accessibility');
+assert.ok(override.includes('text-ui') && !override.includes('text-2xs'),'explicit caller font retained');
+// cn() must read the project's `text-ui` as a size, or it silently replaces the status colour.
+const sized=renderToStaticMarkup(h(Badge,{color:'green',variant:'pill',className:'text-ui'},'Online'));
+assert.ok(sized.includes('text-ui') && sized.includes('text-t1-green-700'),'size override keeps status colour');
+console.log('PASS: default dot/pill, native props/events, legacy tones/null/default, Tag neutrality/overrides');
 
 // @ts-expect-error Taxonomy does not accept status color props.
 const tintedTag: TagProps = { color: 'red' };

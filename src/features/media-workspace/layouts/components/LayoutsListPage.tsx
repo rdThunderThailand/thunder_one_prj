@@ -14,7 +14,6 @@ import { LibraryShell } from "../../content-library/LibraryShell";
 import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
 import { duplicateLayout, fetchLayouts, setLayoutStatus } from "../services/layouts-api";
 import { copyName, filterLayouts, paginate, sortLayouts, summarize } from "../list-filtering";
-import { describeSaveError } from "../status-display";
 import { readListState, writeListState, DEFAULT_STATE } from "../list-url-state";
 import type { ListFilters, Sort, SortKey } from "../list-filtering";
 import type { LayoutListItem } from "../types";
@@ -110,8 +109,7 @@ export function LayoutsListPage() {
       await run();
       await reload();
     } catch (err) {
-      const message = err instanceof Error ? err.message : "";
-      setActionError(message.startsWith("Invalid input:") ? describeSaveError(message) : classifyApiError(err, fallback).message);
+      setActionError(classifyApiError(err, fallback).message);
     } finally {
       setBusyId(null);
     }
@@ -166,7 +164,7 @@ export function LayoutsListPage() {
         toolbar={
           <>
             <LayoutsFilters value={filters} isGrid={isGrid} onViewChange={setIsGrid} onClearAll={qs === "" ? undefined : handleClearAll} onChange={(next) => { setFilters(next); setPage(1); }} />
-            {refreshing && layouts !== null && <span className="ml-auto text-[10px] text-muted-foreground">กำลังรีเฟรช…</span>}
+            {refreshing && layouts !== null && <span className="ml-auto text-2xs text-muted-foreground">กำลังรีเฟรช…</span>}
           </>
         }
         title="All Templates"
@@ -175,10 +173,10 @@ export function LayoutsListPage() {
           <LibraryPagination page={currentPage} totalPages={totalPages} total={sorted.length} pageSize={perPage} onPage={setPage} itemLabel="templates" perPageOptions={[10, 25, 50]} onPageSize={(next) => { setPerPage(next); setPage(1); }} />
         )}
       >
-        {actionError && <p className="mb-3 text-[10px] text-error">{actionError}</p>}
+        {actionError && <p className="mb-3 text-2xs text-error">{actionError}</p>}
         {error && layouts !== null && (
           <div className="mb-3 rounded-lg border border-error/30 bg-error-muted p-3">
-            <p className="text-[10px] text-error">{error.message}</p>
+            <p className="text-2xs text-error">{error.message}</p>
           </div>
         )}
         {layouts === null && !error ? (

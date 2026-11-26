@@ -7,11 +7,12 @@ import type { ChannelListItem } from "../../channels/types";
 import type { MediaAsset } from "../types";
 import { priorities, publicationTypes } from "../mock-data";
 import { formatDmy, WEEKDAYS } from "../schedule";
-import { describeSchedule, scheduleEdges } from "../schedule-describe";
+import { describeSchedule, scheduleEdges } from "../schedule-airing";
 import { draftToSchedule, isDraftValid } from "../schedule-preset";
 import { isVideoPreview } from "../preview-kind";
 import { usePlaylistPreview } from "../hooks/usePlaylistPreview";
 import { usePublicationStagePreview } from "../hooks/usePublicationStagePreview";
+import { useWizardProblemTargets } from "../hooks/useWizardProblemTargets";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 import { publicationTypeIcons } from "./publicationTypeIcons";
 
@@ -41,6 +42,7 @@ export function ProgramSummaryRail({
   const groupIds = usePublicationDraftStore((s) => s.groupIds);
   const groupNamesById = usePublicationDraftStore((s) => s.groupNamesById);
   const schedule = usePublicationDraftStore((s) => s.schedule);
+  const { targets: problemChannels } = useWizardProblemTargets();
 
   const isPlaylist = basicInfo.publicationType === "playlist";
   const { playlist, durationLabel } = usePlaylistPreview(playlistId, isPlaylist);
@@ -63,8 +65,10 @@ export function ProgramSummaryRail({
     channels.length > 0
       ? channels.filter((c) => channelIds.includes(c.id)).map((c) => c.name)
       : [];
+  // A deleted Channel is not in the list; its saved name keeps it counted (ADR 0122 rule 17).
+  const unlistedProblemNames = problemChannels.filter((p) => !channels.some((c) => c.id === p.id)).map((p) => p.name);
   const selectedGroupNames = groupIds.map((id) => groupNamesById[id] ?? id);
-  const selectedNames = [...selectedChannelNames, ...selectedGroupNames];
+  const selectedNames = [...selectedChannelNames, ...unlistedProblemNames, ...selectedGroupNames];
   const channelSummary =
     selectedNames.length > 0
       ? selectedNames.join(", ")
@@ -146,7 +150,7 @@ export function ProgramSummaryRail({
         <Row label="Name">{basicInfo.name || "—"}</Row>
         <Row label="Content">{contentLabel}</Row>
         {isMismatch && (
-          <p className="text-right text-[11px] text-warning">
+          <p className="text-right text-ui text-warning">
             Selected asset is a {selectedAsset?.kind} while publication type is {basicInfo.publicationType}.
           </p>
         )}
@@ -201,7 +205,7 @@ function ReviewFact({ icon, label, value }: { icon: React.ReactNode; label: stri
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="border-t border-border pt-3">
-      <p className="mb-2 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">{title}</p>
+      <p className="mb-2 text-2xs font-bold uppercase tracking-wide text-muted-foreground">{title}</p>
       <dl className="flex flex-col gap-2 text-sm">{children}</dl>
     </div>
   );

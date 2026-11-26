@@ -57,7 +57,7 @@ function CategoryCard({ category }: { category: KnowledgeCategory }) {
         <Icon className="h-5 w-5" />
       </span>
       <span className="text-xs font-medium text-foreground">{category.label}</span>
-      <span className="text-[11px] text-t1-gray-400">{category.articleCount} บทความ</span>
+      <span className="text-ui text-t1-gray-400">{category.articleCount} บทความ</span>
     </button>
   );
 }
@@ -73,7 +73,7 @@ function FeaturedCard({ article }: { article: (typeof featuredArticles)[number] 
       <div className="flex h-24 items-center justify-center rounded-lg bg-muted text-t1-gray-400">
         <InfoIcon className="h-6 w-6" />
       </div>
-      <span className="inline-flex w-fit items-center rounded-full bg-accent px-2 py-0.5 text-[11px] font-medium text-primary">
+      <span className="inline-flex w-fit items-center rounded-full bg-accent px-2 py-0.5 text-ui font-medium text-primary">
         {categoryLabel(article.categoryId)}
       </span>
       <p className="line-clamp-2 text-sm font-medium text-foreground">{article.title}</p>
@@ -94,14 +94,14 @@ function PopularArticlesCard() {
       <ol className="flex flex-col gap-2.5">
         {popularArticles.map((article, index) => (
           <li key={article.id} className="flex items-center gap-2.5">
-            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-medium text-muted-foreground">
+            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-muted text-ui font-medium text-muted-foreground">
               {index + 1}
             </span>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm text-foreground">{article.title}</p>
-              <span className="text-[11px] text-primary">{categoryLabel(article.categoryId)}</span>
+              <span className="text-ui text-primary">{categoryLabel(article.categoryId)}</span>
             </div>
-            <div className="shrink-0 text-right text-[11px] text-t1-gray-400">
+            <div className="shrink-0 text-right text-ui text-t1-gray-400">
               <p className="flex items-center gap-1">
                 <EyeIcon className="h-3 w-3" /> {article.viewsLabel}
               </p>
@@ -126,11 +126,11 @@ function HowToGuidesCard() {
           <li key={guide.id} className="flex items-center gap-2.5">
             <div className="relative flex h-12 w-16 shrink-0 items-center justify-center rounded-lg bg-muted text-t1-gray-400">
               <PlayIcon className="h-4 w-4" />
-              <span className="absolute right-1 bottom-1 rounded bg-t1-black/70 px-1 text-[9px] text-t1-white">{guide.durationLabel}</span>
+              <span className="absolute right-1 bottom-1 rounded bg-t1-black/70 px-1 text-2xs text-t1-white">{guide.durationLabel}</span>
             </div>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm text-foreground">{guide.title}</p>
-              <p className="text-[11px] text-t1-gray-400">
+              <p className="text-ui text-t1-gray-400">
                 {guide.dateLabel} · {guide.viewsLabel} views
               </p>
             </div>
@@ -174,8 +174,8 @@ function LatestUpdatesCard() {
             <MegaphoneIcon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
             <div className="min-w-0">
               <p className="text-sm font-medium text-foreground">{row.title}</p>
-              <p className="text-[11px] text-primary">{categoryLabel(row.categoryId)}</p>
-              <p className="text-[11px] text-t1-gray-400">{row.dateLabel}</p>
+              <p className="text-ui text-primary">{categoryLabel(row.categoryId)}</p>
+              <p className="text-ui text-t1-gray-400">{row.dateLabel}</p>
             </div>
           </li>
         ))}

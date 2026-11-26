@@ -68,7 +68,7 @@ function DatePopover({ date, onChange }: { date: string; onChange: (ymd: string)
           {HEADERS.map((day) => (
             <span
               key={day}
-              className="py-1 text-[10px] text-muted-foreground"
+              className="py-1 text-2xs text-muted-foreground"
             >
               {day}
             </span>
@@ -94,7 +94,7 @@ function DatePopover({ date, onChange }: { date: string; onChange: (ymd: string)
             ),
           )}
         </div>
-        <label className="flex flex-col gap-1 text-[10px] font-semibold text-muted-foreground">
+        <label className="flex flex-col gap-1 text-2xs font-semibold text-muted-foreground">
           Go to date
           <Input
             type="date"

@@ -239,7 +239,7 @@ export function OverviewPage() {
                     <p className="truncate text-sm font-semibold text-foreground">{row.orgName}</p>
                     <p className="truncate text-xs text-t1-gray-400">{row.contactName}</p>
                   </div>
-                  <span className="shrink-0 rounded-full bg-success-muted px-2 py-1 text-[11px] font-medium text-t1-green-700">ลูกค้าปัจจุบัน</span>
+                  <span className="shrink-0 rounded-full bg-success-muted px-2 py-1 text-ui font-medium text-t1-green-700">ลูกค้าปัจจุบัน</span>
                 </li>
               ))}
             </ul>

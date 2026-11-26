@@ -83,7 +83,7 @@ export function OverviewDashboard({ actions }: { actions?: ReactNode }) {
       </div>
       <LowerOverview channels={filteredChannels} publications={publications} loadFailed={loadFailed} />
 
-      <footer className="flex flex-wrap items-center justify-between gap-2 px-1 text-[11px] text-muted-foreground">
+      <footer className="flex flex-wrap items-center justify-between gap-2 px-1 text-ui text-muted-foreground">
         <span className="flex items-center gap-2">
           <i className="h-1.5 w-1.5 rounded-full bg-success" aria-hidden="true" />
           Auto refresh: <strong className="font-semibold text-success">On</strong>
