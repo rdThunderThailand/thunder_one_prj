@@ -9,7 +9,6 @@
 // /my-work, /work-space, /intelligence, /governance), and Sidebar falls back
 // to config/nav/shell.tsx's nav in that case.
 import type { ReactNode } from "react";
-import { env } from "@/config/env";
 import { BoxIcon, CheckCircleIcon, GridIcon, PhoneIcon, SmileIcon, UsersIcon } from "@/components/ui/icons";
 
 export interface AppConfig {
@@ -35,18 +34,13 @@ export const APPS: AppConfig[] = [
     icon: <BoxIcon className="h-4 w-4" />,
     basePath: "/asset-intelligence",
   },
-  // ADR 0097: built beside Asset Intelligence behind the flag; replaces it at release.
-  ...(env.assetWorkspaceMvp
-    ? [
-        {
-          id: "asset-workspace",
-          label: "Asset Workspace",
-          tagline: "Asset Workspace",
-          icon: <BoxIcon className="h-4 w-4" />,
-          basePath: "/asset-workspace",
-        },
-      ]
-    : []),
+  {
+    id: "asset-workspace",
+    label: "Asset Workspace",
+    tagline: "Asset Workspace",
+    icon: <BoxIcon className="h-4 w-4" />,
+    basePath: "/asset-workspace",
+  },
   {
     id: "thunder-care",
     label: "ThunderCare",
