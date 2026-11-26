@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getAuthToken, getSession } from "@/features/auth/services/get-session";
 import { AssetsListView } from "@/features/asset-workspace/components/assets-list/AssetsListView";
 import type { AssetSearchParams } from "@/features/asset-workspace/services/assets-list-query";
@@ -13,7 +14,7 @@ export default async function AssetsPage({ searchParams }: { searchParams: Promi
         title="Sign in to view assets" body="Sign in again to view assets."
         action={
           <Button asChild variant="outline" size="sm">
-            <a href="/login">Sign in</a>
+            <Link href="/login">Sign in</Link>
           </Button>
         }
       />
