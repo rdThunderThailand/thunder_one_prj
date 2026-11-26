@@ -37,7 +37,12 @@ export const coreGet = cache(async function coreGet<T>(path: string, token: stri
       // short of re-deriving it themselves. Not changing the `null`
       // contract itself (still fails open, callers still degrade the same
       // way) — just enough to debug from server logs when it happens.
-      console.error(`[coreGet] ${path} -> HTTP ${res.status}`);
+      // 2026-11-26: 403 is an expected answer for reads limited to some roles
+      // (for example the partner reviewer queue on the Work Space page for an
+      // employee), and callers already show "unavailable" for it. Log it as a
+      // warning so it stays in the server log without the development error overlay.
+      const log = res.status === 403 ? console.warn : console.error;
+      log(`[coreGet] ${path} -> HTTP ${res.status}`);
       return null;
     }
     const body = await res.json().catch(() => null);
