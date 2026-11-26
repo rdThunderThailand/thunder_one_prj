@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { Button } from "@/components/ui/lovable/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/lovable/dialog";
 import { DownloadIcon, FileTextIcon, InfoIcon } from "@/components/ui/icons";
@@ -70,7 +71,7 @@ export function AssetsExportDialog({ flow }: { flow: AssetExportFlow }) {
           <Button variant="outline" size="sm" onClick={flow.close}>Cancel</Button>
           {!flow.pending && (flow.error?.status === 401 ? (
             <Button asChild size="sm">
-              <a href="/login">Sign in</a>
+              <Link href="/login">Sign in</Link>
             </Button>
           ) : (
             <Button size="sm" disabled={blocked} onClick={() => void flow.download()}>
