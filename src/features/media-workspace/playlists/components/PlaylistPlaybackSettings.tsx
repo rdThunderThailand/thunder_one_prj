@@ -18,8 +18,8 @@ export function PlaylistPlaybackSettings({
   return (
     <div className="mt-3 flex flex-col gap-3 border-t border-border pt-3">
       <div>
-        <h2 className="text-[11px] font-semibold text-foreground">Playback Settings</h2>
-        <p className="mt-0.5 text-[9px] text-muted-foreground">Defaults applied across this playlist.</p>
+        <h2 className="text-ui font-semibold text-foreground">Playback Settings</h2>
+        <p className="mt-0.5 text-2xs text-muted-foreground">Defaults applied across this playlist.</p>
       </div>
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         <Field label="Play Mode">

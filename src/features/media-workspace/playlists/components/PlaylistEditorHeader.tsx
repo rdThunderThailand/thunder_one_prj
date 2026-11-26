@@ -106,7 +106,7 @@ export function PlaylistEditorHeader({
       <button
         type="button"
         onClick={onCancel}
-        className="text-[11px] font-medium text-muted-foreground hover:text-foreground"
+        className="text-ui font-medium text-muted-foreground hover:text-foreground"
       >
         Playlists <span aria-hidden="true">›</span> {displayName} <span aria-hidden="true">›</span> Editor
       </button>
