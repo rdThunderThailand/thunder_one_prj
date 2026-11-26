@@ -7,7 +7,7 @@ import type { ChannelListItem } from "../../channels/types";
 import type { MediaAsset } from "../types";
 import { priorities, publicationTypes } from "../mock-data";
 import { formatDmy, WEEKDAYS } from "../schedule";
-import { describeSchedule, scheduleEdges } from "../schedule-describe";
+import { describeSchedule, scheduleEdges } from "../schedule-airing";
 import { draftToSchedule, isDraftValid } from "../schedule-preset";
 import { isVideoPreview } from "../preview-kind";
 import { usePlaylistPreview } from "../hooks/usePlaylistPreview";

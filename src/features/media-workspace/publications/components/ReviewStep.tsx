@@ -16,7 +16,7 @@ import { summarizeGeometryFit, toChannelItems } from "../channels-logic";
 import { compositionZoneDurations } from "../content-info";
 import { priorities, publicationTypes } from "../mock-data";
 import { formatDmy, getDayTimelinePlacement, WEEKDAYS } from "../schedule";
-import { describeSchedule, scheduleEdges } from "../schedule-describe";
+import { describeSchedule, scheduleEdges } from "../schedule-airing";
 import { draftToSchedule, isDraftValid } from "../schedule-preset";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 import { usePlaylistPreview } from "../hooks/usePlaylistPreview";

@@ -8,7 +8,8 @@ import {
   basicInfoToForm,
   targetsFromSelection,
 } from "../draft-mapping";
-import { draftToSchedule, hasAiringLeft, isDraftValid, nowIn, upcomingDays } from "../schedule-preset";
+import { hasAiringLeft, lastAiring } from "../schedule-airing";
+import { draftToSchedule, isDraftValid, toStoredSchedule } from "../schedule-preset";
 import {
   activatePublication,
   checkScheduleConflicts,
@@ -26,7 +27,7 @@ import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 import { computeEligibility, programGateInputFromDraft } from "../publish-eligibility";
 import { validateStep } from "../step-validation";
 import { classifyApiError, UserFacingError, scheduleEndedMessage, type ClassifiedError, type PublishCause } from "@/lib/api/api-error";
-import { formatDmy, shiftYmd, utcToZonedParts } from "../schedule";
+import { formatDmy } from "../schedule";
 import type { MediaAsset, Priority, PublicationSchedule, ScheduleConflict, Tag } from "../types";
 import { DraftSaveError, draftSavePolicy, requireCompleteDraftSave, type DraftPersistResult } from "../draft-save-policy";
 
@@ -340,27 +341,13 @@ export function usePublishDraft() {
 
   const publishNow = async (): Promise<void> => {
     const state = usePublicationDraftStore.getState();
-    // Weekly and monthly ranges may stay open past their last daily window.
-    try {
-      const { schedule } = state;
-      const { ends_at, timezone } = draftToSchedule(schedule);
-      const now = nowIn(timezone);
-      if (!hasAiringLeft(schedule, now.date, now.time) || (ends_at && Date.parse(ends_at) <= Date.now())) {
-        let end = ends_at ? utcToZonedParts(ends_at, timezone) : null;
-        if ((schedule.mode === "weekly" || schedule.mode === "monthly") && schedule.endDate) {
-          // Even the 31st recurs within 62 days. The range end itself may have no airing.
-          const lastDay = upcomingDays(schedule, shiftYmd(schedule.endDate, -62), 63).at(-1);
-          const endsAtMidnight = schedule.allDay || schedule.dailyEnd === "23:59";
-          end = lastDay
-            ? { date: endsAtMidnight ? shiftYmd(lastDay, 1) : lastDay, time: endsAtMidnight ? "00:00" : schedule.dailyEnd }
-            : null;
-        }
-        const label = end ? `${formatDmy(end.date)} ${end.time}` : undefined;
-        setErrorState({ message: scheduleEndedMessage(label), cause: "schedule-ended" });
-        return;
-      }
-    } catch {
-      // ponytail: an incomplete schedule cannot be resolved here; step validation and Core still decide.
+    // ponytail: an incomplete schedule is null here; step validation and Core still decide.
+    const stored = toStoredSchedule(state.schedule);
+    if (stored && !hasAiringLeft(stored)) {
+      const end = lastAiring(stored);
+      const label = end ? `${formatDmy(end.date)} ${end.time}` : undefined;
+      setErrorState({ message: scheduleEndedMessage(label), cause: "schedule-ended" });
+      return;
     }
     setSaving(true);
     setError(null);

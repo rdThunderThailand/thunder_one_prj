@@ -6,7 +6,7 @@ import { CheckCircleIcon, ClockIcon, InfoIcon, PaperPlaneIcon } from "@/componen
 import type { ChannelListItem } from "../../channels/types";
 import type { MediaAsset } from "../types";
 import { formatDmy } from "../schedule";
-import { scheduleEdges } from "../schedule-describe";
+import { scheduleEdges } from "../schedule-airing";
 import { draftToSchedule, isDraftValid } from "../schedule-preset";
 import { usePublicationDraftStore } from "../store/usePublicationDraftStore";
 import { ProgramSummaryRail } from "./ProgramSummaryRail";
