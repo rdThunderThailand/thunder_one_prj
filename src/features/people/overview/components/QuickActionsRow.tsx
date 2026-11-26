@@ -79,7 +79,7 @@ function QuickActionContent({ action }: { action: QuickAction }) {
         <span className="block truncate text-sm font-medium text-foreground">
           {action.label}
         </span>
-        <span className="block truncate text-[11px] text-t1-gray-400">{action.sublabel}</span>
+        <span className="block truncate text-ui text-t1-gray-400">{action.sublabel}</span>
       </span>
     </>
   );

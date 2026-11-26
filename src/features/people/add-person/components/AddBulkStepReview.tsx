@@ -44,22 +44,22 @@ export function AddBulkStepReview({
             <div className="rounded-xl bg-t1-gray-50 p-3">
               <UsersIcon className="mb-1 h-4 w-4 text-primary" />
               <p className="text-lg font-semibold text-foreground">{totalCount} คน</p>
-              <p className="text-[11px] text-t1-gray-400">จำนวนทั้งหมด</p>
+              <p className="text-ui text-t1-gray-400">จำนวนทั้งหมด</p>
             </div>
             <div className="rounded-xl bg-t1-gray-50 p-3">
               <CheckCircleIcon className="mb-1 h-4 w-4 text-primary" />
               <p className="text-sm font-semibold text-foreground">สร้างบุคคลและส่งคำเชิญ</p>
-              <p className="text-[11px] text-t1-gray-400">การดำเนินการ</p>
+              <p className="text-ui text-t1-gray-400">การดำเนินการ</p>
             </div>
             <div className="rounded-xl bg-t1-gray-50 p-3">
               <EnvelopeIcon className="mb-1 h-4 w-4 text-primary" />
               <p className="text-sm font-semibold text-foreground">อีเมล</p>
-              <p className="text-[11px] text-t1-gray-400">ช่องทางการเชิญ</p>
+              <p className="text-ui text-t1-gray-400">ช่องทางการเชิญ</p>
             </div>
             <div className="rounded-xl bg-t1-gray-50 p-3">
               <InfoIcon className="mb-1 h-4 w-4 text-primary" />
               <p className="text-sm font-semibold text-foreground">{startDate ? formatThaiDate(startDate) : "-"}</p>
-              <p className="text-[11px] text-t1-gray-400">วันที่เริ่มงาน</p>
+              <p className="text-ui text-t1-gray-400">วันที่เริ่มงาน</p>
             </div>
           </div>
         </div>
@@ -140,15 +140,15 @@ export function AddBulkStepReview({
           <div className="grid grid-cols-3 divide-x divide-border text-center">
             <div>
               <p className="text-lg font-semibold text-foreground">{totalCount}</p>
-              <p className="text-[11px] text-t1-gray-400">ทั้งหมด</p>
+              <p className="text-ui text-t1-gray-400">ทั้งหมด</p>
             </div>
             <div>
               <p className="text-lg font-semibold text-foreground">0</p>
-              <p className="text-[11px] text-t1-gray-400">เพิ่มใหม่</p>
+              <p className="text-ui text-t1-gray-400">เพิ่มใหม่</p>
             </div>
             <div>
               <p className="text-lg font-semibold text-foreground">0</p>
-              <p className="text-[11px] text-t1-gray-400">อัปเดต</p>
+              <p className="text-ui text-t1-gray-400">อัปเดต</p>
             </div>
           </div>
         </div>

@@ -38,7 +38,7 @@ export function RecentArticlesList() {
                 </span>
               </p>
             </div>
-            <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${article.tagTone}`}>
+            <span className={`shrink-0 rounded-full px-2 py-0.5 text-ui font-medium ${article.tagTone}`}>
               {article.tagLabel}
             </span>
             <div className="flex shrink-0 items-center gap-2 text-t1-gray-400">
