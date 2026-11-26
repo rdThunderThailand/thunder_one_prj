@@ -45,7 +45,7 @@ export function TeamSnapshotCard() {
               <span className="text-lg font-semibold text-foreground">
                 {teamProgress.onPlanPercent}%
               </span>
-              <span className="text-[10px] text-t1-gray-400">On Track</span>
+              <span className="text-2xs text-t1-gray-400">On Track</span>
             </div>
           </div>
           <ul className="w-full space-y-1 text-xs">
@@ -75,7 +75,7 @@ export function TeamSnapshotCard() {
                 <span className="w-8 shrink-0 text-right text-xs text-muted-foreground">
                   {row.percent}%
                 </span>
-                <span className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium ${badgeTone[row.tone]}`}>
+                <span className={`shrink-0 rounded-full px-1.5 py-0.5 text-2xs font-medium ${badgeTone[row.tone]}`}>
                   {badgeLabel[row.tone]}
                 </span>
               </li>

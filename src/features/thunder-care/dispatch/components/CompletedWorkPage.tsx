@@ -139,7 +139,7 @@ export function CompletedWorkPage() {
                       <span className={`text-xs font-medium ${row.slaPassed ? "text-t1-green-700" : "text-t1-red-700"}`}>
                         {row.slaPassed ? "ผ่าน SLA" : "เกิน SLA"}
                       </span>
-                      <p className="text-[11px] text-t1-gray-400">({row.slaDetailLabel})</p>
+                      <p className="text-ui text-t1-gray-400">({row.slaDetailLabel})</p>
                     </td>
                     <td className="px-2 py-2">
                       <Stars rating={row.rating} />

@@ -27,7 +27,7 @@ export function ManagerAttentionCard() {
       <div className="mb-3 flex items-center gap-2">
         <WarningTriangleIcon className="h-4 w-4 text-error" />
         <h2 className="flex-1 text-sm font-semibold text-foreground">Needs Your Attention</h2>
-        <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-error px-1 text-[11px] font-semibold text-error-foreground">
+        <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-error px-1 text-ui font-semibold text-error-foreground">
           {managerAttentionItems.length}
         </span>
       </div>
@@ -44,7 +44,7 @@ export function ManagerAttentionCard() {
               <div className="flex items-center gap-2">
                 <p className="truncate text-sm font-medium text-foreground">{item.title}</p>
                 <span
-                  className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${statusBadge[item.status].tone}`}
+                  className={`shrink-0 rounded-full px-2 py-0.5 text-ui font-medium ${statusBadge[item.status].tone}`}
                 >
                   {statusBadge[item.status].label}
                 </span>

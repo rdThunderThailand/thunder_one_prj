@@ -31,7 +31,7 @@ export function TopIssuesCard() {
               <div className="flex items-center gap-2">
                 <p className="truncate text-sm font-medium text-foreground">{issue.title}</p>
                 <span
-                  className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${severityTone[issue.severity]}`}
+                  className={`shrink-0 rounded-full px-1.5 py-0.5 text-2xs font-semibold ${severityTone[issue.severity]}`}
                 >
                   {issue.severity}
                 </span>

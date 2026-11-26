@@ -60,7 +60,7 @@ function InertNote({ children }: { children: React.ReactNode }) {
 
 function ActiveBadge({ children }: { children: React.ReactNode }) {
   return (
-    <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-success-muted px-2 py-0.5 text-[11px] font-semibold text-t1-green-700">
+    <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-success-muted px-2 py-0.5 text-ui font-semibold text-t1-green-700">
       <CheckCircleIcon className="h-3 w-3" />
       {children}
     </span>
@@ -165,7 +165,7 @@ export function AccountSecurityPage({ me, tenantName, roleName }: AccountSecurit
                             <CopyIcon className="h-3.5 w-3.5" />
                           </button>
                         )}
-                        {copied && <span className="text-[11px] font-medium text-t1-green-700">คัดลอกแล้ว</span>}
+                        {copied && <span className="text-ui font-medium text-t1-green-700">คัดลอกแล้ว</span>}
                       </span>
                     </div>
                     <div className="flex items-center justify-between gap-3 py-2.5 text-sm">

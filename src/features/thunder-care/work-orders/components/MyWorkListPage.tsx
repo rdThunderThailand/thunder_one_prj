@@ -144,7 +144,7 @@ export function MyWorkListPage() {
                   <Badge variant="pill" color={statusColor[job.status]}>
                     {JOB_STATUS_LABEL[job.status]}
                   </Badge>
-                  <p className="mt-0.5 text-[11px] text-t1-gray-400">{job.statusTimeLabel}</p>
+                  <p className="mt-0.5 text-ui text-t1-gray-400">{job.statusTimeLabel}</p>
                 </td>
                 <td className="px-2 py-2">
                   <PriorityDots priority={job.priority} />

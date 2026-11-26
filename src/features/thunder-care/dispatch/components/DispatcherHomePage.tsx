@@ -108,7 +108,7 @@ function WorkStatusCard() {
         <DonutChart size={140} strokeWidth={20} segments={workStatusBreakdown} />
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
           <span className="text-xl font-semibold text-foreground">{total}</span>
-          <span className="text-[11px] text-t1-gray-400">รายการ</span>
+          <span className="text-ui text-t1-gray-400">รายการ</span>
         </div>
       </div>
       <ul className="flex w-full flex-col gap-1.5 text-xs">
@@ -253,7 +253,7 @@ function AnnouncementsCard() {
             <div className="min-w-0">
               <p className="text-sm font-medium text-foreground">{row.title}</p>
               <p className="text-xs text-muted-foreground">{row.detail}</p>
-              <p className="text-[11px] text-t1-gray-400">{row.dateLabel}</p>
+              <p className="text-ui text-t1-gray-400">{row.dateLabel}</p>
             </div>
           </li>
         ))}

@@ -209,7 +209,7 @@ export function InProgressPage() {
                   >
                     <td className="px-2 py-2">
                       <p className="font-medium text-primary">{row.woId}</p>
-                      <p className="text-[11px] text-t1-gray-400">จาก {row.ticketId}</p>
+                      <p className="text-ui text-t1-gray-400">จาก {row.ticketId}</p>
                     </td>
                     <td className="px-2 py-2 text-foreground">
                       <p>{row.issueTitle}</p>

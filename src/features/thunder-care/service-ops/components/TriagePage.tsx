@@ -117,7 +117,7 @@ function QueueTable({ onSelect }: { onSelect: (id: string) => void }) {
                 </td>
                 <td className="px-3 py-2.5">
                   <p className="font-medium text-foreground">{row.id}</p>
-                  <p className="text-[11px] text-primary">ใหม่</p>
+                  <p className="text-ui text-primary">ใหม่</p>
                 </td>
                 <td className="px-3 py-2.5 text-foreground">{row.title}</td>
                 <td className="px-3 py-2.5 text-muted-foreground">
@@ -186,7 +186,7 @@ function QueueWaitingInfoCard() {
       <ol className="flex flex-col gap-2.5">
         {waitingForCustomerRows.map((row, index) => (
           <li key={row.id} className="flex items-center gap-2.5 text-sm">
-            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-medium text-muted-foreground">
+            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-muted text-ui font-medium text-muted-foreground">
               {index + 1}
             </span>
             <div className="min-w-0 flex-1">
@@ -209,7 +209,7 @@ function QueueAnnouncementsCard() {
           <li key={row.id} className="flex flex-col gap-0.5">
             <p className="text-sm font-medium text-foreground">{row.title}</p>
             <p className="text-xs text-muted-foreground">{row.detail}</p>
-            <p className="text-[11px] text-t1-gray-400">{row.dateLabel}</p>
+            <p className="text-ui text-t1-gray-400">{row.dateLabel}</p>
           </li>
         ))}
       </ul>

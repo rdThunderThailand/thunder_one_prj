@@ -157,7 +157,7 @@ function SlaRiskCard() {
             </div>
             <div className="shrink-0 text-right">
               <p className="text-xs font-medium text-foreground">{row.timeLabel}</p>
-              <p className="text-[11px] text-t1-gray-400">{row.deltaLabel}</p>
+              <p className="text-ui text-t1-gray-400">{row.deltaLabel}</p>
             </div>
           </li>
         ))}
@@ -178,7 +178,7 @@ function WaitingForCustomerCard() {
       <ol className="flex flex-col gap-2.5">
         {waitingForCustomerRows.map((row, index) => (
           <li key={row.id} className="flex items-center gap-2.5 text-sm">
-            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-medium text-muted-foreground">
+            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-muted text-ui font-medium text-muted-foreground">
               {index + 1}
             </span>
             <div className="min-w-0 flex-1">
@@ -258,7 +258,7 @@ function AnnouncementsCard() {
             <div className="min-w-0">
               <p className="text-sm font-medium text-foreground">{row.title}</p>
               <p className="text-xs text-muted-foreground">{row.detail}</p>
-              <p className="text-[11px] text-t1-gray-400">{row.dateLabel}</p>
+              <p className="text-ui text-t1-gray-400">{row.dateLabel}</p>
             </div>
           </li>
         ))}

@@ -10,7 +10,7 @@ export function AskThunderOneRail() {
       <div className="mb-3 flex items-center gap-2">
         <SparklesIcon className="h-4 w-4 text-primary" />
         <h2 className="flex-1 text-sm font-semibold text-foreground">Ask ThunderOne</h2>
-        <span className="rounded-full bg-accent px-2 py-0.5 text-[11px] font-semibold text-primary">
+        <span className="rounded-full bg-accent px-2 py-0.5 text-ui font-semibold text-primary">
           AI
         </span>
       </div>

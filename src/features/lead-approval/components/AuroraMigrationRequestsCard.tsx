@@ -71,7 +71,7 @@ function Chips({ values }: { values: string[] }) {
       {values.map((value) => (
         <span
           key={value}
-          className="rounded bg-muted px-1.5 py-0.5 text-[11px] text-muted-foreground"
+          className="rounded bg-muted px-1.5 py-0.5 text-ui text-muted-foreground"
         >
           {value}
         </span>

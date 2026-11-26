@@ -15,7 +15,7 @@ export function PopularArticlesCard() {
       <ul className="flex flex-col gap-2.5">
         {popularArticles.map((article) => (
           <li key={article.id} className="flex items-center gap-2.5">
-            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-semibold text-muted-foreground">
+            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-muted text-ui font-semibold text-muted-foreground">
               {article.rank}
             </span>
             <p className="min-w-0 flex-1 truncate text-sm text-foreground">{article.title}</p>

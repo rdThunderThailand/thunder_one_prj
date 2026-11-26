@@ -20,7 +20,7 @@ export function EmployeeInsightsCard() {
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <p className="text-sm font-medium text-foreground">{employeeInsight.title}</p>
-            <span className="shrink-0 rounded-full bg-success-muted px-2 py-0.5 text-[11px] font-semibold text-t1-green-700">
+            <span className="shrink-0 rounded-full bg-success-muted px-2 py-0.5 text-ui font-semibold text-t1-green-700">
               {employeeInsight.badge}
             </span>
           </div>

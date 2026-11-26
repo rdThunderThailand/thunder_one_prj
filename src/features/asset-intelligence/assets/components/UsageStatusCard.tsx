@@ -14,7 +14,7 @@ export function UsageStatusCard() {
             <span className="text-lg font-semibold text-foreground">
               {usageStatusDistribution.total.toLocaleString()}
             </span>
-            <span className="text-[10px] text-t1-gray-400">รายการ</span>
+            <span className="text-2xs text-t1-gray-400">รายการ</span>
           </div>
         </div>
         <ul className="w-full space-y-1.5 text-xs">
