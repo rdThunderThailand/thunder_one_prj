@@ -1,9 +1,8 @@
 # Asset Workspace, Categories feature — handoff overview
 
-Status as of 2026-11-09: implemented on `feat/asset-ws-categories-frontend`, committed locally through
-`314eecf`. This work has not been pushed or submitted as a PR in this session. Source checks passed;
-**rendered and authenticated live-data acceptance remain pending**. Related Core validator fixes remain
-uncommitted in the separate backend repository.
+Status as of 2026-11-26: merged into `feat/assetworkspace` (through `314eecf`) and pushed. Source checks
+passed; **rendered and authenticated live-data acceptance remain pending**. The related Core validator fixes
+are in Core `develop`.
 
 | Document | Role |
 | --- | --- |
@@ -138,9 +137,9 @@ primitives, theme copies, main header/sidebar and shell implementations were not
 stationary hover/focus feedback. Feature `…Loading` components and route `loading.tsx` wrappers cover
 route/client loading; Assets-tab loading follows the tab URL.
 
-## Core compatibility work — not in these commits
+## Core compatibility work
 
-The local Core checkout is on `develop`. Three approved validator edits remain **uncommitted**:
+Three approved validator edits, now in Core `develop`:
 
 | Core file | Field |
 | --- | --- |
@@ -149,8 +148,7 @@ The local Core checkout is on `develop`. Three approved validator edits remain *
 | `src/lib/core/v2/assets.ts` | shared filter `category_id`: `z.uuid()` → `z.guid()` |
 
 They accept existing PostgreSQL UUID-shaped seed IDs with non-RFC version/variant bits. ID generation,
-stored data, permissions and tenant rules are unchanged. Review/ship this work separately; backend
-deployment is not established by frontend commits. No database writes or migrations ran here.
+stored data, permissions and tenant rules are unchanged. No database writes or migrations ran here.
 
 ## Verification status
 
@@ -198,7 +196,6 @@ Test writes require an explicitly approved safe environment, not the shared deve
 ## Remaining / out of scope
 
 - Complete rendered/live acceptance before calling the batch fully verified.
-- Review the separate uncommitted Core fixes before release.
 - No Category Delete, row/bulk asset mutations, Categories Export, extra tabs or action-explanation rail.
-- Missing Assign/Transfer/Move Location/Update Status/Edit Asset flows belong in their owning Assets
-  modules under separate scope; existing buttons/placeholders do not establish those flows are ready.
+- Assign, Transfer, Move Location, Update Status and Edit Asset are built by their own features (see the
+  [Assignments handoff](assignments.md) and the [overview](README.md)), not by Categories.

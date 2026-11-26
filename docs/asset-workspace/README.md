@@ -1,24 +1,30 @@
-# Asset Workspace, Assets feature — handoff overview
+# Asset Workspace — handoff overview
 
-Read this first, then the Core API docs for contracts. Status as of 2026-11-06: built on branch
-`feat/asset-workspace-asset-profile` (37 commits ahead of `origin/dev`, **not pushed, no PR**).
-All 30 `.check.mts` logic scripts pass. **Browser acceptance of Bulk Import is still to be done** (ADR 0101).
+Read this first, then the feature handoffs below and the Core API docs for contracts. Status as of 2026-11-26:
+every Asset Workspace feature is merged into `feat/assetworkspace` and pushed; no pull request to `dev` yet.
+There are 94 `.check.mts` logic scripts under `src/features/asset-workspace/`. **Browser acceptance of Bulk Import
+is still to be done** (ADR 0131), and most saves have not been run against a server (see Known gaps).
 
 | Document | Role |
 | --- | --- |
 | `docs/adr/0097-asset-workspace-is-a-new-app-beside-asset-intelligence.md` | why this is a new App; the feature flag |
 | `docs/adr/0098-asset-workspace-uses-the-design-system-core-with-a-local-profile.md` | UI rules |
-| `docs/adr/0101-bulk-import-reports-a-core-owned-batch.md` | Bulk Import rules; status is proposed |
+| `docs/adr/0131-bulk-import-reports-a-core-owned-batch.md` | Bulk Import rules; status is proposed |
 | `docs/asset-workspace/core-gap-matrix.md` | screens against Core tables and routes |
-| [Categories handoff](categories.md) | subsequent Categories batch, count links and contextual Single Registration; verification and Core prerequisites |
-| `Thunder_Core/docs/api/asset-workspace-*.md` | API contracts: assets, single registration, bulk import, export, labels, scan, profile |
+| [Categories handoff](categories.md) | Categories, count links and Single Registration from a category |
+| [Assignments handoff](assignments.md) | Assign, Transfer, Return, Move Location and assignment history |
+| [Employee portal handoff](employee-portal.md) | Home, My Assets, My Tasks and Scan Asset for employees |
+| `Thunder_Core/docs/api/asset-workspace-*.md` | API contracts for every Core route the screens call |
 
 ## The shape
 
 ```
 Browser (src/features/asset-workspace)
-  → /api/proxy/v2/asset-workspace/assets/*   same origin; checks session, tenant and user
-  → Core /api/core/v2/tenants/{tenant}/asset-workspace/assets/*
+  → /api/proxy/v2/asset-workspace/{assets,categories,locations}/*   same origin; checks session, tenant and user
+  → Core /api/core/v2/tenants/{tenant}/asset-workspace/*
+
+Server pages and Server Actions (services/*-api.ts, *-actions.ts, *-first-data.ts)
+  → Core /api/core/v2/tenants/{tenant}/asset-workspace/*   directly, with the server-only app key
 
 /asset-workspace/assets
 ├─ Register Asset ── /assets/register ── Single Register | Bulk Assets
@@ -27,7 +33,7 @@ Browser (src/features/asset-workspace)
 ├─ Export ───────── selected rows | current filters
 ├─ Generate Labels ─ selected rows
 ├─ Import History ── finished batches
-└─ Row ──────────── /assets/{assetId} (view-only Asset Profile)
+└─ Row ──────────── /assets/{assetId} (Asset Profile, its tabs and actions)
 
 Printed QR ── /{tenantId}/assets/{assetId} ── login if needed ── Asset Profile
 ```
@@ -40,7 +46,9 @@ Asset was created.
 | Feature | Behavior | Code |
 | --- | --- | --- |
 | Assets list | Summary, filters, sort, pagination and row selection; filters live in the URL | `components/assets-list/` |
-| Asset Profile | View-only details and list thumbnails | `components/asset-profile/` |
+| Asset Profile | Details, tabs (Overview, Assignments, Location, Files, Lifecycle & Warranty, History; each kept once opened), photos; Set as Current for a warranty; the server starts the first reads with the page | `components/asset-profile/`, `services/asset-profile-first-data.ts` |
+| Edit Asset | Edit form; the server starts detail and options with the page | `components/asset-edit/`, `services/asset-edit-first-data.ts` |
+| Asset actions | Assign, Transfer, Return (see [Assignments](assignments.md)), Change Status, Retire, Dispose, Label, Add / Edit Warranty | `components/assignments/`, `components/lifecycle/`, `components/lifecycle-warranty/` |
 | Single Register | 5 steps: Basic Information, Category & Specification, Location & Ownership, Acquisition & Warranty, Review & Confirm | `components/register-asset/` |
 | Bulk Import | 4 steps: Upload File, Map & Validate, Review & Confirm, Complete | `components/bulk-import/` |
 | Import History | Finished batches and their files | `components/import-history/` |
@@ -48,9 +56,20 @@ Asset was created.
 | Labels | 50 × 30 mm PDF with QR and Code128, up to 500 Assets, made in the browser | `components/asset-labels/` |
 | Scan | Camera or manual entry; QR and Code128 | `components/scan-asset/` |
 
-This overview covers the Assets batch. Categories were implemented subsequently; see the
-[Categories handoff](categories.md) for their scope and verification. Overview has its own owner;
-Assignments, Inventory, Lifecycle, Locations, Reports and Settings were not built by the Assets batch.
+The other screens of the App:
+
+| Screen | Route under `/asset-workspace` | Code |
+| --- | --- | --- |
+| Overview | `/` | `components/overview/` |
+| Assignments | `/assignments` | `components/assignments/`; see the [Assignments handoff](assignments.md) |
+| Categories | `/categories` | `components/categories/`; see the [Categories handoff](categories.md) |
+| Locations | `/locations` | `components/locations/` |
+| Inventory | `/inventory` | `components/inventory/` |
+| Lifecycle & Warranty | `/lifecycle-warranty` | `components/lifecycle-warranty/` |
+| Reports | `/reports` | `components/reports/` |
+| Settings (Asset Admin only) | `/settings` | `components/settings/` |
+| Employee portal | `/home`, `/my-assets`, `/my-tasks`, `/scan-asset` | see the [Employee portal handoff](employee-portal.md) |
+| Controlled action demo | `/controlled-action-demo` | `components/controlled-action/`; not in the nav, to be removed |
 
 ## Single Register
 
@@ -62,7 +81,7 @@ for 24 hours, so a reload can recover them. File limits and types come from Core
 
 - Files are `.xlsx` or `.csv`, up to 10 MB and 5,000 rows. These limits come from Core (`/imports/options`).
 - The batch status picks the step, and `?batch=<id>` lets a reload land on the right one.
-- The result comes from Core. A retry first reads the batch, so no Asset is created twice (ADR 0101).
+- The result comes from Core. A retry first reads the batch, so no Asset is created twice (ADR 0131).
 - Rows with errors are fixed in the Error File, then imported as a new linked batch.
 - In development, `?preview=upload` shows the upload step without a batch.
 
@@ -116,7 +135,7 @@ pnpm lint
 pnpm exec tsc --noEmit
 ```
 
-Run one logic check at a time. There are 30 under `src/features/asset-workspace/`:
+Run one logic check at a time. There are 94 under `src/features/asset-workspace/`:
 
 ```bash
 node src/features/asset-workspace/services/asset-import-xlsx.check.mts
@@ -137,19 +156,22 @@ Review these first; they reach beyond this feature.
 
 | File | Change |
 | --- | --- |
-| `src/app/api/proxy/[...path]/route.ts` | adds the `v2/asset-workspace/assets` path and its session, context and origin checks. The subsequent Categories batch also permits `v2/asset-workspace/categories`; other `v2` paths return 404; `v1` still goes through |
+| `src/app/api/proxy/[...path]/route.ts` | adds the `v2/asset-workspace/{assets,categories}` paths and the read-only `v2/asset-workspace/locations` list, with session, context and origin checks; other `v2` paths return 404; `v1` still goes through |
 | `src/proxy.ts` | flag-gates QR routes; sends a signed-out QR scan to login and back |
-| `src/components/ui/StatTile.tsx`, `WizardSteps.tsx`, `charts/DonutChartImpl.tsx`, `lovable/progress.tsx` | adjusted for these screens |
+| `src/components/ui/StatTile.tsx`, `WizardSteps.tsx`, `charts/DonutChartImpl.tsx` | adjusted for these screens |
+| `src/components/layout/Sidebar.tsx`, `asset-workspace-sidebar.tsx` (new), `PageHeader.tsx` | Asset Workspace nav by role; header actions wrap on narrow screens |
+| `src/config/asset-workspace-access.ts`, `asset-workspace-guard.ts`, `nav/asset-workspace*.ts(x)`, `env.ts` | role resolver, route-group guard, nav per role, Mapbox token |
+| `src/lib/core/core-get.ts` | a 403 from Core is logged as a warning, not an error |
 
 ## Known gaps
 
 - Core adds `'` before Error File values starting with `=`, `+`, `-` or `@`, and nothing removes it on
-  re-upload (ADR 0101).
-- Clean-up of batches abandoned before confirm is not decided (ADR 0101).
+  re-upload (ADR 0131).
+- Clean-up of batches abandoned before confirm is not decided (ADR 0131).
 - Real role behavior (manager, company admin, below manager) has not been tested with real users.
+- Not run against a server: Edit Asset save, Move Location save, Set as Current save, and the Assignment saves.
 - The former 257-line `SingleAssetWizard.tsx` was split by the subsequent Categories entry work into a 31-line wrapper and 241-line form; see the [Categories handoff](categories.md#register-from-a-category). Source checks passed; browser acceptance remains pending.
 
 ## Out of scope
 
-Editing an Asset, editing a row on screen during import (ADR 0101), choosing export columns, and the other
-Asset Workspace screens listed above.
+Editing a row on screen during import (ADR 0131) and choosing export columns.
