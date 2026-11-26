@@ -115,7 +115,6 @@ Labels also use `qrcode`, which was already installed.
 
 | Variable | Needed | Notes |
 | --- | --- | --- |
-| `NEXT_PUBLIC_ASSET_WORKSPACE_MVP` | yes | must be `1`, or every `/asset-workspace` and QR route is Not Found. Build-time, so restart after changing it. **Not in `.env.example` yet; add it by hand** |
 | `CORE_API_URL` | yes | Core base URL. Server only |
 | `CORE_API_KEY` | yes | Core app key. Server only, never `NEXT_PUBLIC_` |
 | `NEXT_PUBLIC_MAPBOX_TOKEN` | Overview map only | public `pk.` token; when unset, the map shows "Map unavailable" |

@@ -1,5 +1,4 @@
 import { APPS } from "@/config/apps";
-import { env } from "@/config/env";
 import { canOpenApp } from "@/config/tenant-access";
 
 /**
@@ -57,21 +56,16 @@ export const WORKSPACES: WorkspaceEntry[] = [
     href: appHref("asset-intelligence"),
     dataStatus: "live",
   },
-  // ADR 0097: behind the flag until release.
-  ...(env.assetWorkspaceMvp
-    ? [
-        {
-          id: "asset-workspace",
-          name: "Asset Workspace",
-          description: "Register, assign and count assets across every location.",
-          category: "Operations",
-          icon: "box",
-          tone: "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400",
-          href: appHref("asset-workspace"),
-          dataStatus: "sample",
-        } satisfies WorkspaceEntry,
-      ]
-    : []),
+  {
+    id: "asset-workspace",
+    name: "Asset Workspace",
+    description: "Register, assign and count assets across every location.",
+    category: "Operations",
+    icon: "box",
+    tone: "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400",
+    href: appHref("asset-workspace"),
+    dataStatus: "sample",
+  },
   {
     id: "people",
     name: "People Workspace",

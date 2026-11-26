@@ -75,6 +75,12 @@ Routes must be fixed now: Help `screenKey`s, nav config and every later screen h
    the App Switcher and the Workspaces catalog. Set only in local and dev; production leaves it unset.
    It is build-time (`NEXT_PUBLIC_*`), so flipping it needs a redeploy. The flag stays until the
    release gate (QA + UAT + Release Owner Go), even though the Spec is Ready for Development.
+   - Amended 2026-11-26 (flag removed, senior's request after the App was merged into `dev`): the flag
+     and its checks in `src/proxy.ts`, `src/config/apps.tsx`, `src/features/workspaces/catalog.ts` and
+     `src/config/env.ts` are gone. The App now always exists; who can open it is decided by the
+     per-tenant App switch (`requireAppAccess` in the App layout, Core `enabled_workspaces`). The owner
+     tenant and platform super admins see every App, so they see Asset Workspace wherever this code
+     is deployed.
 6. **Release cut-over** (implemented at release, in `next.config.ts`, all `permanent: true`; specific
    rules before the catch-all, as with ADR 0081). Paths are relative to each base:
 
