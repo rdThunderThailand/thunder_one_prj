@@ -20,7 +20,7 @@ export const REFUSAL_PREFIXES = [
 export type RefusalPrefix = (typeof REFUSAL_PREFIXES)[number];
 
 /** Only where a caller does something other than show `message` (ADR 0126 §4). */
-export type RefusalReason = "duplicate-name" | "needs-confirm" | "stale-draft" | "program-refused";
+export type RefusalReason = "duplicate-name" | "needs-confirm" | "stale-draft" | "program-refused" | "in-use";
 
 /** The tag `media_core.publication_error_tag` puts on a Program edit refusal. */
 export type ProgramPart = "details" | "content" | "targets" | "schedule" | "publish";
@@ -122,7 +122,8 @@ export const CORE_REFUSAL_RULES: readonly RefusalRule[] = [
   {
     prefix: "Already in use: ",
     match: /^these publications still target this channel: (.+)$/,
-    build: (found) => rejected(`ยังมี Program ใช้ Channel นี้อยู่: ${found[1]} กรุณายกเลิกหรือย้าย Program เหล่านี้ก่อน`),
+    build: (found) =>
+      rejected(`ยังมี Program ใช้ Channel นี้อยู่: ${found[1]} กรุณายกเลิกหรือย้าย Program เหล่านี้ก่อน`, { reason: "in-use" }),
   },
   {
     prefix: "Already in use: ",
@@ -132,7 +133,8 @@ export const CORE_REFUSAL_RULES: readonly RefusalRule[] = [
   {
     prefix: "Already in use: ",
     match: /^remove this group from these publications first: (.+)$/,
-    build: (found) => rejected(`Group นี้ยังถูกใช้ใน Program: ${found[1]} กรุณายกเลิกหรือย้าย Program เหล่านี้ก่อนลบ`),
+    build: (found) =>
+      rejected(`Group นี้ยังถูกใช้ใน Program: ${found[1]} กรุณายกเลิกหรือย้าย Program เหล่านี้ก่อนลบ`, { reason: "in-use" }),
   },
   {
     // One partial unique index (ADR 0074 §5) behind five raises in three RPCs.
@@ -181,7 +183,7 @@ export const CORE_REFUSAL_RULES: readonly RefusalRule[] = [
     prefix: "not found: ",
     match: /^playlist not found for this tenant/,
     part: "content",
-    build: () => ({ kind: "not-found", message: NO_CONTENT_MESSAGE }),
+    build: () => ({ kind: "not-found", message: NO_CONTENT_MESSAGE, cause: "no-content" }),
   },
   {
     prefix: "not found: ",
@@ -200,7 +202,9 @@ export const CORE_REFUSAL_RULES: readonly RefusalRule[] = [
     prefix: "Invalid input: ",
     match: /^playlist is used by an active or draft publication: (.+)$/,
     build: (found) =>
-      rejected(`ย้ายลงถังไม่ได้ — Playlist นี้ถูกใช้อยู่ใน Program ที่ Active หรือ Draft: ${found[1]} กรุณายกเลิก Program เหล่านั้นก่อน`),
+      rejected(`ย้ายลงถังไม่ได้ — Playlist นี้ถูกใช้อยู่ใน Program ที่ Active หรือ Draft: ${found[1]} กรุณายกเลิก Program เหล่านั้นก่อน`, {
+        reason: "in-use",
+      }),
   },
   {
     prefix: "Invalid input: ",
@@ -223,7 +227,7 @@ export const CORE_REFUSAL_RULES: readonly RefusalRule[] = [
   {
     prefix: "Invalid input: ",
     match: /^zone is used by composition\(s\) (.+)/,
-    build: (found) => rejected(`ลบ Zone ไม่ได้ — Template นี้ยังถูกใช้ใน: ${found[1]}`),
+    build: (found) => rejected(`ลบ Zone ไม่ได้ — Template นี้ยังถูกใช้ใน: ${found[1]}`, { reason: "in-use" }),
   },
   {
     prefix: "Invalid input: ",

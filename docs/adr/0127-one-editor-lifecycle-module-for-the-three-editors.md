@@ -6,6 +6,8 @@ after an outside review of this ADR found the Composition baseline problem in §
 **Extends:** ADR 0060 §2 (leaving with unsaved edits is confirmed — now in every editor) · ADR 0003
 (revision conflict on the first write) · ADR 0078 §6 and ADR 0116 §6 (save before publish) · ADR 0126
 (`kind: "conflict"` from the refusal table).
+**Amended by:** [ADR 0130](0130-an-in-use-refusal-links-to-each-blocker.md) — §6: a failed save also
+keeps its `reason` (`saveReason`), so the Template editor can show the in-use links.
 **Relates to:** GitHub #459 (this decision), #464 (architecture review round 2), #454 / #455 (the fixes
 that showed the drift), #479 (refusal links, lands after this on the same files); ADR 0063 §2 and
 ADR 0088 §4 (Composition multi-write save); ADR 0087 (Composition undo); ADR 0123 (success is a toast).

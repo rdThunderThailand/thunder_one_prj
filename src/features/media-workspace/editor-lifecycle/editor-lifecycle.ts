@@ -1,5 +1,6 @@
 // Pure save-lifecycle rules shared by the Playlist, Composition and Layout editors (ADR 0127).
 // No React and no runtime imports, so `editor-lifecycle.check.mts` runs under plain `node`.
+import type { RefusalReason } from "@/lib/api/core-refusal-rules";
 
 export type LifecycleStatus = "new" | "dirty" | "saved";
 
@@ -8,6 +9,8 @@ export type LifecycleState = {
   baseline: string;
   isSaving: boolean;
   saveError: string | null;
+  /** Why Core refused, when the page does more than show `saveError` (ADR 0130 §6). */
+  saveReason: RefusalReason | null;
   conflict: string | null;
   lastSavedAt: Date | null;
 };
@@ -19,30 +22,30 @@ export type LifecycleEvent =
   | { type: "save-start" }
   /** `baseline` is the snapshot captured when the save started (ADR 0127 §3). */
   | { type: "save-success"; baseline: string; at: Date }
-  | { type: "save-failure"; kind: "conflict" | "error"; message: string }
+  | { type: "save-failure"; kind: "conflict" | "error"; message: string; reason?: RefusalReason }
   /** A newer write by the same editor took over the error slot. A pending conflict stays until a reload. */
   | { type: "clear-error" };
 
 export function initialLifecycle(baseline: string): LifecycleState {
-  return { baseline, isSaving: false, saveError: null, conflict: null, lastSavedAt: null };
+  return { baseline, isSaving: false, saveError: null, saveReason: null, conflict: null, lastSavedAt: null };
 }
 
 export function reduceLifecycle(state: LifecycleState, event: LifecycleEvent): LifecycleState {
   switch (event.type) {
     case "reset":
-      return { ...state, baseline: event.baseline, saveError: null, conflict: null };
+      return { ...state, baseline: event.baseline, saveError: null, saveReason: null, conflict: null };
     case "save-start":
-      return { ...state, isSaving: true, saveError: null, conflict: null };
+      return { ...state, isSaving: true, saveError: null, saveReason: null, conflict: null };
     case "save-success":
       return { ...state, baseline: event.baseline, isSaving: false, lastSavedAt: event.at };
     case "save-failure":
       // An error never drops a pending conflict: a failed reload must leave the Reload button on screen.
       // (`save-start` already cleared it for a failed save.)
       return event.kind === "conflict"
-        ? { ...state, isSaving: false, conflict: event.message, saveError: null }
-        : { ...state, isSaving: false, saveError: event.message };
+        ? { ...state, isSaving: false, conflict: event.message, saveError: null, saveReason: null }
+        : { ...state, isSaving: false, saveError: event.message, saveReason: event.reason ?? null };
     case "clear-error":
-      return { ...state, saveError: null };
+      return { ...state, saveError: null, saveReason: null };
   }
 }
 

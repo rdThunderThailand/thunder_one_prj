@@ -56,21 +56,23 @@ const fixtures: [string, Expect][] = [
   // media_publication_update_published: B
   ["Invalid input: [content] html and dynamic content cannot be edited here", { kind: "rejected", part: "content", has: "HTML" }],
   ["Invalid input: [content] at least one media asset is required", { kind: "rejected", part: "content", has: "ยังไม่ได้เลือกสื่อ" }],
-  ["not found: [content] playlist not found for this tenant", { kind: "not-found", part: "content", cause: undefined, has: "ยังไม่ได้เลือกเนื้อหา", status: 404 }],
+  ["not found: [content] playlist not found for this tenant", { kind: "not-found", part: "content", cause: "no-content", has: "ยังไม่ได้เลือกเนื้อหา", status: 404 }],
   ["not found: [content] composition not found for this tenant", { kind: "rejected", part: "content", cause: "no-content", status: 404 }],
   ["not found: [targets] screen D1 not found for this tenant", { kind: "not-found", part: "targets", has: "ไม่พบจอที่เลือก", status: 404 }],
   ["not found: [targets] channel C1 not found for this tenant", { kind: "rejected", part: "targets", cause: "targets", status: 404 }],
   ["Invalid input: [targets] duplicate target — the same channel, screen or group is listed twice", { kind: "rejected", part: "targets", has: "เลือกปลายทางซ้ำกัน" }],
   // media_playlist_delete: playlist_in_use_via_layout.sql
+  // Same set as the links' read (ADR 0130): both are built on `playlist_program_ids`.
   [
     "Invalid input: playlist is used by an active or draft publication: Summer Sale, Lobby Loop",
-    { kind: "rejected", has: "Program ที่ Active หรือ Draft: Summer Sale, Lobby Loop" },
+    { kind: "rejected", reason: "in-use", has: "Program ที่ Active หรือ Draft: Summer Sale, Lobby Loop" },
   ],
   ["Invalid input: this playlist belongs to a publication and cannot be deleted on its own", { kind: "rejected", has: "ลบที่ Program แทน" }],
   // media_layout_upsert: B
   ["Invalid input: zones 1 and 3 overlap", { kind: "rejected", has: "Zone ลำดับที่ 1 และ 3 ซ้อนทับกัน" }],
   ["Invalid input: a layout needs at least one zone", { kind: "rejected", has: "ต้องมีอย่างน้อย 1 Zone" }],
-  ["Invalid input: zone is used by composition(s) Lobby, Menu", { kind: "rejected", has: "ยังถูกใช้ใน: Lobby, Menu" }],
+  // Same set as the links' read (ADR 0130): `composition_zones` rows of the deleted Zones.
+  ["Invalid input: zone is used by composition(s) Lobby, Menu", { kind: "rejected", reason: "in-use", has: "ยังถูกใช้ใน: Lobby, Menu" }],
   // media_composition_set_zones: what_holds_a_playlist.sql
   ["Invalid input: playlist is in Trash: Summer Loop", { kind: "rejected", has: "Playlist Summer Loop อยู่ในถังขยะ" }],
   // media_composition_upsert: B
@@ -81,7 +83,7 @@ const fixtures: [string, Expect][] = [
   // media_core.channel_set_devices (via media_channel_update / _create): B:790
   [
     "Already in use: cannot remove Player 01 while these publications target this channel: Summer Sale",
-    { kind: "rejected", has: "เปลี่ยน Player ไม่ได้" },
+    { kind: "rejected", reason: undefined, has: "เปลี่ยน Player ไม่ได้" },
   ],
   // media_core.channel_validate (via media_channel_create / _update): B:895 and B:907
   [
@@ -99,9 +101,10 @@ const fixtures: [string, Expect][] = [
   ],
   // media_channel_delete (channel_delete_unused.sql:183 main, channel_tombstone.sql:41 develop) and
   // media_channel_deactivate (B:5034): one verb-free line for both
+  // Same set as the links' read (ADR 0130): both are built on `channel_blocking_publication_rows`.
   [
     "Already in use: these publications still target this channel: Summer Sale",
-    { kind: "rejected", has: "ยังมี Program ใช้ Channel นี้อยู่: Summer Sale" },
+    { kind: "rejected", reason: "in-use", has: "ยังมี Program ใช้ Channel นี้อยู่: Summer Sale" },
   ],
   // media_channel_delete: channel_delete_unused.sql:190 (main only; develop's channel_tombstone.sql no longer raises it)
   [
@@ -109,9 +112,10 @@ const fixtures: [string, Expect][] = [
     { kind: "rejected", has: "ปิดใช้งานแทน" },
   ],
   // media_channel_groups_delete: B:5175
+  // Same set as the links' read (ADR 0130): both match on `publication_targets.group_id`.
   [
     "Already in use: remove this group from these publications first: Promo A, Promo B",
-    { kind: "rejected", has: "ยังถูกใช้ใน Program: Promo A, Promo B" },
+    { kind: "rejected", reason: "in-use", has: "ยังถูกใช้ใน Program: Promo A, Promo B" },
   ],
   // The sync-group conflict, five raises (all one rule): media_channel_groups_set_members B:5267 / B:5281
   // (develop channel_tombstone_guards.sql:703 / :717), media_channel_groups_update B:5339,

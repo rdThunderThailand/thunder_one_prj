@@ -11,6 +11,7 @@ import { fetchLayout, upsertLayout } from "../services/layouts-api";
 import { DEFAULT_ASPECT_RATIO, DEFAULT_BACKGROUND, DEFAULT_RESOLUTION, type LayoutDraft, type LayoutZone } from "../types";
 import { LayoutCanvas } from "./LayoutCanvas";
 import { LayoutEditorHeader, LayoutEditorToolbar, LayoutZoneOverview } from "./LayoutEditorChrome";
+import { LayoutSaveError } from "./LayoutSaveError";
 import { LayoutSettingsPanel } from "./LayoutSettingsPanel";
 import { useConfirmDialog } from "../../content-library/useConfirmDialog";
 import { TemplateRail } from "./TemplateRail";
@@ -189,9 +190,12 @@ export function LayoutEditorPage({ layoutId }: { layoutId?: string | null }) {
       {lifecycle.leaveDialog}
 
       {lifecycle.saveError && (
-        <div className="shrink-0 border-b border-error/30 bg-error-muted px-4 py-2">
-          <p className="text-sm text-error">{lifecycle.saveError}</p>
-        </div>
+        <LayoutSaveError
+          message={lifecycle.saveError}
+          reason={lifecycle.saveReason}
+          templateId={draft.id}
+          zones={draft.zones}
+        />
       )}
 
       {usageCount > 1 && (

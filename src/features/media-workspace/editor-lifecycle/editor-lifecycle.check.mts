@@ -61,6 +61,18 @@ assert.equal(reduceLifecycle(failed, { type: "clear-error" }).saveError, null);
 assert.equal(reduceLifecycle(failed, { type: "save-start" }).saveError, null);
 assert.equal(reduceLifecycle(conflicted, { type: "save-start" }).conflict, null);
 
+// the failure's reason is kept with the error and cleared with it; a conflict keeps none
+const inUse = reduceLifecycle(saving, { type: "save-failure", kind: "error", message: "in use", reason: "in-use" });
+assert.equal(inUse.saveReason, "in-use");
+assert.equal(reduceLifecycle(inUse, { type: "save-start" }).saveReason, null);
+assert.equal(reduceLifecycle(inUse, { type: "clear-error" }).saveReason, null);
+assert.equal(reduceLifecycle(inUse, { type: "reset", baseline: y }).saveReason, null);
+assert.equal(failed.saveReason, null);
+assert.equal(
+  reduceLifecycle(inUse, { type: "save-failure", kind: "conflict", message: "changed elsewhere", reason: "in-use" }).saveReason,
+  null,
+);
+
 // 8. ensureSaved: clean writes nothing and is true; a failed save is false
 let writes = 0;
 assert.equal(await ensureSavedWith(false, async () => { writes += 1; return "id"; }), true);
