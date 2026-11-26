@@ -1,10 +1,8 @@
 # Asset Workspace, Employee portal — handoff overview
 
-Status as of 2026-11-17: the employee portal frontend (EMP-00 Shell, EMP-01 Home, EMP-02 My Assets, EMP-03 My Tasks,
-EMP-04 Scan Asset) is built on `feat/asset-ws-employee` from `feat/assetworkspace`. Local head is `2b94c21`; the remote
-still has `c8fedc4` (same work before the B1 amend), so the next push needs `--force-with-lease`. Not merged. The
-backend `/me` routes are merged into Core `develop` (#393). The B2 fix (Home counts only the caller's tasks) is Core
-commit `5a74eff` on `fix/asset-ws-me-task-counts`, pushed, **PR not opened**. Read-only browser checks and the `/me`
+Status as of 2026-11-26: the employee portal frontend (Shell, Home, My Assets, My Tasks, Scan Asset) is merged into
+`feat/assetworkspace` (through `2b94c21`) and pushed. The backend `/me` routes are merged into Core `develop` (#393),
+and so is the fix that makes Home count only the caller's tasks (Core #397). Read-only browser checks and the `/me`
 API test passed; task writes were checked in the browser on develop with owner approval (≤5 assets).
 
 | Document | Role |
@@ -49,11 +47,11 @@ Feature paths below are relative to `src/features/asset-workspace/employee/`.
 
 | Item | Behavior | Main code |
 | --- | --- | --- |
-| EMP-00 Shell | Role resolver (role_type, else role code), route-group guards, employee nav (My Assets, My Tasks, Scan Asset, Home) | `src/config/asset-workspace-access.ts`, `asset-workspace-guard.ts`, `config/nav/asset-workspace*.ts(x)`, `app/(dashboard)/(application)/asset-workspace/{(admin),(employee)}/layout.tsx` |
-| EMP-02 My Assets | List with search, tabs, Condition filter, paging; asset view with an allow-listed field set; safe Back link (`?from=` stays under `/my-assets`) | `my-assets/MyAssetsView.tsx`, `MyAssetView.tsx`, `my-assets-api.ts`, `my-assets-query.ts` |
-| EMP-03 My Tasks | Task list; task page with the checklist, Mismatch (condition + note), Change, Report unexpected, My Findings. No Submit or Close (each verify marks the task Submitted) | `my-tasks/MyTasksView.tsx`, `MyTaskView.tsx`, `MyTaskDialogs.tsx`, `my-tasks-actions.ts`, `my-tasks-api.ts` |
-| EMP-04 Scan Asset | Camera via `hooks/use-asset-camera.ts` plus typed-code fallback; Found / Not Found / scan failure | `scan-asset/MyScanView.tsx`, `MyScanResult.tsx`, `my-scan-actions.ts` |
-| EMP-01 Home | Asset counts by status, tasks to do with progress; no new route | `home/MyHomeView.tsx` |
+| Shell | Role resolver (role_type, else role code), route-group guards, employee nav (My Assets, My Tasks, Scan Asset, Home) | `src/config/asset-workspace-access.ts`, `asset-workspace-guard.ts`, `config/nav/asset-workspace*.ts(x)`, `app/(dashboard)/(application)/asset-workspace/{(admin),(employee)}/layout.tsx` |
+| My Assets | List with search, tabs, Condition filter, paging; asset view with an allow-listed field set; safe Back link (`?from=` stays under `/my-assets`) | `my-assets/MyAssetsView.tsx`, `MyAssetView.tsx`, `my-assets-api.ts`, `my-assets-query.ts` |
+| My Tasks | Task list; task page with the checklist, Mismatch (condition + note), Change, Report unexpected, My Findings. No Submit or Close (each verify marks the task Submitted) | `my-tasks/MyTasksView.tsx`, `MyTaskView.tsx`, `MyTaskDialogs.tsx`, `my-tasks-actions.ts`, `my-tasks-api.ts` |
+| Scan Asset | Camera via `hooks/use-asset-camera.ts` plus typed-code fallback; Found / Not Found / scan failure | `scan-asset/MyScanView.tsx`, `MyScanResult.tsx`, `my-scan-actions.ts` |
+| Home | Asset counts by status, tasks to do with progress; no new route | `home/MyHomeView.tsx` |
 | Shared | List page frame, loading skeletons for every route | `shared/EmployeeListPage.tsx`, `shared/EmployeeLoading.tsx` |
 
 ## Rules the UI follows
@@ -66,7 +64,7 @@ Feature paths below are relative to `src/features/asset-workspace/employee/`.
   unexpected; M6 employee field list per batch.
 - Findings never change the Asset Master (AC-016): a Mismatch is recorded on the task only.
 - Desktop first; My Assets, Scan and task verification work at 375px (one column, no horizontal scroll).
-- Out of scope: EMP-05 My Requests (PO: UC, permission and AC missing), the Manager view.
+- Out of scope: My Requests (PO: use case, permission and acceptance criteria missing), the Manager view.
 
 ## Roles
 
@@ -121,7 +119,7 @@ All merged in Core #393. No migration, no dependency or environment-variable cha
 ## Verification status
 
 Passed (2026-11-17, full test report kept in the owner's workspace docs, outside this repo): TypeScript, ESLint on employee, config, route-group and nav files, 5 `.check.mts`
-self-checks; `/me` API test 29/29 against local Core (30/30 with the B2 check); browser as `employee_asset` at 1366
+self-checks; `/me` API test 29/29 against local Core (30/30 with the Home task-count check); browser as `employee_asset` at 1366
 and 375px: AC-004, 005, 016, 019 (UI), 027, 028, 032, 034, 13 admin URLs redirect to My Assets; XSS and open-redirect
 probes. Run focused checks from the frontend root:
 
@@ -141,12 +139,12 @@ with Core down; Home "Tasks to do" with rows; `/me` write checks (`ME_WRITES=1`,
 
 | # | Bug | Fix |
 | --- | --- | --- |
-| B1 | My Findings identifier wrapped one letter per line at 375px | `MyTaskView.tsx` `min-w-40 flex-1`; amended into `2b94c21` |
-| B2 | Home progress counted the whole session (others' assets) | Core `listInventorySessions` counts only the caller's tasks for non-admins; `5a74eff`, PR not opened. The "N specific assets" label still shows the session size |
+| 1 | My Findings identifier wrapped one letter per line at 375px | `MyTaskView.tsx` `min-w-40 flex-1`; in `2b94c21` |
+| 2 | Home progress counted the whole session (others' assets) | Core `listInventorySessions` counts only the caller's tasks for non-admins; `5a74eff`, merged in Core #397. The "N specific assets" label still shows the session size |
 
 ## Known risks
 
-- **R1: an employee can still read every tenant asset through the admin read routes** (they check membership only;
+- **An employee can still read every tenant asset through the admin read routes** (they check membership only;
   the browser proxy `assets/list` returned all 249 assets). Admin detail, label and export answer 403. Fix belongs to
   the planned "Asset access policy" batch (Core route guard, senior sign-off). Conflicts with AC-004 "only permitted
   scope" until then.
@@ -165,13 +163,12 @@ with Core down; Home "Tasks to do" with rows; `/me` write checks (`ME_WRITES=1`,
 | `865b92a` | My Tasks list and task verification |
 | `7603c92` | Scan Asset |
 | `4e9f575` | Home |
-| `2b94c21` | Lists, asset view and loading screens improved; B1 (remote has `c8fedc4`, before the amend) |
+| `2b94c21` | Lists, asset view and loading screens improved; My Findings wrapping fix |
 
 ## Remaining / out of scope
 
-- Force-push `2b94c21` and open the frontend PR when the owner asks; open the Core PR for `5a74eff` (B2).
 - Run `/me` write checks on a local database; see a task Not Found result, the camera scan and the Core-down state.
-- PO: should Home replace My Assets as the landing page; EMP-05 My Requests needs UC, permission and AC.
+- PO: should Home replace My Assets as the landing page; My Requests needs a use case, permission and acceptance criteria.
 - Minor, no fix yet: Change on a Mismatch reopens empty; Mismatch offers the expected condition; "Choose what is
   different" stays red until Save; Scan "Try again" keeps the old code; Format shows "Valid" for any text.
 - Not built: My Requests, Manager view, any admin action.

@@ -1,8 +1,7 @@
 # Asset Workspace, Assignments feature — handoff overview
 
-Status as of 2026-11-13: the Assignment frontend (FE 01–09 plus the PO design pass) is merged into
-`origin/feat/assetworkspace` through `93e184f`. The Assign step 1 redesign is committed as `69771a7` on
-`feat/asset-ws-profile-tabs` (owner choice) and **is not pushed**. The backend (BE 01–03) is merged into Core
+Status as of 2026-11-26: the whole Assignment frontend, including the PO design pass and the Assign step 1
+redesign (`69771a7`), is merged into `feat/assetworkspace` and pushed. The backend routes are merged into Core
 `develop` (#349, #350, #359). Source checks and read-only browser checks passed; **no save (Assign / Transfer /
 Return / Move Location) has been run against a server**.
 
@@ -18,9 +17,12 @@ Return / Move Location) has been run against a server**.
 ## The shape
 
 ```text
-Browser (src/features/asset-workspace)
-  → /api/proxy/v2/asset-workspace/{assignments,assets}/*
-  → Core /api/core/v2/tenants/{tenant}/asset-workspace/{assignments,assets}/*
+Saves and profile reads (browser)
+  → /api/proxy/v2/asset-workspace/assets/*
+  → Core /api/core/v2/tenants/{tenant}/asset-workspace/assets/*
+
+Current and History tabs (server, services/asset-assignments-api.ts)
+  → Core /api/core/v2/tenants/{tenant}/asset-workspace/assignments/*
 
 /asset-workspace/assignments
 ├─ Current tab (default) → search, Category / Location / Custodian filters, table, row menu
@@ -50,17 +52,17 @@ Feature paths below are relative to `src/features/asset-workspace/`.
 
 | Item | Behavior | Main code |
 | --- | --- | --- |
-| FE 01 — Current tab | Search, Category / Location / Custodian filters, table, row menu, paging; row opens the profile | `components/assignments/AssignmentsCurrentView.tsx`, `AssignmentsTable.tsx`, `domain/assignment-current.ts` |
-| FE 02 — Assign | Steps: select asset → custodian (person or org unit) and details → review → result. Evidence upload. No PO page frame; follows the Transfer layout (owner 2026-11-10) | `components/assignments/AssignFlowView.tsx`, `use-assign-flow.ts`, `domain/assignment-assign.ts` |
-| FE 02 — step 1 redesign | Compact table (asset + serial, Asset ID, Category, Location, Condition), Category / Location filters, paging through every Available asset, preselected asset pinned on top; no "Available" chip | `components/assignments/AssignSelectAsset.tsx`, `services/asset-assignments-write.ts` |
-| FE 03 — Transfer | Person or Team tab, To Location, optional Reason, condition Good / Fair; current holder left out of the picker; review and confirm | `components/assignments/TransferFlowView.tsx`, `use-transfer-flow.ts`, `domain/assignment-transfer.ts` |
-| FE 04 — Return | Return details and condition check, next status shown (auto), review and confirm | `components/assignments/ReturnFlowView.tsx`, `use-return-flow.ts`, `domain/assignment-return.ts` |
-| FE 05 — History tab | Event type / date range filters on the house date picker, table, Event Details card; condition shown on Return only | `components/assignments/AssignmentsHistoryView.tsx`, `domain/assignment-history.ts` |
-| FE 06 — Profile parts | Overview Current Assignment card, Assignments tab, History › Assignment with server-side filters and periods; profile kept inside Assignments | `components/assignments/ProfileAssignmentHistory.tsx`, `ProfileAssignmentEvents.tsx`, `domain/assignment-profile.ts` |
-| FE 07 — Move Location | Two-step dialog (choose location → Review, per PO UC-012) from the profile Location tab; active location tree; also opened by `?tab=location&action=move-location` | `components/assignments/MoveLocationFlow.tsx`, `domain/assignment-move-location.ts` |
-| FE 08 — Location tab | Current location and history on the profile; Location details and Photos disabled for phase 1 (owner) | `components/assignments/ProfileLocationView.tsx` |
-| FE 09 — Location History | History › Location History table with a side panel | `components/assignments/ProfileLocationHistory.tsx`, `domain/assignment-location-history.ts` |
-| Design pass | FE 01 / 05 / 06 / 08 / 09 aligned to the PO frames | commit `93e184f` |
+| Current tab | Search, Category / Location / Custodian filters, table, row menu, paging; row opens the profile | `components/assignments/AssignmentsCurrentView.tsx`, `AssignmentsTable.tsx`, `domain/assignment-current.ts` |
+| Assign | Steps: select asset → custodian (person or org unit) and details → review → result. Evidence upload. No PO page frame; follows the Transfer layout (owner 2026-11-10) | `components/assignments/AssignFlowView.tsx`, `use-assign-flow.ts`, `domain/assignment-assign.ts` |
+| Assign step 1 redesign | Compact table (asset + serial, Asset ID, Category, Location, Condition), Category / Location filters, paging through every Available asset, preselected asset pinned on top; no "Available" chip | `components/assignments/AssignSelectAsset.tsx`, `services/asset-assignments-write.ts` |
+| Transfer | Person or Team tab, To Location, optional Reason, condition Good / Fair; current holder left out of the picker; review and confirm | `components/assignments/TransferFlowView.tsx`, `use-transfer-flow.ts`, `domain/assignment-transfer.ts` |
+| Return | Return details and condition check, next status shown (auto), review and confirm | `components/assignments/ReturnFlowView.tsx`, `use-return-flow.ts`, `domain/assignment-return.ts` |
+| History tab | Event type / date range filters on the house date picker, table, Event Details card; condition shown on Return only | `components/assignments/AssignmentsHistoryView.tsx`, `domain/assignment-history.ts` |
+| Profile parts | Overview Current Assignment card, Assignments tab, History › Assignment with server-side filters and periods; profile kept inside Assignments | `components/assignments/ProfileAssignmentHistory.tsx`, `ProfileAssignmentEvents.tsx`, `domain/assignment-profile.ts` |
+| Move Location | Two-step dialog (choose location → Review, per PO UC-012) from the profile Location tab; active location tree; also opened by `?tab=location&action=move-location` | `components/assignments/MoveLocationFlow.tsx`, `domain/assignment-move-location.ts` |
+| Location tab | Current location and history on the profile; Location details and Photos disabled for phase 1 (owner) | `components/assignments/ProfileLocationView.tsx` |
+| Location History | History › Location History table with a side panel | `components/assignments/ProfileLocationHistory.tsx`, `domain/assignment-location-history.ts` |
+| Design pass | Current tab, History tab, profile parts, Location tab and Location History aligned to the PO frames | commit `93e184f` |
 
 ## Custody rules the UI follows
 
@@ -110,15 +112,15 @@ Same-origin authenticated proxy; tenant selection happens on the server. Paths a
 | GET | `assets/registration-options/{persons,org-units,locations}` | custodian and location pickers | existing |
 
 No dependency, environment-variable or migration change on the frontend. Core added its functions and migration
-`20261111024538` with BE 03.
+`20261111024538` with the Move Location route.
 
 ## Shared code touched
 
 | File | Change |
 | --- | --- |
-| `src/app/api/proxy/[...path]/route.ts` | `assignments` branch with the same checks as `assets` and `categories` |
+| `src/app/api/proxy/[...path]/route.ts` | no `assignments` branch: saves use the `assets` path; the Current and History tabs read Core from the server |
 | `components/asset-profile/*` | Current Assignment card, Assignments / Location tabs, history sub-tabs (Assignment, Location) |
-| `components/assets-list/*` (Profile Tabs FE 06) | one selected asset links to Assign / Transfer / Move Location / Update Status; blocked actions explain why |
+| `components/assets-list/*` (profile tabs work) | one selected asset links to Assign / Transfer / Move Location / Update Status; blocked actions explain why |
 | `domain/status-tone.ts` | status and condition colours stay in the one map |
 
 ## Verification status
@@ -165,12 +167,11 @@ evidence upload in the browser; real role and tenant permissions.
 | `a6eee33` | Profile Location tab |
 | `d1317c8` | Move Location dialog |
 | `93e184f` | Assignment and profile pages aligned to the PO design |
-| `69771a7` | Assign step 1 table, filters and paging (on `feat/asset-ws-profile-tabs`, not pushed) |
+| `69771a7` | Assign step 1 table, filters and paging |
 
 ## Remaining / out of scope
 
 - Run the save flows on an approved local Core before calling the feature fully verified.
-- Push `69771a7` with the Profile Tabs branch, or move it to the Assignment branch, before review.
-- Open: All History per-event read (BE 04 + FE 10), To Location star on the shared picker, 390px app-shell
-  overflow, broader QA of FE 01 / 05.
+- Open: an All History read per event (needs a new Core route and its screen), To Location star on the shared
+  picker, 390px app-shell overflow, broader QA of the Current and History tabs.
 - Not built: Transfer to storage (it is a Return), bulk assign / transfer, Assignment Export, Transaction ID.

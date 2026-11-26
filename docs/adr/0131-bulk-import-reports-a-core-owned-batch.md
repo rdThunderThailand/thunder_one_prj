@@ -1,7 +1,8 @@
-# 0101 — Bulk Import reports a batch that Core owns
+# 0131 — Bulk Import reports a batch that Core owns
 
 Status: proposed (2026-11-05). Implements the owner-approved Bulk Import design of 2026-11-02 (ticket
 84, UC-010). Contract: Notes `Assets/bulk import/`.
+**Workspace:** asset-workspace
 
 ## Context
 
