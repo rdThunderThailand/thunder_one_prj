@@ -1,0 +1,115 @@
+import { LocationIcon, UserIcon, WarningTriangleIcon } from "@/components/ui/icons";
+import { Button } from "@/components/ui/lovable/button";
+import { registrationInitialConditions, registrationInitialStatus } from "../../domain/registration-initial-state";
+import { selectedReference, selectedReferenceLabel } from "../../domain/registration-references";
+import type { KeptReferenceTrees } from "../../services/kept-reference-trees";
+import type { ReferenceItem, SelectorKind } from "../../services/registration-selector-contract";
+import { StatusBadge } from "../StatusBadges";
+import { RegistrationHelp, RegistrationSection, RegistrationSelect, type RegistrationStepProps } from "./RegistrationFields";
+import { RegistrationReferenceSelect } from "./RegistrationReferenceSelect";
+import { RegistrationTreeField } from "./RegistrationTreeField";
+
+export function LocationOwnershipStep({ draft, options, errors, patch, onReviewCondition, context, keptTrees, onSelectReference }: RegistrationStepProps & {
+  onReviewCondition: () => void; context: string; keptTrees?: KeptReferenceTrees; onSelectReference: (kind: SelectorKind, item: ReferenceItem) => void;
+}) {
+  const location = selectedReference(draft, "locations");
+  const locationLabel = selectedReferenceLabel(draft, "locations");
+  const kind = draft.custodyType === "person" ? "persons" : "orgUnits";
+  const status = registrationInitialStatus(draft, options);
+  const conditionConflict = !registrationInitialConditions(draft, options).includes(draft.condition);
+  const custodyField = {
+    name: "custodyId",
+    value: draft.custodyId,
+    context,
+    rules: options.referenceSelectors,
+    selectedLabel: selectedReferenceLabel(draft, kind),
+    onChange: (item: ReferenceItem) => onSelectReference(kind, item),
+    error: errors.custodyId,
+  };
+  return (
+    <div className="@container/ownership min-w-0 space-y-3">
+      <RegistrationSection title="Location" icon={LocationIcon} description="Select where this asset is located.">
+        <RegistrationTreeField
+          kind="locations"
+          name="locationId"
+          label="Location"
+          value={draft.locationId}
+          context={context}
+          keptTrees={keptTrees}
+          checking={options.referenceValidation?.locations?.first}
+          rules={options.referenceSelectors}
+          selectedLabel={locationLabel}
+          onChange={(item) => onSelectReference("locations", item)}
+          error={errors.locationId}
+        />
+        {location && (
+          <SelectedLocationSummary location={location} />
+        )}
+      </RegistrationSection>
+      <RegistrationSection title="Ownership & assignment" icon={UserIcon} description="Choose an initial custodian, or leave unassigned.">
+        <div className="grid items-start gap-4 @min-lg/ownership:grid-cols-2">
+          <RegistrationSelect
+            name="custodyType"
+            label="Custodian"
+            value={draft.custodyType}
+            items={[
+              { value: "none", label: "Unassigned" },
+              { value: "person", label: "Person" },
+              { value: "org_unit", label: "Organizational unit" },
+            ]}
+            onChange={(value) => patch({ custodyType: value as typeof draft.custodyType })}
+          />
+          {draft.custodyType === "person" && (
+            <RegistrationReferenceSelect {...custodyField} label="Person" kind="persons" />
+          )}
+          {draft.custodyType === "org_unit" && (
+            <RegistrationTreeField {...custodyField} keptTrees={keptTrees} label="Organizational unit" kind="orgUnits" />
+          )}
+        </div>
+        <div className="flex flex-wrap items-center gap-2 rounded-control bg-muted p-3 text-xs leading-relaxed">
+          <span className="font-medium text-foreground">Initial status</span>
+          <StatusBadge status={status} />
+          <span className="text-muted-foreground">Based on initial custody.</span>
+        </div>
+        {conditionConflict && (
+          <div role="alert" className="flex items-start gap-3 rounded-control bg-warning-muted p-3 text-xs leading-relaxed text-foreground">
+            <WarningTriangleIcon aria-hidden="true" className="size-5 shrink-0 text-warning" />
+            <div className="min-w-0 flex-1 space-y-2">
+              <p>{draft.condition} is not allowed with {status} status. Select valid initial custody or review the condition in Step 1 before continuing. Your entered values have been kept.</p>
+              <Button variant="outline" size="sm" className="max-sm:h-10" onClick={onReviewCondition}>
+                Review condition
+              </Button>
+            </div>
+          </div>
+        )}
+        <div className="border-t border-border pt-1">
+          <RegistrationHelp>
+            <p>Parent and child locations can both be selected. Custody does not change the asset’s organization or location.</p>
+            <p>Handover evidence is not required or available in this version. Add general asset notes in Step 4.</p>
+          </RegistrationHelp>
+        </div>
+      </RegistrationSection>
+    </div>
+  );
+}
+
+/** The field already shows name and path; this adds only what it doesn't (type, code). */
+function SelectedLocationSummary({ location }: { location: ReferenceItem }) {
+  if (!location.code && !location.location_type) return null;
+  return (
+    <dl aria-label="Selected location details" className="flex flex-wrap gap-x-6 gap-y-1 text-xs">
+      {location.location_type && (
+        <div className="flex gap-1.5">
+          <dt className="text-muted-foreground">Type</dt>
+          <dd className="font-medium capitalize text-foreground">{location.location_type.replaceAll("_", " ")}</dd>
+        </div>
+      )}
+      {location.code && (
+        <div className="flex min-w-0 gap-1.5">
+          <dt className="text-muted-foreground">Code</dt>
+          <dd className="font-medium wrap-anywhere text-foreground">{location.code}</dd>
+        </div>
+      )}
+    </dl>
+  );
+}

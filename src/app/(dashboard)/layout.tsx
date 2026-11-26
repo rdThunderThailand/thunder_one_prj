@@ -4,6 +4,7 @@ import { MobileNavigation } from "@/components/layout/MobileNavigation";
 import { ShortcutPlatformProvider } from "@/components/layout/ShortcutPlatform";
 import { Topbar } from "@/components/layout/Topbar";
 import { resolveRoleLabel, resolveRole } from "@/config/rbac";
+import { resolveAssetWorkspaceRole } from "@/config/asset-workspace-access";
 import { env } from "@/config/env";
 import { canSwitchTenant, getSession } from "@/features/auth/services/get-session";
 import { headers } from "next/headers";
@@ -35,6 +36,9 @@ export default async function DashboardLayout({
   // access-tier label; falls back to the tier label (e.g. "Company
   // Administrator") only for members with no job_title set.
   const roleLabel = jobTitle ?? resolveRoleLabel(resolveRole(session));
+  // "none" shows the admin nav; the Asset Workspace route gate redirects them.
+  const workspaceAccess = resolveAssetWorkspaceRole(resolveRole(session));
+  const assetWorkspaceRole = workspaceAccess === "none" ? "asset_admin" : workspaceAccess;
   const locale = await getAppLocale(session.preferredLanguage);
   // ⌘ on Apple devices, Ctrl elsewhere, for every shortcut hint in the shell (lib/keyboard-shortcut).
   const shortcutPlatform = platformFromHeaders(await headers());
@@ -46,6 +50,7 @@ export default async function DashboardLayout({
           tenantId,
           tenantName,
           availableTenants: canSwitchTenant(session) ? availableTenants : [],
+          assetWorkspaceRole,
         }}>
           <div className="flex min-h-0 min-w-0 flex-1 flex-col">
             <Topbar

@@ -44,7 +44,11 @@ interface AssetWorkspaceListPageProps<Row> {
   title: string;
   subtitle?: string;
   primaryAction?: ReactNode;
+  /** Under the header, e.g. the Reports tab links. */
+  nav?: ReactNode;
   stats?: ListStat[];
+  /** Between the stat tiles and the filters, e.g. report charts. */
+  summary?: ReactNode;
   tabs?: { key: string; label: string }[];
   /** Filter controls. They get the scaffold's own URL state: a second `useListUrlState()`
    *  would not tell the scaffold a navigation is pending, so Loading would never show. */
@@ -61,13 +65,17 @@ interface AssetWorkspaceListPageProps<Row> {
   /** Row click opens this in a right-side panel. */
   renderPanel?: (row: Row) => ReactNode;
   panelTitle?: (row: Row) => string;
+  /** Inside another page (e.g. a Location Detail tab): no page header or page padding. */
+  embedded?: boolean;
 }
 
 export function AssetWorkspaceListPage<Row>({
   title,
   subtitle,
   primaryAction,
+  nav,
   stats,
+  summary,
   tabs,
   filters,
   columns,
@@ -79,6 +87,7 @@ export function AssetWorkspaceListPage<Row>({
   bulkActions,
   renderPanel,
   panelTitle,
+  embedded = false,
 }: AssetWorkspaceListPageProps<Row>) {
   const url = useListUrlState();
   const panelId = useId();
@@ -111,12 +120,16 @@ export function AssetWorkspaceListPage<Row>({
   const showSelection = bulkActions !== undefined;
 
   return (
-    <div className="space-y-3 p-6">
-      <PageHeader
-        title={title}
-        subtitle={subtitle}
-        actions={primaryAction}
-      />
+    <div className={embedded ? "space-y-3" : "space-y-3 p-6"}>
+      {!embedded && (
+        <PageHeader
+          title={title}
+          subtitle={subtitle}
+          actions={primaryAction}
+        />
+      )}
+
+      {nav}
 
       {stats && stats.length > 0 && (
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -128,6 +141,8 @@ export function AssetWorkspaceListPage<Row>({
           ))}
         </div>
       )}
+
+      {summary}
 
       {hasTabs && (
         <Tabs

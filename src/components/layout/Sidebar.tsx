@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { resolveActiveApp } from "@/config/apps";
 import { resolveAssetIntelligenceNav } from "@/config/nav/asset-intelligence";
 import { filterAssetWorkspaceNav } from "@/config/nav/asset-workspace";
-import { DEFAULT_ASSET_WORKSPACE_ROLE } from "@/config/nav/asset-workspace-roles";
+import type { AssetWorkspaceRole } from "@/config/nav/asset-workspace-roles";
 import { customerWorkspaceNav } from "@/config/nav/customer-workspace";
 import { leadApprovalNav } from "@/config/nav/lead-approval";
 import { mediaWorkspaceNav } from "@/config/nav/media-workspace";
@@ -19,6 +19,7 @@ import { ArrowLeftIcon, ArrowRightIcon, ChevronDownIcon, ChevronRightIcon } from
 import { isEditorRoute } from "@/config/nav/editor-routes";
 import { recordWorkspaceVisit } from "@/lib/workspace-prefs";
 import type { AvailableTenant } from "@/features/auth/services/get-session";
+import { AssetWorkspaceNav } from "./asset-workspace-sidebar";
 import { MediaWorkspaceBrand, MediaWorkspaceCollapseIcon, MediaWorkspaceNav } from "./media-workspace-sidebar";
 import { TenantSwitcher } from "./TenantSwitcher";
 
@@ -29,9 +30,9 @@ const SETTINGS_ROUTE_PREFIXES = ["/profile", "/account-security"];
 // config/nav/asset-intelligence.tsx, config/nav/thunder-care.tsx). A null
 // appId means the route belongs to no App — Thunder One's shell nav
 // (config/nav/shell.tsx) applies instead — docs/adr/0033.
-function resolveAppNavConfig(appId: string, pathname: string): NavConfig {
+function resolveAppNavConfig(appId: string, pathname: string, assetWorkspaceRole: AssetWorkspaceRole): NavConfig {
   if (appId === "asset-intelligence") return resolveAssetIntelligenceNav(pathname);
-  if (appId === "asset-workspace") return filterAssetWorkspaceNav(DEFAULT_ASSET_WORKSPACE_ROLE);
+  if (appId === "asset-workspace") return filterAssetWorkspaceNav(assetWorkspaceRole);
   if (appId === "thunder-care") return resolveThunderCareNav(pathname);
   if (appId === "people") return peopleNav;
   if (appId === "customer-workspace") return customerWorkspaceNav;
@@ -234,12 +235,25 @@ function ShellNav({ pathname, collapsed }: { pathname: string; collapsed: boolea
 
 // Rendered on any App route (Media Workspace, Asset Intelligence, ThunderCare)
 // — the existing per-persona sectioned nav, restyled to the light theme.
-function AppNav({ appId, pathname, collapsed }: { appId: string; pathname: string; collapsed: boolean }) {
-  const nav = resolveAppNavConfig(appId, pathname);
+function AppNav({
+  appId,
+  pathname,
+  collapsed,
+  assetWorkspaceRole,
+}: {
+  appId: string;
+  pathname: string;
+  collapsed: boolean;
+  assetWorkspaceRole: AssetWorkspaceRole;
+}) {
+  const nav = resolveAppNavConfig(appId, pathname, assetWorkspaceRole);
   const isMediaWorkspace = appId === "media-workspace";
 
   if (isMediaWorkspace) {
     return <MediaWorkspaceNav nav={nav} pathname={pathname} collapsed={collapsed} />;
+  }
+  if (appId === "asset-workspace") {
+    return <AssetWorkspaceNav nav={nav} pathname={pathname} collapsed={collapsed} />;
   }
 
   const overviewActive = isActivePath(pathname, nav.overviewItem.href);
@@ -353,11 +367,14 @@ export function Sidebar({
   tenantId,
   tenantName,
   availableTenants,
+  assetWorkspaceRole = "asset_admin",
   isMobile = false,
 }: {
   tenantId: string | null;
   tenantName: string | null;
   availableTenants: AvailableTenant[];
+  /** Picks the Asset Workspace nav; hiding items is never authorization (ADR 0097 §4). */
+  assetWorkspaceRole?: AssetWorkspaceRole;
   isMobile?: boolean;
 }) {
   const pathname = usePathname();
@@ -418,7 +435,12 @@ export function Sidebar({
       </Link>
 
       {activeApp ? (
-        <AppNav appId={activeApp.id} pathname={pathname} collapsed={collapsed} />
+        <AppNav
+          appId={activeApp.id}
+          pathname={pathname}
+          collapsed={collapsed}
+          assetWorkspaceRole={assetWorkspaceRole}
+        />
       ) : (
         <ShellNav pathname={pathname} collapsed={collapsed} />
       )}

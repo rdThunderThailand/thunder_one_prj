@@ -10,20 +10,15 @@ import {
   ClipboardIcon,
   FileTextIcon,
   GaugeIcon,
-  GridIcon,
-  InventoryIcon,
+  CheckSquareIcon,
+  HomeIcon,
   LocationIcon,
+  ScanIcon,
   SettingsIcon,
   WarrantyIcon,
 } from "@/components/ui/icons";
-import { sectionsForRole, type AssetWorkspaceRole } from "./asset-workspace-roles";
+import { sectionsForRole, standaloneLinksForRole, type AssetWorkspaceRole } from "./asset-workspace-roles";
 import type { NavConfig } from "./types";
-
-const SECTION_ICONS: Record<string, ReactNode> = {
-  "Asset Management": <BoxIcon className="h-4 w-4" />,
-  "Asset Structure": <GridIcon className="h-4 w-4" />,
-  Management: <SettingsIcon className="h-4 w-4" />,
-};
 
 const iconClass = "h-full w-full";
 
@@ -31,12 +26,19 @@ const iconClass = "h-full w-full";
 const ITEM_ICONS: Record<string, ReactNode> = {
   Assets: <BoxIcon className={iconClass} />,
   Assignments: <AssignmentIcon className={iconClass} />,
-  Inventory: <InventoryIcon className={iconClass} />,
+  // Not InventoryIcon: next to Assignments both read as documents; a stock check is a checked square.
+  Inventory: <CheckSquareIcon className={iconClass} />,
   Categories: <CategoryIcon className={iconClass} />,
   Locations: <LocationIcon className={iconClass} />,
   "Lifecycle & Warranty": <WarrantyIcon className={iconClass} />,
   Reports: <FileTextIcon className={iconClass} />,
   Settings: <SettingsIcon className={iconClass} />,
+};
+
+const STANDALONE_ICONS: Record<string, ReactNode> = {
+  "My Assets": <ClipboardIcon className="h-4 w-4" />,
+  "My Tasks": <CheckSquareIcon className="h-4 w-4" />,
+  "Scan Asset": <ScanIcon className="h-4 w-4" />,
 };
 
 const overviewItem = {
@@ -45,21 +47,22 @@ const overviewItem = {
   icon: <GaugeIcon className="h-4 w-4 shrink-0" />,
 };
 
-const myAssetsItem = {
-  label: "My Assets",
-  href: "/asset-workspace/my-assets",
-  icon: <ClipboardIcon className="h-4 w-4 shrink-0" />,
+// Employees' pinned item: Home is their overview, like Overview for admins (persona map §3).
+const homeItem = {
+  label: "Home",
+  href: "/asset-workspace/home",
+  icon: <HomeIcon className="h-4 w-4 shrink-0" />,
 };
 
 export function filterAssetWorkspaceNav(role: AssetWorkspaceRole): NavConfig {
+  const standaloneLinks = standaloneLinksForRole(role);
   return {
-    overviewItem: role === "employee" ? myAssetsItem : overviewItem,
+    overviewItem: role === "employee" ? homeItem : overviewItem,
     sections: sectionsForRole(role).map((section) => ({
       ...section,
-      icon: SECTION_ICONS[section.label],
       items: section.items.map((item) => ({ ...item, icon: ITEM_ICONS[item.label] })),
     })),
-    standaloneLinks: [],
-    standaloneIcons: [],
+    standaloneLinks,
+    standaloneIcons: standaloneLinks.map((item) => STANDALONE_ICONS[item.label]),
   };
 }
