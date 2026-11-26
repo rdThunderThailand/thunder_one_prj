@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useReducer, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { classifyApiError } from "@/lib/api/api-error";
+import type { RefusalReason } from "@/lib/api/core-refusal-rules";
 import {
   createSaveSlot,
   ensureSavedWith,
@@ -42,6 +43,8 @@ export type EditorLifecycle<S, I, R> = {
   /** Save before publish: not dirty → `true` with no write. */
   ensureSaved: () => Promise<boolean>;
   saveError: string | null;
+  /** Why Core refused the failed save; clears with `saveError` (ADR 0130 §6). */
+  saveReason: RefusalReason | null;
   conflict: string | null;
   reloadFromServer: () => Promise<void>;
   /** A newer write elsewhere in the editor took over the error slot. */
@@ -70,7 +73,12 @@ export function useEditorLifecycle<S, I = undefined, R = void>(options: Lifecycl
       result = await options.write(toSave, intent);
     } catch (err) {
       const classified = classifyApiError(err, options.fallbackError);
-      dispatch({ type: "save-failure", kind: failureKind(classified.kind, !!reload), message: classified.message });
+      dispatch({
+        type: "save-failure",
+        kind: failureKind(classified.kind, !!reload),
+        message: classified.message,
+        reason: classified.reason,
+      });
       return null;
     }
     dispatch({ type: "save-success", baseline: savedBaseline(toSave, result, options.savedSnapshot), at: new Date() });
@@ -126,6 +134,7 @@ export function useEditorLifecycle<S, I = undefined, R = void>(options: Lifecycl
     save,
     ensureSaved,
     saveError: state.saveError,
+    saveReason: state.saveReason,
     conflict: state.conflict,
     reloadFromServer,
     clearError,

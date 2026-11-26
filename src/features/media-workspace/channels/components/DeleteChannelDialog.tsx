@@ -4,7 +4,9 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
-import { classifyApiError } from "@/lib/api/api-error";
+import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
+import { IN_USE_LEAD, programLinks } from "../../in-use/in-use-links";
+import { InUseRefusal } from "../../in-use/InUseRefusal";
 import { deleteChannel, fetchChannel } from "../services/channels-api";
 import { deleteDialogLines, deleteSuccessMessage } from "../delete-dialog-copy";
 import type { ChannelDetail } from "../types";
@@ -33,7 +35,7 @@ export function DeleteChannelDialog({
   onDeleted: () => void;
 }) {
   const [pending, setPending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ClassifiedError | null>(null);
   const [detail, setDetail] = useState<ChannelDetail | null>(null);
 
   useEffect(() => {
@@ -66,7 +68,7 @@ export function DeleteChannelDialog({
       close();
       onDeleted();
     } catch (caught) {
-      setError(classifyApiError(caught, "ลบ Channel นี้ไม่สำเร็จ กรุณาลองใหม่").message);
+      setError(classifyApiError(caught, "ลบ Channel นี้ไม่สำเร็จ กรุณาลองใหม่"));
     } finally {
       setPending(false);
     }
@@ -92,11 +94,19 @@ export function DeleteChannelDialog({
         <p key={line}>{line}</p>
       ))}
       <p>This can&apos;t be undone.</p>
-      {error && (
-        <p role="alert" className="mt-3 text-sm text-error">
-          {error}
-        </p>
-      )}
+      {error &&
+        (error.reason === "in-use" ? (
+          <InUseRefusal
+            message={error.message}
+            lead={IN_USE_LEAD.channel}
+            load={() => fetchChannel(channelId).then((d) => programLinks(d.blocking_programs))}
+            className="mt-3 text-sm text-error"
+          />
+        ) : (
+          <p role="alert" className="mt-3 text-sm text-error">
+            {error.message}
+          </p>
+        ))}
     </Modal>
   );
 }

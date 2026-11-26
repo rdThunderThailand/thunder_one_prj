@@ -9,10 +9,13 @@ import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { EditIcon, MonitorIcon, MoreIcon, PlusIcon, XIcon } from "@/components/ui/icons";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/lovable/popover";
-import { classifyApiError } from "@/lib/api/api-error";
+import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
 import { deleteChannelGroup, updateChannelGroup } from "../services/channel-groups-api";
 import { memberHealthCounts } from "../channel-groups-logic";
 import { mediaStatus } from "../../media-status";
+import { groupDeleteLinks, IN_USE_LEAD } from "../../in-use/in-use-links";
+import { InUseRefusal } from "../../in-use/InUseRefusal";
+import { fetchPublicationsPage } from "@/features/media-workspace/publications/services/publications-api";
 import type { ChannelListItem } from "../../channels/types";
 import type { ChannelGroup } from "../types";
 import { CreateEditGroupModal } from "./CreateEditGroupModal";
@@ -39,7 +42,7 @@ export function ChannelGroupInspector({
   const [managingChannels, setManagingChannels] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ClassifiedError | null>(null);
 
   const status = mediaStatus(group.status === "disabled" ? "inactive" : group.status);
   const health = memberHealthCounts(group, new Map(channels.map((c) => [c.id, c])));
@@ -51,7 +54,7 @@ export function ChannelGroupInspector({
       onChanged(await updateChannelGroup(group.id, { status: group.status === "active" ? "disabled" : "active" }));
       setMenuOpen(false);
     } catch (caught) {
-      setError(classifyApiError(caught, "อัปเดต Group ไม่สำเร็จ กรุณาลองใหม่").message);
+      setError(classifyApiError(caught, "อัปเดต Group ไม่สำเร็จ กรุณาลองใหม่"));
     } finally {
       setBusy(false);
     }
@@ -66,7 +69,7 @@ export function ChannelGroupInspector({
       onDeleted();
     } catch (caught) {
       setConfirmingDelete(false);
-      setError(classifyApiError(caught, "ลบ Group ไม่สำเร็จ กรุณาลองใหม่").message);
+      setError(classifyApiError(caught, "ลบ Group ไม่สำเร็จ กรุณาลองใหม่"));
     } finally {
       setBusy(false);
     }
@@ -104,11 +107,19 @@ export function ChannelGroupInspector({
         <p className="mt-2 text-sm leading-5 text-muted-foreground">{group.description}</p>
       )}
 
-      {error && (
-        <p role="alert" className="mt-3 text-sm text-error">
-          {error}
-        </p>
-      )}
+      {error &&
+        (error.reason === "in-use" ? (
+          <InUseRefusal
+            message={error.message}
+            lead={IN_USE_LEAD.groupDelete}
+            load={() => fetchPublicationsPage({ group_id: group.id }).then((page) => groupDeleteLinks(page.publications))}
+            className="mt-3 text-sm text-error"
+          />
+        ) : (
+          <p role="alert" className="mt-3 text-sm text-error">
+            {error.message}
+          </p>
+        ))}
 
       <div className="mt-4 flex flex-nowrap items-center gap-2">
         <Link href={`/media-workspace/program/create`} className={buttonClasses("primary", "min-w-0 flex-1 whitespace-nowrap px-3")}>

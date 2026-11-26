@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { MoreIcon } from "@/components/ui/icons";
 import { Modal } from "@/components/ui/Modal";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/lovable/popover";
-import { classifyApiError } from "@/lib/api/api-error";
+import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
 import { lifecycleActionsFor } from "../lifecycle-actions";
 import { deactivateChannel } from "../services/channels-api";
 import type { ChannelListItem } from "../types";
@@ -31,7 +32,7 @@ export function ChannelRowActionsMenu({
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [pending, setPending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ClassifiedError | null>(null);
   const [isConfirming, setIsConfirming] = useState(false);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
 
@@ -46,7 +47,7 @@ export function ChannelRowActionsMenu({
     } catch (caught) {
       setIsConfirming(false);
       setIsOpen(true);
-      setError(classifyApiError(caught, "ปิดใช้งาน Channel นี้ไม่สำเร็จ กรุณาลองใหม่").message);
+      setError(classifyApiError(caught, "ปิดใช้งาน Channel นี้ไม่สำเร็จ กรุณาลองใหม่"));
     } finally {
       setPending(false);
     }
@@ -107,8 +108,20 @@ export function ChannelRowActionsMenu({
           </button>
           {error && (
             <p role="alert" className="px-3 py-2 text-xs text-error">
-              {error}
+              {error.message}
             </p>
+          )}
+          {/* No room for a list here: the editor already links each blocking Program (ADR 0130 §4). */}
+          {error?.reason === "in-use" && (
+            <Link
+              href={`/media-workspace/channels/${channel.id}/edit`}
+              target="_blank"
+              rel="noreferrer"
+              role="menuitem"
+              className="block px-3 pb-2 text-xs font-medium text-primary underline"
+            >
+              เปิด Channel
+            </Link>
           )}
         </PopoverContent>
       </Popover>

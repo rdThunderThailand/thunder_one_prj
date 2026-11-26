@@ -6,8 +6,10 @@ import { Card } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
 import { classifyApiError, type ClassifiedError } from "@/lib/api/api-error";
 import { toast } from "sonner";
+import { IN_USE_LEAD, programLinks } from "../../in-use/in-use-links";
+import { InUseRefusal } from "../../in-use/InUseRefusal";
 import { lifecycleActionsFor } from "../lifecycle-actions";
-import { activateChannel, deactivateChannel } from "../services/channels-api";
+import { activateChannel, deactivateChannel, fetchChannel } from "../services/channels-api";
 import type { BlockingProgram, ChannelDetail, ChannelLifecycle } from "../types";
 import { DeleteChannelDialog } from "./DeleteChannelDialog";
 
@@ -78,11 +80,19 @@ export function ChannelLifecycleActions({
   return (
     <Card className="p-5">
       <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Lifecycle</p>
-      {error && (
-        <p role="alert" className="mt-2 text-sm text-error">
-          {error.message}
-        </p>
-      )}
+      {error &&
+        (error.reason === "in-use" ? (
+          <InUseRefusal
+            message={error.message}
+            lead={IN_USE_LEAD.channel}
+            load={() => fetchChannel(channelId).then((d) => programLinks(d.blocking_programs))}
+            className="mt-2 text-sm text-error"
+          />
+        ) : (
+          <p role="alert" className="mt-2 text-sm text-error">
+            {error.message}
+          </p>
+        ))}
       <div className="mt-3 flex flex-wrap gap-2">
         {lifecycle === "active" && (
           <Button
