@@ -27,17 +27,20 @@ export type CompositionDraft = {
   /** Feed to `absorbPlaylistDetails` — nulls are Playlists whose read failed. */
   slices: (PlaylistDetailSlice | null)[];
   /** Compared against the live draft to decide whether leaving needs a confirmation. */
-  snapshot: string;
+  snapshot: CompositionDraftFields;
 };
 
-export function draftSnapshot(input: {
+export type CompositionDraftFields = {
   name: string;
   layoutId: string | null;
   bindings: ZoneBindingDraft[];
   folderId: string | null | undefined;
   tags: string[] | undefined;
-}): string {
-  return JSON.stringify(input);
+};
+
+/** One place fixes the key order, because the editor lifecycle compares snapshots as JSON (ADR 0127 §3). */
+export function draftSnapshot({ name, layoutId, bindings, folderId, tags }: CompositionDraftFields): CompositionDraftFields {
+  return { name, layoutId, bindings, folderId, tags };
 }
 
 export async function loadCompositionDraft(compositionId: string): Promise<CompositionDraft> {

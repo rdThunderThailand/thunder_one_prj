@@ -21,7 +21,7 @@ import {
   deletePublication,
   duplicatePublication,
 } from "../services/publications-api";
-import { useLeaveGuard } from "../hooks/useLeaveGuard";
+import { useLeaveGuard } from "../../editor-lifecycle/useLeaveGuard";
 import { useLayoutPublishBlock } from "../hooks/useLayoutPublishBlock";
 import { publishCauseFix, publishFixCard } from "../publish-cause-fix";
 import { LayoutNotActiveNotice } from "./LayoutNotActiveNotice";

@@ -2,6 +2,7 @@
 // reordering and hydration logic has one runnable check behind it.
 
 import type { MediaAsset } from "../../../types/domain.ts";
+import type { LifecycleStatus } from "../editor-lifecycle/editor-lifecycle.ts";
 import type { PlaylistDetail } from "./types";
 import type { DraftItem, PlaylistInfo, PlaylistPlayback } from "./types";
 import { playlistDetailToDraftFields } from "./draft-from-detail.ts";
@@ -38,16 +39,11 @@ export function editorStateFromDetail(detail: PlaylistDetail): {
   };
 }
 
-/** The dirty-check / saved-baseline serialisation — one definition so every call site agrees. */
-export function editorSnapshot(state: EditorState): string {
-  return JSON.stringify(state);
-}
-
 /** The header's save-state text (#33: "the header shows when the Playlist was last saved"). */
-export function savedStateLabel(isDirty: boolean, lastSavedAt: Date | null, hasRow: boolean): string {
-  if (isDirty) return "unsaved changes";
-  if (lastSavedAt) return `saved ${lastSavedAt.toLocaleTimeString()}`;
-  return hasRow ? "saved" : "not saved yet";
+export function savedStateLabel(status: LifecycleStatus, lastSavedAt: Date | null): string {
+  if (status === "dirty") return "unsaved changes";
+  if (status === "new") return "not saved yet";
+  return lastSavedAt ? `saved ${lastSavedAt.toLocaleTimeString()}` : "saved";
 }
 
 function toScheduleItems(items: DraftItem[], assets: MediaAsset[]) {
