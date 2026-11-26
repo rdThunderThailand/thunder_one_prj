@@ -35,7 +35,7 @@ export function PlaylistPreviewModal({ open, onClose, preview, assets, onOpenFul
       onClose={onClose}
       title="Preview Playlist"
       description="Full-screen playlist preview"
-      badge={<span className="truncate text-[11px] text-primary-foreground/70">{zone.name}</span>}
+      badge={<span className="truncate text-ui text-primary-foreground/70">{zone.name}</span>}
       subtitle={`${zone.items.length} ${zone.items.length === 1 ? "item" : "items"} · Total duration ${formatDuration(totalSeconds)}`}
       actions={
         <>

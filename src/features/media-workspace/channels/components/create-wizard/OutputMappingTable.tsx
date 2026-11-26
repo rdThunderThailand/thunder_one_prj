@@ -19,7 +19,7 @@ export function OutputMappingTable({
     <div className="overflow-hidden rounded-lg border border-border">
       <table className="w-full text-left text-sm">
         <thead>
-          <tr className="border-b border-border bg-muted text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+          <tr className="border-b border-border bg-muted text-ui font-semibold uppercase tracking-wide text-muted-foreground">
             <th className="px-3 py-2">Display</th>
             <th className="px-3 py-2">Output Label</th>
             <th className="px-3 py-2">Resolution</th>
@@ -46,7 +46,7 @@ export function OutputMappingTable({
           ))}
         </tbody>
       </table>
-      <p className="border-t border-border bg-muted px-3 py-2 text-[11px] text-muted-foreground">
+      <p className="border-t border-border bg-muted px-3 py-2 text-ui text-muted-foreground">
         Output labels are auto-numbered — the player does not report its real outputs yet. Rename
         them to match your cabling if you know it.
       </p>

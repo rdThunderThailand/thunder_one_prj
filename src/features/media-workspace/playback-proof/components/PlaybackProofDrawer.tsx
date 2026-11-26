@@ -90,20 +90,20 @@ export function PlaybackProofDrawer({
               <div className="flex items-center gap-2">
                 <p className="min-w-0 truncate text-sm font-bold text-foreground">{media.title}</p>
                 <Tag
-                  className="shrink-0 px-1.5 py-0 text-[10px] capitalize"
+                  className="shrink-0 px-1.5 py-0 text-2xs capitalize"
                 >
                   {media.kind}
                 </Tag>
                 {media.in_trash && (
                   <Badge
                     variant="neutral"
-                    className="shrink-0 px-1.5 py-0 text-[10px]"
+                    className="shrink-0 px-1.5 py-0 text-2xs"
                   >
                     {media.file_deleted ? "File deleted" : "In Trash"}
                   </Badge>
                 )}
               </div>
-              {mediaFacts.length > 0 && <p className="text-[11px] text-muted-foreground">{mediaFacts.join(" · ")}</p>}
+              {mediaFacts.length > 0 && <p className="text-ui text-muted-foreground">{mediaFacts.join(" · ")}</p>}
             </section>
 
             <dl className="divide-y divide-border rounded-lg border border-border px-3">
@@ -113,7 +113,7 @@ export function PlaybackProofDrawer({
                 ) : (
                   <span className="inline-flex flex-col items-end gap-1">
                     <Badge variant={OUTCOME_BADGES[entry.outcome].variant}>{OUTCOME_BADGES[entry.outcome].label}</Badge>
-                    {entry.failure_reason && <span className="text-[11px] text-muted-foreground">{FAILURE_LABELS[entry.failure_reason]}</span>}
+                    {entry.failure_reason && <span className="text-ui text-muted-foreground">{FAILURE_LABELS[entry.failure_reason]}</span>}
                   </span>
                 )}
               </Fact>
@@ -127,7 +127,7 @@ export function PlaybackProofDrawer({
             <section className="flex flex-col gap-2">
               <h3 className="text-xs font-bold text-foreground">Related objects</h3>
               {!entry.program && (
-                <p className="rounded-lg bg-muted px-3 py-2 text-[11px] text-muted-foreground">
+                <p className="rounded-lg bg-muted px-3 py-2 text-ui text-muted-foreground">
                   The Player did not report which Program this was, so no Program or Source is linked.
                 </p>
               )}
@@ -138,9 +138,9 @@ export function PlaybackProofDrawer({
                     className="flex items-center justify-between gap-3 px-3 py-2.5"
                   >
                     <div className="min-w-0">
-                      <p className="text-[10px] text-muted-foreground">{link.label}</p>
+                      <p className="text-2xs text-muted-foreground">{link.label}</p>
                       <p className="truncate text-xs font-semibold text-foreground">{link.name}</p>
-                      {link.note && <p className="text-[10px] text-muted-foreground">{link.note}</p>}
+                      {link.note && <p className="text-2xs text-muted-foreground">{link.note}</p>}
                     </div>
                     {link.href ? (
                       <Button

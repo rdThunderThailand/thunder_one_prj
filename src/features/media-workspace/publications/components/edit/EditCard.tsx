@@ -30,7 +30,7 @@ export function EditCard({
             {step}
             {isRequired && <span className="text-error"> *</span>}
           </h2>
-          {hint && <p className="mt-0.5 text-[10px] text-muted-foreground">{hint}</p>}
+          {hint && <p className="mt-0.5 text-2xs text-muted-foreground">{hint}</p>}
         </div>
       </header>
       {error && (

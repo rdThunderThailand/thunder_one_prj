@@ -41,12 +41,12 @@ type Props = {
 // Lovable `FolderTree` row: 32px tall, 10px label, soft-primary when active.
 const rowClass = (active: boolean) =>
   cn(
-    "group flex h-8 w-full min-w-0 items-center gap-2 rounded-md px-2 text-left text-[10px] font-medium",
+    "group flex h-8 w-full min-w-0 items-center gap-2 rounded-md px-2 text-left text-2xs font-medium",
     active ? "bg-accent text-primary" : "hover:bg-muted",
   );
 
 const countLabel = (counts: Record<string, number> | undefined, key: string) =>
-  counts && key in counts ? <span className="text-[8px] text-muted-foreground">{counts[key]}</span> : null;
+  counts && key in counts ? <span className="text-3xs text-muted-foreground">{counts[key]}</span> : null;
 
 export function ContentFolderRail({ folders, selected, labels, onSelect, onRename, onMove, onDelete, counts, footer, isLoading = false }: Props) {
   const children = foldersByParent(folders);

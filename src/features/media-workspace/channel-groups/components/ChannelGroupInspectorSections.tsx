@@ -33,29 +33,29 @@ export function ChannelGroupInspectorSections({
       <div className="mt-4 grid grid-cols-4 gap-2">
         <div className="rounded-lg border border-border bg-muted px-2 py-2 text-center">
           <p className="text-lg font-semibold text-foreground">{group.member_count}</p>
-          <p className="text-[11px] text-muted-foreground">Channels</p>
+          <p className="text-ui text-muted-foreground">Channels</p>
         </div>
         <div className="rounded-lg border border-border bg-muted px-2 py-2 text-center">
           <p className="text-lg font-semibold text-success">{health.online}</p>
-          <p className="text-[11px] text-muted-foreground">Online</p>
+          <p className="text-ui text-muted-foreground">Online</p>
         </div>
         <div className="rounded-lg border border-border bg-muted px-2 py-2 text-center">
           <p className="text-lg font-semibold text-error">{health.offline}</p>
-          <p className="text-[11px] text-muted-foreground">Offline</p>
+          <p className="text-ui text-muted-foreground">Offline</p>
         </div>
         <div className="rounded-lg border border-border bg-muted px-2 py-2 text-center">
           <p className="text-lg font-semibold text-warning">{health.warning}</p>
-          <p className="text-[11px] text-muted-foreground">Warning</p>
+          <p className="text-ui text-muted-foreground">Warning</p>
         </div>
         <div className="col-span-4 rounded-lg border border-border bg-muted px-2 py-2 text-center">
           <p className="truncate text-sm font-semibold text-primary">{playbackMode}</p>
-          <p className="text-[11px] text-muted-foreground">Playback</p>
+          <p className="text-ui text-muted-foreground">Playback</p>
         </div>
       </div>
 
       <div className="mt-4 border-t border-border pt-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Current Program</h3>
+          <h3 className="text-2xs font-bold uppercase tracking-wide text-muted-foreground">Current Program</h3>
           <Link href="/media-workspace/program" className="text-xs font-medium text-primary hover:text-primary">View Programs →</Link>
         </div>
         <p className="mt-2 text-sm text-muted-foreground">No program scheduled now</p>
@@ -63,7 +63,7 @@ export function ChannelGroupInspectorSections({
 
       <div className="mt-4 border-t border-border pt-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Channels in this Group ({group.member_count})</h3>
+          <h3 className="text-2xs font-bold uppercase tracking-wide text-muted-foreground">Channels in this Group ({group.member_count})</h3>
           <button type="button" onClick={onManageChannels} className="text-xs font-medium text-primary hover:text-primary">Manage Channels →</button>
         </div>
         {group.members.length === 0 ? (
@@ -78,7 +78,7 @@ export function ChannelGroupInspectorSections({
       </div>
 
       <div className="mt-4 border-t border-border pt-4">
-        <h3 className="mb-3 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Group Information</h3>
+        <h3 className="mb-3 text-2xs font-bold uppercase tracking-wide text-muted-foreground">Group Information</h3>
         <dl>
           <DetailItem label="Group ID" value={group.id} />
           <DetailItem label="Name" value={group.name} />

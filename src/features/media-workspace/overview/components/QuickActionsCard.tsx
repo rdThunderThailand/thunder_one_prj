@@ -31,7 +31,7 @@ const actionDescriptions: Record<string, string> = {
 export function QuickActionsCard() {
   return (
     <Card className="flex h-full flex-col border-border p-4 shadow-panel transition-[box-shadow,border-color] duration-200 hover:border-foreground/20 hover:shadow-float">
-      <h2 className="mb-3 text-[11px] font-extrabold uppercase tracking-[0.08em] text-foreground">
+      <h2 className="mb-3 text-ui font-extrabold uppercase tracking-[0.08em] text-foreground">
         Quick Actions
       </h2>
       <div className="grid flex-1 grid-cols-1 gap-2 sm:grid-cols-2 sm:grid-rows-3">
@@ -42,8 +42,8 @@ export function QuickActionsCard() {
                 {iconFor[action.icon]}
               </span>
               <span className="min-w-0">
-                <span className="block truncate text-[10px] font-semibold">{action.label}</span>
-                <span className="mt-0.5 block truncate text-[9px] text-muted-foreground">{actionDescriptions[action.label]}</span>
+                <span className="block truncate text-2xs font-semibold">{action.label}</span>
+                <span className="mt-0.5 block truncate text-2xs text-muted-foreground">{actionDescriptions[action.label]}</span>
               </span>
             </>
           );

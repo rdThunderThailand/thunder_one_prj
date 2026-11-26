@@ -137,7 +137,7 @@ export function CreateEditGroupModal({
                 >
                   <Icon className={`h-4 w-4 ${selected ? "text-primary" : "text-muted-foreground"}`} />
                   <span className="text-sm font-semibold text-foreground">{label}</span>
-                  <span className="text-[11px] text-muted-foreground">{hint}</span>
+                  <span className="text-ui text-muted-foreground">{hint}</span>
                 </button>
               );
             })}

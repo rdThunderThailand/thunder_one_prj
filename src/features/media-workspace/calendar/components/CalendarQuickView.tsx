@@ -13,7 +13,7 @@ function ContentLine({ publication }: { publication: CalendarPublication }) {
   const href = contentHref(content);
   const name = content.name ?? publication.content_name ?? CONTENT_KIND_LABELS[content.kind];
   return (
-    <div className="flex min-w-0 items-center gap-1.5 text-[10px] text-foreground">
+    <div className="flex min-w-0 items-center gap-1.5 text-2xs text-foreground">
       <ContentKindIcon
         kind={content.kind}
         className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
@@ -75,13 +75,13 @@ export function CalendarQuickView({ row, segment, date, now, returnTo }: { row: 
             {isLoop && <span className="font-normal text-muted-foreground"> +{others.length} in loop</span>}
           </Link>
         </div>
-        <p className="text-[11px] tabular-nums text-foreground">
+        <p className="text-ui tabular-nums text-foreground">
           {range}
           {range !== "All day" && (
             <span className="text-muted-foreground"> ({formatDuration(Date.parse(segment.closes_at) - Date.parse(segment.opens_at))})</span>
           )}
         </p>
-        <p className="truncate text-[10px] text-muted-foreground">
+        <p className="truncate text-2xs text-muted-foreground">
           {channel ? (
             <Link
               href={`/media-workspace/channels?channel=${channel.id}`}
@@ -95,10 +95,10 @@ export function CalendarQuickView({ row, segment, date, now, returnTo }: { row: 
           {channel?.location_name && ` · ${channel.location_name}`}
         </p>
       </div>
-      <dl className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 gap-y-1.5 text-[10px] lg:w-72">
+      <dl className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 gap-y-1.5 text-2xs lg:w-72">
         <dt className="text-muted-foreground">Priority</dt>
         <dd>
-          <span className={`rounded-md border px-2 py-0.5 text-[9px] font-semibold ${priority.block}`}>{priority.label}</span>
+          <span className={`rounded-md border px-2 py-0.5 text-2xs font-semibold ${priority.block}`}>{priority.label}</span>
         </dd>
         {isLoop ? (
           <>
@@ -157,22 +157,22 @@ export function CalendarQuickView({ row, segment, date, now, returnTo }: { row: 
         />
       )}
       <div className="lg:w-60 lg:border-l lg:border-border lg:pl-4">
-        <p className="mb-2 text-[9px] text-muted-foreground">Next Program</p>
+        <p className="mb-2 text-2xs text-muted-foreground">Next Program</p>
         {next && nextProgram ? (
           <div className="flex min-w-0 items-center gap-2">
             <ProgramCover publication={nextProgram} />
             <div className="min-w-0">
               <Link
                 href={`/media-workspace/program/${nextProgram.id}`}
-                className="block truncate text-[11px] font-semibold text-foreground hover:text-primary"
+                className="block truncate text-ui font-semibold text-foreground hover:text-primary"
               >
                 {nextProgram.name}
               </Link>
-              <p className="text-[9px] text-muted-foreground">Starts {clockLabel(next.opens_at, date)}</p>
+              <p className="text-2xs text-muted-foreground">Starts {clockLabel(next.opens_at, date)}</p>
             </div>
           </div>
         ) : (
-          <p className="text-[10px] text-muted-foreground">Nothing else today</p>
+          <p className="text-2xs text-muted-foreground">Nothing else today</p>
         )}
       </div>
     </section>

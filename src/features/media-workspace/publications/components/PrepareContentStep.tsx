@@ -107,7 +107,7 @@ function QuickEditTools() {
             <Icon className="h-6 w-6 shrink-0 text-primary" />
             <span className="min-w-0 flex-1">
               <span className="block text-sm font-semibold text-foreground">{label}</span>
-              <span className="mt-1 block text-[10px] leading-4 text-muted-foreground">{description}</span>
+              <span className="mt-1 block text-2xs leading-4 text-muted-foreground">{description}</span>
             </span>
             <ArrowRightIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
           </button>
@@ -155,8 +155,8 @@ function PreviewAssetStrip({ preview, assets, onSeek }: { preview: StagePreview;
               className="aspect-video w-full rounded-none"
             />
             <div className="px-2 py-1">
-              <p className="truncate text-[10px] font-medium text-muted-foreground">{label}</p>
-              <p className="truncate text-[9px] text-muted-foreground">{item.zoneName}</p>
+              <p className="truncate text-2xs font-medium text-muted-foreground">{label}</p>
+              <p className="truncate text-2xs text-muted-foreground">{item.zoneName}</p>
             </div>
           </button>
         );

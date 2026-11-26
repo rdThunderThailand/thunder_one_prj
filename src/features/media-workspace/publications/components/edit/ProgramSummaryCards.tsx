@@ -84,7 +84,7 @@ export function TargetCard({
         <SummaryTile icon={Radio} />
         <div className="min-w-0">
           <p className="text-xs font-semibold text-foreground">{summary || "No target"}</p>
-          <p className="truncate text-[10px] text-muted-foreground">
+          <p className="truncate text-2xs text-muted-foreground">
             {targets.map((t) => t.name).filter(Boolean).join(", ")}
           </p>
         </div>
@@ -151,8 +151,8 @@ export function ScheduleCard({
             <SummaryTile icon={Clock3} />
             <div className="min-w-0 flex-1">
               <p className="text-xs font-semibold text-foreground">{view.title}</p>
-              {view.hours && <p className="text-[10px] text-muted-foreground">{view.hours}</p>}
-              <p className="text-[10px] text-muted-foreground">{view.range}</p>
+              {view.hours && <p className="text-2xs text-muted-foreground">{view.hours}</p>}
+              <p className="text-2xs text-muted-foreground">{view.range}</p>
             </div>
             {editButton}
           </div>
@@ -163,8 +163,8 @@ export function ScheduleCard({
                   key={day.value}
                   className={
                     view.days.includes(day.value)
-                      ? "rounded-md bg-info-muted px-2.5 py-1 text-[10px] font-medium text-info"
-                      : "rounded-md bg-muted px-2.5 py-1 text-[10px] text-muted-foreground"
+                      ? "rounded-md bg-info-muted px-2.5 py-1 text-2xs font-medium text-info"
+                      : "rounded-md bg-muted px-2.5 py-1 text-2xs text-muted-foreground"
                   }
                 >
                   {day.label}

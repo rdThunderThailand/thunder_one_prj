@@ -167,7 +167,7 @@ export function PlaylistPickerModal({ selectedId, onClose, onSelect }: { selecte
                 placeholder="Min"
                 className="min-w-0 rounded-lg border border-border px-2 py-2 text-xs"
               />
-              <span className="text-[10px] text-muted-foreground">to</span>
+              <span className="text-2xs text-muted-foreground">to</span>
               <input
                 aria-label="Maximum duration"
                 inputMode="numeric"
@@ -323,7 +323,7 @@ function PlaylistGridCard({ playlist, selected, previews, onSelect }: CardProps)
       <PlaylistCover playlist={playlist} previews={previews} className="aspect-video w-full rounded-none" />
       <div className="space-y-1 p-2">
         <p className="truncate text-xs font-semibold text-foreground">{playlist.name}</p>
-        <p className="text-[10px] text-muted-foreground">{playlist.item_count} items · {formatDuration(playlist.total_duration_seconds ?? 0)}</p>
+        <p className="text-2xs text-muted-foreground">{playlist.item_count} items · {formatDuration(playlist.total_duration_seconds ?? 0)}</p>
         <div className="flex flex-wrap items-center gap-1">
           <Badge color={badge.color} variant="pill">{badge.label}</Badge>
           {inUse && <Tag>{inUse}</Tag>}
@@ -342,16 +342,16 @@ function PlaylistRow({ playlist, selected, previews, onSelect }: CardProps) {
       onClick={onSelect}
       className={`grid w-full grid-cols-[1.5rem_5rem_minmax(0,1fr)_7rem] items-center gap-3 rounded-xl border p-2 text-left transition-colors ${selected ? "border-primary bg-accent ring-1 ring-primary/30" : "border-border hover:border-border hover:bg-muted"}`}
     >
-      <span className={`grid h-5 w-5 place-items-center rounded-full border text-[10px] ${selected ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card"}`}>
+      <span className={`grid h-5 w-5 place-items-center rounded-full border text-2xs ${selected ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card"}`}>
         {selected ? "✓" : ""}
       </span>
       <PlaylistCover playlist={playlist} previews={previews} className="aspect-video h-12 w-20 rounded-lg" />
       <span className="min-w-0">
         <span className="flex items-center gap-2">
           <span className="truncate text-sm font-semibold text-foreground">{playlist.name}</span>
-          {playlist.tags?.[0] && <span className="shrink-0 rounded-full bg-accent px-2 py-0.5 text-[10px] font-medium text-primary">{playlist.tags[0].name}</span>}
+          {playlist.tags?.[0] && <span className="shrink-0 rounded-full bg-accent px-2 py-0.5 text-2xs font-medium text-primary">{playlist.tags[0].name}</span>}
         </span>
-        <span className="mt-1 flex flex-wrap gap-x-3 text-[11px] text-muted-foreground">
+        <span className="mt-1 flex flex-wrap gap-x-3 text-ui text-muted-foreground">
           <span>{formatDuration(playlist.total_duration_seconds ?? 0)}</span>
           <span>{playlist.item_count} items</span>
           <span>Updated {formatDate(playlist.updated_at ?? playlist.created_at)}</span>
@@ -360,7 +360,7 @@ function PlaylistRow({ playlist, selected, previews, onSelect }: CardProps) {
       <span className="text-right">
         <Badge color={badge.color} variant="pill">{badge.label}</Badge>
         {inUse && <Tag className="ml-1">{inUse}</Tag>}
-        <span className="mt-1 block truncate text-[10px] text-muted-foreground">{playlist.created_by?.display_name ?? "—"}</span>
+        <span className="mt-1 block truncate text-2xs text-muted-foreground">{playlist.created_by?.display_name ?? "—"}</span>
       </span>
     </button>
   );

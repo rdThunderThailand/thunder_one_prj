@@ -388,7 +388,7 @@ export function CompositionEditorPage({
         )}
         <aside className="flex min-h-0 flex-col gap-4 overflow-y-auto border-l border-border bg-card p-3">
           {view.binding && view.activeZone ? <>
-            <p className="text-[11px] font-bold text-foreground">Zone Properties</p>
+            <p className="text-ui font-bold text-foreground">Zone Properties</p>
             <ZonePropertiesPanel
               zone={view.activeZone} referenceResolution={settings.referenceResolution} binding={view.binding}
               onZoneChange={(next) => beginZoneEdit(zoneEditKey(view.activeZone, next)) && setEditedZones((layout?.zones ?? []).map((zone) => (zone.id === next.id ? next : zone)))} onBindingChange={setBinding}

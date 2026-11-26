@@ -45,7 +45,7 @@ const SORT_LABELS: Record<PublicationListSort, string> = {
   created_desc: "Created: newest first",
 };
 
-const triggerClass = "h-9 w-32 text-[10px] shadow-none";
+const triggerClass = "h-9 w-32 text-2xs shadow-none";
 const SOON = "เร็วๆ นี้";
 
 // Created by is left out: the API filters on it (`created_by`), but there is no user list this
@@ -156,7 +156,7 @@ export function PublicationsFilterBar({
         size="sm"
         disabled
         title={SOON}
-        className="h-9 text-[10px]"
+        className="h-9 text-2xs"
       >
         <FilterIcon className="h-3.5 w-3.5" />
         More filters
@@ -190,7 +190,7 @@ export function PublicationsFilterBar({
           onValueChange={(sort) => onChange({ sort: sort as PublicationListSort })}
         >
           <SelectTrigger
-            className="h-9 w-48 text-[10px] shadow-none"
+            className="h-9 w-48 text-2xs shadow-none"
             aria-label="Sort"
           >
             <SelectValue />

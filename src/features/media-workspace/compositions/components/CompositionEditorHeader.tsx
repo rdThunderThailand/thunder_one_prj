@@ -154,7 +154,7 @@ export function CompositionEditorHeader({
           <ArrowLeftIcon />
         </button>
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <p className="text-[11px] text-muted-foreground">Layouts <span aria-hidden="true">›</span> {name.trim() || "Untitled Layout"}</p>
+          <p className="text-ui text-muted-foreground">Layouts <span aria-hidden="true">›</span> {name.trim() || "Untitled Layout"}</p>
           <div className="flex min-w-0 items-center gap-2">
           {editing ? <>
             <input
@@ -176,7 +176,7 @@ export function CompositionEditorHeader({
           </>}
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="pill" color={badge.color} className="px-2 py-0 text-[10px]">{badge.label}</Badge>
+            <Badge variant="pill" color={badge.color} className="px-2 py-0 text-2xs">{badge.label}</Badge>
             <span className="text-xs text-muted-foreground">{referenceResolution ?? aspectRatio} · {zoneCount} {zoneCount === 1 ? "Zone" : "Zones"} · {updatedLabel}</span>
             {affectedCount > 0 && <button type="button" onClick={onShowPrograms} className="text-xs font-medium text-primary hover:underline">Used by {affectedCount} program{affectedCount === 1 ? "" : "s"}</button>}
           </div>

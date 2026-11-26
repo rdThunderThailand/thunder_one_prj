@@ -22,7 +22,7 @@ const STATUS_OPTIONS: { value: PlaylistDisplayStatus | "all"; label: string }[] 
   { value: "draft", label: "Draft" },
 ];
 
-const triggerClass = "h-9 w-30 text-[10px] shadow-none";
+const triggerClass = "h-9 w-30 text-2xs shadow-none";
 
 /** Lovable toolbar controls (search + selects) on this list's real filters. */
 export function PlaylistsFilters({

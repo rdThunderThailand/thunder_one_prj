@@ -25,7 +25,7 @@ export function ProgramBreadcrumb({ listHref, name, status }: { listHref: string
       <Badge
         variant="pill"
         color={mediaStatus(status).color}
-        className="px-2 py-0 text-[9px]"
+        className="px-2 py-0 text-2xs"
       >
         {mediaStatus(status).label}
       </Badge>

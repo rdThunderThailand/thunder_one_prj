@@ -164,7 +164,7 @@ export function LayoutsListPage() {
         toolbar={
           <>
             <LayoutsFilters value={filters} isGrid={isGrid} onViewChange={setIsGrid} onClearAll={qs === "" ? undefined : handleClearAll} onChange={(next) => { setFilters(next); setPage(1); }} />
-            {refreshing && layouts !== null && <span className="ml-auto text-[10px] text-muted-foreground">กำลังรีเฟรช…</span>}
+            {refreshing && layouts !== null && <span className="ml-auto text-2xs text-muted-foreground">กำลังรีเฟรช…</span>}
           </>
         }
         title="All Templates"
@@ -173,10 +173,10 @@ export function LayoutsListPage() {
           <LibraryPagination page={currentPage} totalPages={totalPages} total={sorted.length} pageSize={perPage} onPage={setPage} itemLabel="templates" perPageOptions={[10, 25, 50]} onPageSize={(next) => { setPerPage(next); setPage(1); }} />
         )}
       >
-        {actionError && <p className="mb-3 text-[10px] text-error">{actionError}</p>}
+        {actionError && <p className="mb-3 text-2xs text-error">{actionError}</p>}
         {error && layouts !== null && (
           <div className="mb-3 rounded-lg border border-error/30 bg-error-muted p-3">
-            <p className="text-[10px] text-error">{error.message}</p>
+            <p className="text-2xs text-error">{error.message}</p>
           </div>
         )}
         {layouts === null && !error ? (

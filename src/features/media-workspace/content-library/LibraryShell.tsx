@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 
 // Library rail keeps its compact underline presentation.
 const railTabClass =
-  "h-10 flex-1 whitespace-nowrap rounded-none text-[10px] shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:shadow-none";
+  "h-10 flex-1 whitespace-nowrap rounded-none text-2xs shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:shadow-none";
 
 export type LibraryRail = {
   /** Folder rail; the function form learns whether it renders in the fixed aside (true) or
@@ -69,7 +69,7 @@ export function LibraryShell({ toolbar, selection, rail, title, meta, headerActi
           <div className="mb-4 flex items-end justify-between gap-3">
             <div>
               <h2 className="text-sm font-bold">{title}</h2>
-              {meta && <p className="mt-1 text-[9px] text-muted-foreground">{meta}</p>}
+              {meta && <p className="mt-1 text-2xs text-muted-foreground">{meta}</p>}
             </div>
             {headerActions && <div className="flex gap-2">{headerActions}</div>}
           </div>
@@ -98,7 +98,7 @@ export function LibraryShell({ toolbar, selection, rail, title, meta, headerActi
 export function LibrarySelectionBar({ count, onClear, children }: { count: number; onClear: () => void; children: ReactNode }) {
   return (
     <div className="flex flex-wrap items-center gap-2 border-b border-primary/20 bg-accent px-3 py-2">
-      <strong className="mr-2 text-[10px] text-primary">{count} selected</strong>
+      <strong className="mr-2 text-2xs text-primary">{count} selected</strong>
       {children}
       <Button variant="ghost" size="sm" className="ml-auto" onClick={onClear}><X className="h-3.5 w-3.5" />Clear Selection</Button>
     </div>
@@ -110,7 +110,7 @@ export function LibrarySearch({ value, onChange, placeholder, className }: { val
   return (
     <label className={cn("relative min-w-48 flex-1 sm:max-w-60", className)}>
       <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-      <Input value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} className="pl-9 text-[10px] shadow-none" />
+      <Input value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} className="pl-9 text-2xs shadow-none" />
     </label>
   );
 }

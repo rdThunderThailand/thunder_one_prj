@@ -190,7 +190,7 @@ function ReadOnlyRow({ label, value, hint }: { label: string; value: string; hin
       <span className="text-muted-foreground">{label}</span>
       <span className="text-right">
         <span className="font-medium capitalize text-foreground">{value}</span>
-        {hint && <span className="block text-[11px] font-normal text-muted-foreground">{hint}</span>}
+        {hint && <span className="block text-ui font-normal text-muted-foreground">{hint}</span>}
       </span>
     </div>
   );

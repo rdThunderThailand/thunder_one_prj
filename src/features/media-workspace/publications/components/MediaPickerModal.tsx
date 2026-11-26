@@ -25,7 +25,7 @@ const STATUS_OPTIONS = [
 ];
 
 function FilterChoice({ checked, disabled = false, icon, label, onClick }: { checked: boolean; disabled?: boolean; icon?: ReactNode; label: string; onClick: () => void }) {
-  return <button type="button" role="checkbox" aria-checked={checked} disabled={disabled} onClick={onClick} className="flex w-full items-center gap-2 rounded-md px-1.5 py-1 text-left text-xs text-muted-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30 disabled:cursor-not-allowed disabled:opacity-40"><span className={`grid h-3.5 w-3.5 shrink-0 place-items-center rounded border text-[9px] ${checked ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card"}`}>{checked ? "✓" : ""}</span>{icon}{label}</button>;
+  return <button type="button" role="checkbox" aria-checked={checked} disabled={disabled} onClick={onClick} className="flex w-full items-center gap-2 rounded-md px-1.5 py-1 text-left text-xs text-muted-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30 disabled:cursor-not-allowed disabled:opacity-40"><span className={`grid h-3.5 w-3.5 shrink-0 place-items-center rounded border text-2xs ${checked ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card"}`}>{checked ? "✓" : ""}</span>{icon}{label}</button>;
 }
 
 function AssetDetail({ asset, previewUrl, thumbnailUrl }: { asset?: MediaAsset; previewUrl?: string; thumbnailUrl?: string }) {
@@ -45,7 +45,7 @@ function AssetDetail({ asset, previewUrl, thumbnailUrl }: { asset?: MediaAsset; 
     <div className="relative aspect-video overflow-hidden rounded-lg bg-muted">{imageUrl && <Image src={imageUrl} alt={filename} fill sizes="260px" className="object-cover" />}</div>
     <div className="flex items-start justify-between gap-2"><h3 className="min-w-0 break-words text-sm font-semibold text-foreground">{filename}</h3>{asset.status ? <Badge variant="pill" color={mediaStatus(asset.status).color} className="shrink-0">{mediaStatus(asset.status).label}</Badge> : <span className="text-xs text-muted-foreground">—</span>}</div>
     <dl className="space-y-2 text-xs">{fields.map(([label, value]) => <div key={label} className="flex justify-between gap-3"><dt className="text-muted-foreground">{label}</dt><dd className="text-right text-foreground">{value}</dd></div>)}</dl>
-    <div><p className="text-xs text-muted-foreground">Tags</p><div className="mt-1 flex flex-wrap gap-1">{asset.tags?.length ? asset.tags.map((tag) => <span key={tag.id} className="rounded-full bg-accent px-2 py-0.5 text-[10px] text-primary">{tag.name}</span>) : <span className="text-xs text-muted-foreground">—</span>}</div></div>
+    <div><p className="text-xs text-muted-foreground">Tags</p><div className="mt-1 flex flex-wrap gap-1">{asset.tags?.length ? asset.tags.map((tag) => <span key={tag.id} className="rounded-full bg-accent px-2 py-0.5 text-2xs text-primary">{tag.name}</span>) : <span className="text-xs text-muted-foreground">—</span>}</div></div>
     <div><p className="text-xs text-muted-foreground">Description</p><p className="mt-1 text-xs leading-5 text-muted-foreground">{asset.title ?? "—"}</p></div>
   </div>;
 }
@@ -98,19 +98,19 @@ export function MediaPickerModal({ assets, tags, selectedIds, loading, error, on
     </div>
     <div className="grid h-[min(42rem,calc(100vh-15rem))] min-h-[30rem] grid-cols-[11rem_minmax(0,1fr)_16rem] overflow-hidden border-b border-border">
       <aside id="media-picker-filters" tabIndex={-1} className="overflow-y-auto border-r border-border px-3 py-4 focus:outline-none">
-        <p className="mb-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Filters</p>
-        <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Type</p>
+        <p className="mb-3 text-2xs font-semibold uppercase tracking-wider text-muted-foreground">Filters</p>
+        <p className="mb-1 text-2xs font-semibold uppercase tracking-wider text-muted-foreground">Type</p>
         <FilterChoice icon={<GridIcon className="h-3.5 w-3.5 text-primary" />} label="All Types" checked={filters.kind === "all"} onClick={() => update({ kind: "all" })} />
         <FilterChoice icon={<ImageIcon className="h-3.5 w-3.5 text-success" />} label="Image" checked={filters.kind === "image"} onClick={() => update({ kind: "image" })} />
         <FilterChoice icon={<PlayIcon className="h-3.5 w-3.5 text-t1-blue-500" />} label="Video" checked={filters.kind === "video"} onClick={() => update({ kind: "video" })} />
         {['Audio', 'HTML', 'Document'].map((label) => <FilterChoice key={label} icon={<span className="h-2 w-2 rounded-full bg-border" />} label={label} checked={false} disabled onClick={() => undefined} />)}
         <div className="my-3 border-t border-border" />
-        <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Status</p>
+        <p className="mb-1 text-2xs font-semibold uppercase tracking-wider text-muted-foreground">Status</p>
         {STATUS_OPTIONS.map((option, index) => <FilterChoice key={option.value} icon={<span className={`h-2 w-2 rounded-full ${["bg-primary", "bg-success", "bg-warning", "bg-border", "bg-error"][index]}`} />} label={option.label} checked={filters.status === option.value} onClick={() => update({ status: option.value })} />)}
         <div className="my-3 border-t border-border" />
-        <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Duration</p>
+        <p className="mb-2 text-2xs font-semibold uppercase tracking-wider text-muted-foreground">Duration</p>
         <div className="flex items-center gap-1"><input aria-label="Minimum duration" inputMode="numeric" value={filters.minDuration} onChange={(event) => update({ minDuration: event.target.value })} placeholder="Min" className="min-w-0 rounded border border-border px-2 py-1.5 text-xs" /><span className="text-muted-foreground">–</span><input aria-label="Maximum duration" inputMode="numeric" value={filters.maxDuration} onChange={(event) => update({ maxDuration: event.target.value })} placeholder="Max" className="min-w-0 rounded border border-border px-2 py-1.5 text-xs" /></div>
-        <p className="mb-2 mt-4 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Tags</p>
+        <p className="mb-2 mt-4 text-2xs font-semibold uppercase tracking-wider text-muted-foreground">Tags</p>
         <select aria-label="Tag" value={filters.tagId ?? ""} onChange={(event) => update({ tagId: event.target.value || null })} className="w-full rounded-lg border border-border px-2 py-2 text-xs"><option value="">Select or type tags</option>{tags.map((tag) => <option key={tag.id} value={tag.id}>{tag.name}</option>)}</select>
       </aside>
       <section className="flex min-w-0 flex-col overflow-hidden p-4">
@@ -146,7 +146,7 @@ export function MediaPickerModal({ assets, tags, selectedIds, loading, error, on
                     onClick={() => toggle(asset)}
                     className={`grid w-full grid-cols-[1.5rem_5rem_minmax(0,1fr)_7rem] items-center gap-3 rounded-xl border p-2 text-left transition-colors ${isSelected ? "border-primary bg-accent ring-1 ring-primary/30" : "border-border hover:border-border hover:bg-muted"} disabled:opacity-50`}
                   >
-                    <span className={`grid h-5 w-5 place-items-center rounded-full border text-[10px] ${isSelected ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card"}`}>
+                    <span className={`grid h-5 w-5 place-items-center rounded-full border text-2xs ${isSelected ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card"}`}>
                       {isSelected ? "✓" : ""}
                     </span>
                     <MediaThumb
@@ -160,9 +160,9 @@ export function MediaPickerModal({ assets, tags, selectedIds, loading, error, on
                     <span className="min-w-0">
                       <span className="flex items-center gap-2">
                         <span className="truncate text-sm font-semibold text-foreground">{label}</span>
-                        {asset.tags?.[0] && <span className="shrink-0 rounded-full bg-accent px-2 py-0.5 text-[10px] font-medium text-primary">{asset.tags[0].name}</span>}
+                        {asset.tags?.[0] && <span className="shrink-0 rounded-full bg-accent px-2 py-0.5 text-2xs font-medium text-primary">{asset.tags[0].name}</span>}
                       </span>
-                      <span className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+                      <span className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-ui text-muted-foreground">
                         <span>{assetKind(asset)}</span>
                         <span>{asset.width && asset.height ? `${asset.width} × ${asset.height}` : "No resolution"}</span>
                         <span>{asset.duration_seconds ? `${Math.round(asset.duration_seconds)}s` : "Still image"}</span>
@@ -174,8 +174,8 @@ export function MediaPickerModal({ assets, tags, selectedIds, loading, error, on
                       </span>
                     </span>
                     <span className="text-right">
-                      <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium ${status === "Active" ? "bg-success-muted text-success" : "bg-muted text-muted-foreground"}`}>{status}</span>
-                      <span className="mt-1 block truncate text-[10px] text-muted-foreground">{asset.created_by?.display_name ?? "—"}</span>
+                      <span className={`inline-flex rounded-full px-2 py-0.5 text-2xs font-medium ${status === "Active" ? "bg-success-muted text-success" : "bg-muted text-muted-foreground"}`}>{status}</span>
+                      <span className="mt-1 block truncate text-2xs text-muted-foreground">{asset.created_by?.display_name ?? "—"}</span>
                     </span>
                   </button>
                 );
@@ -186,7 +186,7 @@ export function MediaPickerModal({ assets, tags, selectedIds, loading, error, on
         </div>
         <div className="shrink-0 border-t border-border bg-card"><Pagination page={currentPage} totalPages={totalPages} perPage={perPage} perPageOptions={PER_PAGE_OPTIONS} totalItems={visible.length} rangeStart={visible.length ? (currentPage - 1) * perPage + 1 : 0} rangeEnd={Math.min(currentPage * perPage, visible.length)} itemLabel="media" onPageChange={setPage} onPerPageChange={(next) => { setPerPage(next); setPage(1); }} /></div>
       </section>
-      <aside className="overflow-y-auto border-l border-border"><p className="border-b border-border px-4 py-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Selected item</p><AssetDetail asset={detailAsset} previewUrl={detailAsset ? previews.urls[detailAsset.id] : undefined} thumbnailUrl={detailAsset ? previews.thumbnailUrls[detailAsset.id] : undefined} /></aside>
+      <aside className="overflow-y-auto border-l border-border"><p className="border-b border-border px-4 py-3 text-2xs font-semibold uppercase tracking-wider text-muted-foreground">Selected item</p><AssetDetail asset={detailAsset} previewUrl={detailAsset ? previews.urls[detailAsset.id] : undefined} thumbnailUrl={detailAsset ? previews.thumbnailUrls[detailAsset.id] : undefined} /></aside>
     </div>
   </Modal>;
 }

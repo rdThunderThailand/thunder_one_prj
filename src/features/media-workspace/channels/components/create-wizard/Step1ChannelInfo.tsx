@@ -47,7 +47,7 @@ export function Step1ChannelInfo({
               >
                 <Icon className={`h-6 w-6 ${selected ? "text-primary" : "text-muted-foreground"}`} />
                 <span className="text-sm font-semibold text-foreground">{label}</span>
-                <span className="text-[11px] text-muted-foreground">{hint}</span>
+                <span className="text-ui text-muted-foreground">{hint}</span>
               </button>
             );
           })}
@@ -93,7 +93,7 @@ export function Step1ChannelInfo({
               onChange={(event) => onChange({ ...draft, description: event.target.value })}
               className={`${fieldClasses} resize-y`}
             />
-            <span className="self-end text-[11px] text-muted-foreground">{draft.description.length}/300</span>
+            <span className="self-end text-ui text-muted-foreground">{draft.description.length}/300</span>
           </label>
         </div>
       </div>

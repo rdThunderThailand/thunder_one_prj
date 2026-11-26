@@ -128,7 +128,7 @@ function FitWarning({ text, detail }: { text: string; detail?: string }) {
       <WarningTriangleIcon className="h-4 w-4 shrink-0 text-warning" />
       <div>
         <p className="text-xs font-medium text-foreground">{text}</p>
-        {detail && <p className="text-[11px] text-muted-foreground">{detail}</p>}
+        {detail && <p className="text-ui text-muted-foreground">{detail}</p>}
       </div>
     </div>
   );

@@ -127,7 +127,7 @@ export function SchedulePreviewPane({ draft, today, programName }: { draft: Sche
               );
             })}
           </div>
-          <p className="mt-1 flex justify-between text-[10px] text-muted-foreground">
+          <p className="mt-1 flex justify-between text-2xs text-muted-foreground">
             <span>00:00</span>
             <span>12:00</span>
             <span>24:00</span>

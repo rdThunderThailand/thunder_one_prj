@@ -119,7 +119,7 @@ export function UngroupedChannelsTable({
       <div className="mt-3 overflow-x-auto">
         <table className="w-full min-w-[900px] text-left text-sm">
           <thead>
-            <tr className="border-b border-border bg-muted text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+            <tr className="border-b border-border bg-muted text-ui font-semibold uppercase tracking-wide text-muted-foreground">
               <th className="w-10 px-4 py-2.5">
                 <input
                   type="checkbox"
