@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { env } from "@/config/env";
 import { readAssetQrPath } from "@/features/asset-workspace/domain/asset-qr-reference";
 
 export function proxy(request: NextRequest) {
@@ -7,6 +8,12 @@ export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const assetQr = readAssetQrPath(pathname);
 
+  // docs/adr/0097: with the Asset Workspace flag off every /asset-workspace route is Not Found.
+  // Gated here, not in the layout — Next renders a layout and its page in parallel, so a layout
+  // notFound() would still run the page (and its data fetches) and stream its content.
+  if (!env.assetWorkspaceMvp && (assetQr || pathname === "/asset-workspace" || pathname.startsWith("/asset-workspace/"))) {
+    return NextResponse.rewrite(new URL("/_asset-workspace-off", request.url));
+  }
 
   // /set-password: where Supabase's invite email (Add Employee flow) lands
   // an invitee who, by definition, has no session cookie yet — see
