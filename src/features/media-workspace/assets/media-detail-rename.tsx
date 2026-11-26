@@ -67,7 +67,7 @@ export function InlineRename({ asset, onRenamed }: { asset: MediaAsset; onRename
           <X className="h-4 w-4" />
         </Button>
       </div>
-      {error && <p role="alert" className="mt-2 text-[11px] text-error">{error}</p>}
+      {error && <p role="alert" className="mt-2 text-ui text-error">{error}</p>}
     </div>
   );
 }

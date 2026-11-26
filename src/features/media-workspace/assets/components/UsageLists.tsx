@@ -23,7 +23,7 @@ function RefLink({ href, children, note }: { href: string; children: React.React
 function Group({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{title}</p>
+      <p className="text-2xs font-semibold uppercase tracking-wide text-muted-foreground">{title}</p>
       <ul className="mt-1 space-y-0.5 text-xs">{children}</ul>
     </div>
   );

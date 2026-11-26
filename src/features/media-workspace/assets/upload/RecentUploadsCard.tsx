@@ -40,7 +40,7 @@ export function RecentUploadsCard({ completedCount }: { completedCount: number }
 
   return (
     <Card className="p-4">
-      <h2 className="text-[11px] font-bold text-foreground">Recent Uploads</h2>
+      <h2 className="text-ui font-bold text-foreground">Recent Uploads</h2>
       <div className="mt-4 space-y-3">
         {isLoading ? (
           Array.from({ length: 3 }, (_, index) => (
@@ -61,7 +61,7 @@ export function RecentUploadsCard({ completedCount }: { completedCount: number }
                 <MediaThumb url={previews.urls[asset.id]} thumbnailUrl={previews.thumbnailUrls[asset.id]} kind={asset.kind} mimeType={asset.file?.mime_type} alt={label} className="h-11 w-14 rounded-lg" />
                 <span className="min-w-0">
                   <span className="block truncate text-xs font-medium text-foreground group-hover:text-primary">{label}</span>
-                  <span className="block text-[11px] text-muted-foreground">{asset.kind?.toUpperCase() ?? "FILE"}{asset.created_at ? ` · ${new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(new Date(asset.created_at))}` : ""}</span>
+                  <span className="block text-ui text-muted-foreground">{asset.kind?.toUpperCase() ?? "FILE"}{asset.created_at ? ` · ${new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(new Date(asset.created_at))}` : ""}</span>
                 </span>
               </Link>
             );
